@@ -8,9 +8,12 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.ar.core.Anchor
+import com.google.ar.core.Anchor.CloudAnchorState
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.ArCoreApk.InstallStatus
 import com.google.ar.core.Camera
+import com.google.ar.core.Config
+import com.google.ar.core.Config.CloudAnchorMode
 import com.google.ar.core.Frame
 import com.google.ar.core.Plane
 import com.google.ar.core.Point
@@ -23,6 +26,7 @@ import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 import com.lamti.capturetheflag.arcore.helpers.CameraPermissionHelper
+import com.lamti.capturetheflag.arcore.helpers.CloudAnchorManager
 import com.lamti.capturetheflag.arcore.helpers.DisplayRotationHelper
 import com.lamti.capturetheflag.arcore.helpers.FullScreenHelper
 import com.lamti.capturetheflag.arcore.helpers.SnackbarHelper
@@ -32,6 +36,7 @@ import com.lamti.capturetheflag.arcore.rendering.BackgroundRenderer
 import com.lamti.capturetheflag.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.arcore.rendering.PointCloudRenderer
+import com.lamti.capturetheflag.data.FirebaseManager
 import com.lamti.capturetheflag.databinding.ActivityMainBinding
 import java.io.IOException
 import javax.microedition.khronos.egl.EGLConfig
@@ -42,6 +47,9 @@ private val TAG: String = MainActivity::class.java.simpleName
 class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
 
     private lateinit var binding: ActivityMainBinding
+
+    private val firebaseManager = FirebaseManager()
+    private val cloudAnchorManager = CloudAnchorManager()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,6 +98,11 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
 
                 // Create the session.
                 session = Session(this@MainActivity)
+
+                // Configure session for cloud anchors.
+                val config = Config(session)
+                config.cloudAnchorMode = CloudAnchorMode.ENABLED
+                session!!.configure(config)
 
             } catch (e: UnavailableArcoreNotInstalledException) {
                 message = "Please install ARCore"
@@ -168,7 +181,7 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
 
     private fun setupListeners() = with(binding) {
         resolveButton.setOnClickListener {
-
+            onResolveButtonPressed()
         }
         clearButton.setOnClickListener {
             onClearButtonPressed()
@@ -269,6 +282,8 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
             // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
             // camera frame rate.
             val frame = session!!.update()
+            cloudAnchorManager.onUpdate()
+
             val camera = frame.camera
 
             // Handle one tap per frame.
@@ -351,6 +366,13 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
                     // space. This anchor is created on the Plane to place the 3D model
                     // in the correct position relative both to the world and to the plane.
                     currentAnchor = hit.createAnchor()
+
+                    // host cloud anchor
+                    runOnUiThread { binding.resolveButton.isEnabled = false }
+                    messageSnackbarHelper.showMessage(this@MainActivity, "Now hosting anchor...")
+                    cloudAnchorManager.hostCloudAnchor(session, currentAnchor) { anchor: Anchor? ->
+                        onHostedAnchorAvailable(anchor!!)
+                    }
                     break
                 }
             }
@@ -372,7 +394,52 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
     @Synchronized
     private fun onClearButtonPressed() {
         // Clear the anchor from the scene.
+        cloudAnchorManager.clearListeners()
+        binding.resolveButton.isEnabled = true
         currentAnchor = null
+    }
+
+    @Synchronized
+    private fun onHostedAnchorAvailable(anchor: Anchor) {
+        val cloudState = anchor.cloudAnchorState
+        if (cloudState == CloudAnchorState.SUCCESS) {
+            val cloudAnchorId = anchor.cloudAnchorId
+
+            firebaseManager.uploadAnchor(cloudAnchorId)
+            messageSnackbarHelper.showMessage(this@MainActivity, "Cloud Anchor Hosted. ID: $cloudAnchorId")
+            currentAnchor = anchor
+        } else {
+            messageSnackbarHelper.showMessage(this@MainActivity, "Error while hosting: $cloudState")
+        }
+    }
+
+    @Synchronized
+    private fun onResolveButtonPressed() {
+        firebaseManager.getUploadedAnchorID { cloudAnchorId ->
+            if (cloudAnchorId.isEmpty()) {
+                messageSnackbarHelper.showMessage(this@MainActivity, "A Cloud Anchor ID was not found.")
+                return@getUploadedAnchorID
+            }
+            binding.resolveButton.isEnabled = false
+            cloudAnchorManager.resolveCloudAnchor(session, cloudAnchorId) { anchor ->
+                onResolvedAnchorAvailable(anchor)
+            }
+        }
+    }
+
+    @Synchronized
+    private fun onResolvedAnchorAvailable(anchor: Anchor) {
+        val cloudState = anchor.cloudAnchorState
+        if (cloudState == CloudAnchorState.SUCCESS) {
+            messageSnackbarHelper.showMessage(this@MainActivity, "Cloud Anchor Resolved. ID: ${anchor.cloudAnchorId}")
+            currentAnchor = anchor
+        } else {
+            messageSnackbarHelper.showMessage(
+                this@MainActivity,
+                "Error while resolving anchor with id: ${anchor.cloudAnchorId}. Error: $cloudState"
+            )
+            binding.resolveButton.isEnabled = true
+        }
     }
 
 }

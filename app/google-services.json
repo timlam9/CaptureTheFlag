@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "556209415495",
+    "project_id": "corded-racer-341709",
+    "storage_bucket": "corded-racer-341709.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:556209415495:android:0b8af4d683e34c81ea9862",
+        "android_client_info": {
+          "package_name": "com.lamti.capturetheflag"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "556209415495-ugdsba7cdbq30qk4n1p44gatdnkk02ib.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lamti.capturetheflag",
+            "certificate_hash": "f13059b10d5eaea8bffe69fa408e8cdadfcfefbf"
+          }
+        },
+        {
+          "client_id": "556209415495-uuaepk8rokae7mntpcsjiigpd8bgfrq5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHFPsfQToqxQY9I01avUHUpG4jg1iPusI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "556209415495-uuaepk8rokae7mntpcsjiigpd8bgfrq5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

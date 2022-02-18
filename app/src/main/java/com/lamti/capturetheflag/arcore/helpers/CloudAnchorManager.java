@@ -48,6 +48,16 @@ public class CloudAnchorManager {
   }
 
   /**
+   * This method hosts an anchor for one day. The {@code listener} will be invoked when the results are
+   * available.
+   */
+  public synchronized void hostCloudAnchor(
+          Session session, Anchor anchor, CloudAnchorListener listener) {
+    Anchor newAnchor = session.hostCloudAnchor(anchor);
+    pendingAnchors.put(newAnchor, listener);
+  }
+
+  /**
    * This method resolves an anchor. The {@code listener} will be invoked when the results are
    * available.
    */

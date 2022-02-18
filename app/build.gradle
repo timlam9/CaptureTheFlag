@@ -1,6 +1,8 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'com.google.gms.google-services'
+    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
 }
 
 android {
@@ -65,4 +67,14 @@ dependencies {
     implementation 'com.google.ar:core:1.29.0'
     // Obj - a simple Wavefront OBJ file loader. https://github.com/javagl/Obj
     implementation 'de.javagl:obj:0.3.0'
+
+    // Firebase
+    implementation platform('com.google.firebase:firebase-bom:29.1.0')
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation 'com.google.firebase:firebase-firestore-ktx'
+
+}
+
+secrets {
+    defaultPropertiesFileName 'local.properties'
 }
