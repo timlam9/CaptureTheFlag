@@ -13,7 +13,7 @@ class MainViewModel: ViewModel() {
     val currentScreen: StateFlow<Screen> = _currentScreen.asStateFlow()
 
     fun onStatsClicked() {
-        _currentScreen.update { Screen.Stats }
+        _currentScreen.update { Screen.Ar }
     }
 
     fun onMapClicked() {

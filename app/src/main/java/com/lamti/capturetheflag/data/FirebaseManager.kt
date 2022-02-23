@@ -14,9 +14,8 @@ class FirebaseManager {
 
     private val firestoreDatabase = Firebase.firestore
 
-    suspend fun uploadAnchor(id: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun uploadAnchor(anchor: CloudAnchor): Boolean = withContext(Dispatchers.IO) {
         try {
-            val anchor = CloudAnchor(anchorID = id)
             firestoreDatabase.collection(COLLECTION_ANCHORS)
                 .document(DOCUMENT_FLAG)
                 .set(anchor)

@@ -30,6 +30,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.IOException
+import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.format.DateTimeFormatter
+import java.util.Date
+import java.util.Locale
 
 val TAG: String = ArFragment::class.java.simpleName
 
@@ -249,7 +254,7 @@ class ArViewModel : ViewModel() {
         if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
             val cloudAnchorId = anchor.cloudAnchorId
 
-            viewModelScope.launch { firebaseManager.uploadAnchor(cloudAnchorId) }
+            viewModelScope.launch { firebaseManager.uploadAnchor(CloudAnchor(cloudAnchorId)) }
             _message.update { "Cloud Anchor Hosted. ID: $cloudAnchorId" }
             currentAnchor = anchor
         } else {
