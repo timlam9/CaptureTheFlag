@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.presentation.fragments
+package com.lamti.capturetheflag.presentation.fragments.ar
 
 import android.annotation.SuppressLint
 import android.opengl.GLES20
@@ -16,6 +16,7 @@ import com.google.ar.core.Point
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
 import com.lamti.capturetheflag.R
+import com.lamti.capturetheflag.databinding.FragmentArBinding
 import com.lamti.capturetheflag.presentation.arcore.helpers.CameraPermissionHelper
 import com.lamti.capturetheflag.presentation.arcore.helpers.DisplayRotationHelper
 import com.lamti.capturetheflag.presentation.arcore.helpers.SnackbarHelper
@@ -23,7 +24,6 @@ import com.lamti.capturetheflag.presentation.arcore.helpers.TapHelper
 import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
 import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
-import com.lamti.capturetheflag.databinding.FragmentArBinding
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import javax.microedition.khronos.egl.EGLConfig

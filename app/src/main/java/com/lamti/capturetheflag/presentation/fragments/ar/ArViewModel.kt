@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.presentation.fragments
+package com.lamti.capturetheflag.presentation.fragments.ar
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
