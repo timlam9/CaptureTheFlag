@@ -2,6 +2,7 @@ package com.lamti.capturetheflag.presentation.fragments.ar
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.ar.core.Anchor
 import com.google.ar.core.Camera
 import com.google.ar.core.Config
@@ -15,17 +16,19 @@ import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
+import com.lamti.capturetheflag.data.CloudAnchor
+import com.lamti.capturetheflag.data.FirebaseManager
 import com.lamti.capturetheflag.presentation.arcore.helpers.CloudAnchorManager
 import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
 import com.lamti.capturetheflag.presentation.arcore.rendering.BackgroundRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PointCloudRenderer
-import com.lamti.capturetheflag.data.FirebaseManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.io.IOException
 
 val TAG: String = ArFragment::class.java.simpleName
@@ -204,13 +207,17 @@ class ArViewModel : ViewModel() {
 
     @Synchronized
     fun onResolveButtonPressed() {
-        firebaseManager.getUploadedAnchorID { cloudAnchorId ->
-            if (cloudAnchorId.isEmpty()) {
+        viewModelScope.launch {
+            val cloudAnchor: CloudAnchor = firebaseManager.getUploadedAnchorID()
+            val anchorID = cloudAnchor.anchorID
+
+            if (anchorID.isEmpty()) {
                 _message.update { "A Cloud Anchor ID was not found." }
-                return@getUploadedAnchorID
+                return@launch
             }
+
             _resolveButtonEnabled.update { false }
-            cloudAnchorManager.resolveCloudAnchor(_session.value, cloudAnchorId) { anchor ->
+            cloudAnchorManager.resolveCloudAnchor(_session.value, anchorID) { anchor ->
                 onResolvedAnchorAvailable(anchor)
             }
         }
@@ -242,7 +249,7 @@ class ArViewModel : ViewModel() {
         if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
             val cloudAnchorId = anchor.cloudAnchorId
 
-            firebaseManager.uploadAnchor(cloudAnchorId)
+            viewModelScope.launch { firebaseManager.uploadAnchor(cloudAnchorId) }
             _message.update { "Cloud Anchor Hosted. ID: $cloudAnchorId" }
             currentAnchor = anchor
         } else {
