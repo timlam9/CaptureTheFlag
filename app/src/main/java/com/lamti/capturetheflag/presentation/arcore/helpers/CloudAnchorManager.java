@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lamti.capturetheflag.arcore.helpers;
+package com.lamti.capturetheflag.presentation.arcore.helpers;
 
 import com.google.ar.core.Anchor;
 import com.google.ar.core.Anchor.CloudAnchorState;

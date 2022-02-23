@@ -1,38 +1,38 @@
-package com.lamti.capturetheflag
+package com.lamti.capturetheflag.presentation.fragments
 
 import android.annotation.SuppressLint
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.ar.core.ArCoreApk
-import com.google.ar.core.ArCoreApk.InstallStatus
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
 import com.google.ar.core.Plane
 import com.google.ar.core.Point
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
-import com.lamti.capturetheflag.arcore.helpers.CameraPermissionHelper
-import com.lamti.capturetheflag.arcore.helpers.DisplayRotationHelper
-import com.lamti.capturetheflag.arcore.helpers.FullScreenHelper
-import com.lamti.capturetheflag.arcore.helpers.SnackbarHelper
-import com.lamti.capturetheflag.arcore.helpers.TapHelper
-import com.lamti.capturetheflag.arcore.helpers.TrackingStateHelper
-import com.lamti.capturetheflag.arcore.rendering.ObjectRenderer
-import com.lamti.capturetheflag.arcore.rendering.PlaneRenderer
-import com.lamti.capturetheflag.databinding.ActivityMainBinding
+import com.lamti.capturetheflag.R
+import com.lamti.capturetheflag.presentation.arcore.helpers.CameraPermissionHelper
+import com.lamti.capturetheflag.presentation.arcore.helpers.DisplayRotationHelper
+import com.lamti.capturetheflag.presentation.arcore.helpers.SnackbarHelper
+import com.lamti.capturetheflag.presentation.arcore.helpers.TapHelper
+import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
+import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
+import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
+import com.lamti.capturetheflag.databinding.FragmentArBinding
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
+class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
 
-    private lateinit var binding: ActivityMainBinding
-    private val mainViewModel = MainViewModel()
+    private var binding: FragmentArBinding? = null
+    private val viewModel: ArViewModel = ArViewModel()
 
     private val messageSnackbarHelper: SnackbarHelper = SnackbarHelper()
     private var displayRotationHelper: DisplayRotationHelper? = null
@@ -41,11 +41,9 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
 
     private var installRequested = false
 
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding = FragmentArBinding.bind(view)
 
         setupHelpers()
         setupSurfaceView()
@@ -53,83 +51,88 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
         collectFlows()
     }
 
+    override fun onDestroyView() {
+        binding = null
+        super.onDestroyView()
+    }
+
     private fun setupHelpers() {
-        tapHelper = TapHelper(this@MainActivity)
-        trackingStateHelper = TrackingStateHelper(this@MainActivity)
-        displayRotationHelper = DisplayRotationHelper(this@MainActivity)
+        tapHelper = TapHelper(requireContext())
+        trackingStateHelper = TrackingStateHelper(requireActivity())
+        displayRotationHelper = DisplayRotationHelper(requireContext())
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun setupSurfaceView() = with(binding) {
+    private fun setupSurfaceView() = binding?.apply {
         surfaceView.setOnTouchListener(tapHelper)
 
         surfaceView.preserveEGLContextOnPause = true
         surfaceView.setEGLContextClientVersion(2)
         surfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0) // Alpha used for plane blending.
 
-        surfaceView.setRenderer(this@MainActivity)
+        surfaceView.setRenderer(this@ArFragment)
         surfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
         surfaceView.setWillNotDraw(false)
     }
 
-    private fun setupListeners() = with(binding) {
+    private fun setupListeners() = binding?.apply {
         resolveButton.setOnClickListener {
-            mainViewModel.onResolveButtonPressed()
+            viewModel.onResolveButtonPressed()
         }
         clearButton.setOnClickListener {
-            mainViewModel.onClearButtonPressed()
+            viewModel.onClearButtonPressed()
         }
     }
 
     private fun collectFlows() {
-        mainViewModel.message.onEach(::showSnackbarMessage).launchIn(lifecycleScope)
-        mainViewModel.resolveButtonEnabled.onEach(::setResolveButtonActive).launchIn(lifecycleScope)
-        mainViewModel.clearButtonEnabled.onEach(::setClearButtonActive).launchIn(lifecycleScope)
+        viewModel.message.onEach(::showSnackbarMessage).launchIn(lifecycleScope)
+        viewModel.resolveButtonEnabled.onEach(::setResolveButtonActive).launchIn(lifecycleScope)
+        viewModel.clearButtonEnabled.onEach(::setClearButtonActive).launchIn(lifecycleScope)
     }
 
     private fun showSnackbarMessage(message: String) {
-        messageSnackbarHelper.showMessage(this@MainActivity, message)
+        messageSnackbarHelper.showMessage(requireActivity(), message)
     }
 
     private fun setResolveButtonActive(active: Boolean) {
-        binding.resolveButton.isEnabled = active
+        binding?.resolveButton?.isEnabled = active
     }
 
     private fun setClearButtonActive(active: Boolean) {
-        binding.clearButton.isEnabled = active
+        binding?.clearButton?.isEnabled = active
     }
 
     override fun onResume() {
         super.onResume()
 
-        when (ArCoreApk.getInstance().requestInstall(this, !installRequested)) {
-            InstallStatus.INSTALL_REQUESTED -> {
+        when (ArCoreApk.getInstance().requestInstall(requireActivity(), !installRequested)) {
+            ArCoreApk.InstallStatus.INSTALL_REQUESTED -> {
                 installRequested = true
                 return
             }
-            InstallStatus.INSTALLED -> Unit
+            ArCoreApk.InstallStatus.INSTALLED -> Unit
             else -> Unit
         }
 
         // ARCore requires camera permissions to operate. If we did not yet obtain runtime
         // permission on Android M and above, now is a good time to ask the user for it.
-        if (!CameraPermissionHelper.hasCameraPermission(this)) {
-            CameraPermissionHelper.requestCameraPermission(this)
+        if (!CameraPermissionHelper.hasCameraPermission(requireActivity())) {
+            CameraPermissionHelper.requestCameraPermission(requireActivity())
             return
         }
 
-        mainViewModel.createSession(Session(this@MainActivity))
+        viewModel.createSession(Session(requireContext()))
 
-        mainViewModel.resumeSession()
+        viewModel.resumeSession()
         displayRotationHelper!!.onResume()
-        binding.surfaceView.onResume()
+        binding?.surfaceView?.onResume()
     }
 
     override fun onPause() {
         super.onPause()
 
-        mainViewModel.pauseSession()
-        binding.surfaceView.onPause()
+        viewModel.pauseSession()
+        binding?.surfaceView?.onPause()
         displayRotationHelper!!.onPause()
     }
 
@@ -140,37 +143,32 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
     }
 
     private fun requestCameraPermission() {
-        if (!CameraPermissionHelper.hasCameraPermission(this@MainActivity)) {
+        if (!CameraPermissionHelper.hasCameraPermission(requireActivity())) {
             Toast.makeText(
-                this@MainActivity, "Camera permission is needed to run this application",
+                requireContext(), "Camera permission is needed to run this application",
                 Toast.LENGTH_LONG
             ).show()
-            if (!CameraPermissionHelper.shouldShowRequestPermissionRationale(this@MainActivity)) {
+            if (!CameraPermissionHelper.shouldShowRequestPermissionRationale(requireActivity())) {
                 // Permission denied with checking "Do not ask again".
-                CameraPermissionHelper.launchPermissionSettings(this@MainActivity)
+                CameraPermissionHelper.launchPermissionSettings(requireActivity())
             }
-            this@MainActivity.finish()
+            requireActivity().finish()
         }
-    }
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        FullScreenHelper.setFullScreenOnWindowFocusChanged(this, hasFocus)
     }
 
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f)
-        mainViewModel.prepareRenderingObjects { backgroundRenderer, planeRenderer, pointCloudRenderer, virtualObject, virtualObjectShadow ->
+        viewModel.prepareRenderingObjects { backgroundRenderer, planeRenderer, pointCloudRenderer, virtualObject, virtualObjectShadow ->
             // Create the texture and pass it to ARCore session to be filled during update().
-            backgroundRenderer.createOnGlThread(this@MainActivity)
-            planeRenderer.createOnGlThread(this@MainActivity, "models/tri_grid.png")
-            pointCloudRenderer.createOnGlThread(this@MainActivity)
+            backgroundRenderer.createOnGlThread(requireContext())
+            planeRenderer.createOnGlThread(requireContext(), "models/tri_grid.png")
+            pointCloudRenderer.createOnGlThread(requireContext())
 
-            virtualObject.createOnGlThread(this@MainActivity, "models/andy.obj", "models/andy.png")
+            virtualObject.createOnGlThread(requireContext(), "models/andy.obj", "models/andy.png")
             virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f)
 
-            virtualObjectShadow.createOnGlThread(this@MainActivity, "models/andy_shadow.obj", "models/andy_shadow.png")
+            virtualObjectShadow.createOnGlThread(requireContext(), "models/andy_shadow.obj", "models/andy_shadow.png")
             virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow)
             virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f)
         }
@@ -184,14 +182,14 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
     override fun onDrawFrame(gl: GL10?) {
         // Clear screen to notify driver it should not load any pixels from previous frame.
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
-        if (mainViewModel.session.value == null) return
+        if (viewModel.session.value == null) return
 
 
         // Notify ARCore session that the view size changed so that the perspective matrix and
         // the video background can be properly adjusted.
-        displayRotationHelper!!.updateSessionIfNeeded(mainViewModel.session.value)
+        displayRotationHelper!!.updateSessionIfNeeded(viewModel.session.value)
 
-        mainViewModel.renderObjects({ camera ->
+        viewModel.renderObjects({ camera ->
             // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
             trackingStateHelper!!.updateKeepScreenOnFlag(camera.trackingState)
         }) { frame, camera ->
@@ -201,7 +199,7 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
 
     // Handle only one tap per frame, as taps are usually low frequency compared to frame rate.
     private fun handleTap(frame: Frame, camera: Camera) {
-        if (mainViewModel.isCurrentAnchorNull()) return  // Do nothing if there was already an anchor.
+        if (viewModel.isCurrentAnchorNull()) return  // Do nothing if there was already an anchor.
 
         val tap = tapHelper!!.poll()
         if (tap != null && camera.trackingState == TrackingState.TRACKING) {
@@ -221,7 +219,7 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
                     // Adding an Anchor tells ARCore that it should track this position in
                     // space. This anchor is created on the Plane to place the 3D model
                     // in the correct position relative both to the world and to the plane.
-                    mainViewModel.createAnchor(hit.createAnchor())
+                    viewModel.createAnchor(hit.createAnchor())
                     break
                 }
             }

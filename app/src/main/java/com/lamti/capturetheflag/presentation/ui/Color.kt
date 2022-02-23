@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.ui
+package com.lamti.capturetheflag.presentation.ui
 
 import androidx.compose.ui.graphics.Color
 

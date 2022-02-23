@@ -79,6 +79,9 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.0-alpha02'
 
+    // Fragments
+    implementation 'androidx.fragment:fragment-ktx:1.4.1'
+
 }
 
 secrets {

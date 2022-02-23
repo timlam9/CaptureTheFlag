@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lamti.capturetheflag.arcore.rendering;
+package com.lamti.capturetheflag.presentation.arcore.rendering;
 
 import android.content.Context;
 import android.opengl.GLES20;

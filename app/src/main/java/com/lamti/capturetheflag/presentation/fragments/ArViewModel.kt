@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag
+package com.lamti.capturetheflag.presentation.fragments
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -15,12 +15,12 @@ import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
-import com.lamti.capturetheflag.arcore.helpers.CloudAnchorManager
-import com.lamti.capturetheflag.arcore.helpers.TrackingStateHelper
-import com.lamti.capturetheflag.arcore.rendering.BackgroundRenderer
-import com.lamti.capturetheflag.arcore.rendering.ObjectRenderer
-import com.lamti.capturetheflag.arcore.rendering.PlaneRenderer
-import com.lamti.capturetheflag.arcore.rendering.PointCloudRenderer
+import com.lamti.capturetheflag.presentation.arcore.helpers.CloudAnchorManager
+import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
+import com.lamti.capturetheflag.presentation.arcore.rendering.BackgroundRenderer
+import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
+import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
+import com.lamti.capturetheflag.presentation.arcore.rendering.PointCloudRenderer
 import com.lamti.capturetheflag.data.FirebaseManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,9 +28,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.io.IOException
 
-val TAG: String = MainActivity::class.java.simpleName
+val TAG: String = ArFragment::class.java.simpleName
 
-class MainViewModel : ViewModel() {
+class ArViewModel : ViewModel() {
 
     private var _session: MutableStateFlow<Session?> = MutableStateFlow(null)
     val session: StateFlow<Session?> = _session
