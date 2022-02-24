@@ -3,6 +3,8 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'com.google.gms.google-services'
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
+    id 'kotlin-kapt'
+    id 'dagger.hilt.android.plugin'
 }
 
 android {
@@ -83,8 +85,16 @@ dependencies {
     // Fragments
     implementation 'androidx.fragment:fragment-ktx:1.4.1'
 
+    // Hilt
+    implementation 'com.google.dagger:hilt-android:2.38.1'
+    kapt 'com.google.dagger:hilt-android-compiler:2.38.1'
 }
 
 secrets {
     defaultPropertiesFileName 'local.properties'
+}
+
+// Allow references to generated code
+kapt {
+    correctErrorTypes = true
 }

@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.Camera
@@ -24,15 +25,17 @@ import com.lamti.capturetheflag.presentation.arcore.helpers.TapHelper
 import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
 import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
+@AndroidEntryPoint
 class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
 
     private var binding: FragmentArBinding? = null
-    private val viewModel: ArViewModel = ArViewModel()
+    private val viewModel: ArViewModel by viewModels()
 
     private val messageSnackbarHelper: SnackbarHelper = SnackbarHelper()
     private var displayRotationHelper: DisplayRotationHelper? = null

@@ -1,6 +1,7 @@
 package com.lamti.capturetheflag.presentation
 
 import android.os.Bundle
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,14 +26,16 @@ import com.lamti.capturetheflag.presentation.arcore.helpers.FullScreenHelper
 import com.lamti.capturetheflag.presentation.fragments.navigation.MainFragmentFactory
 import com.lamti.capturetheflag.presentation.fragments.navigation.Screen
 import com.lamti.capturetheflag.presentation.fragments.navigation.navigateToScreen
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private val viewModel: MainViewModel = MainViewModel()
+    private val viewModel: MainViewModel by viewModels()
 
     private var collectFlowsJob: Job? = null
 

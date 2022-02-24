@@ -17,28 +17,26 @@ import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 import com.lamti.capturetheflag.data.CloudAnchor
-import com.lamti.capturetheflag.data.FirebaseManager
+import com.lamti.capturetheflag.domain.CloudAnchorRepository
 import com.lamti.capturetheflag.presentation.arcore.helpers.CloudAnchorManager
 import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
 import com.lamti.capturetheflag.presentation.arcore.rendering.BackgroundRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PointCloudRenderer
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.IOException
-import java.text.SimpleDateFormat
-import java.time.Instant
-import java.time.format.DateTimeFormatter
-import java.util.Date
-import java.util.Locale
+import javax.inject.Inject
 
 val TAG: String = ArFragment::class.java.simpleName
 
-class ArViewModel : ViewModel() {
+@HiltViewModel
+class ArViewModel @Inject constructor(private val cloudAnchorRepository: CloudAnchorRepository) : ViewModel() {
 
     private var _session: MutableStateFlow<Session?> = MutableStateFlow(null)
     val session: StateFlow<Session?> = _session
@@ -52,7 +50,6 @@ class ArViewModel : ViewModel() {
     private val _clearButtonEnabled = MutableStateFlow(true)
     val clearButtonEnabled: StateFlow<Boolean> = _clearButtonEnabled.asStateFlow()
 
-    private val firebaseManager = FirebaseManager()
     private val cloudAnchorManager = CloudAnchorManager()
 
     private val backgroundRenderer: BackgroundRenderer = BackgroundRenderer()
@@ -213,7 +210,7 @@ class ArViewModel : ViewModel() {
     @Synchronized
     fun onResolveButtonPressed() {
         viewModelScope.launch {
-            val cloudAnchor: CloudAnchor = firebaseManager.getUploadedAnchorID()
+            val cloudAnchor: CloudAnchor = cloudAnchorRepository.getUploadedAnchor()
             val anchorID = cloudAnchor.anchorID
 
             if (anchorID.isEmpty()) {
@@ -254,7 +251,7 @@ class ArViewModel : ViewModel() {
         if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
             val cloudAnchorId = anchor.cloudAnchorId
 
-            viewModelScope.launch { firebaseManager.uploadAnchor(CloudAnchor(cloudAnchorId)) }
+            viewModelScope.launch { cloudAnchorRepository.uploadAnchor(CloudAnchor(cloudAnchorId)) }
             _message.update { "Cloud Anchor Hosted. ID: $cloudAnchorId" }
             currentAnchor = anchor
         } else {

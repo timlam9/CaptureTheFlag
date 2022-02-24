@@ -1,7 +1,7 @@
 package com.lamti.capturetheflag.data
 
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.firestore.FirebaseFirestore
+import com.lamti.capturetheflag.domain.CloudAnchorRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
@@ -9,12 +9,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class FirebaseManager {
+class CloudAnchorRepositoryImpl @Inject constructor(
+    private val firestoreDatabase: FirebaseFirestore
+) : CloudAnchorRepository {
 
-    private val firestoreDatabase = Firebase.firestore
 
-    suspend fun uploadAnchor(anchor: CloudAnchor): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun uploadAnchor(anchor: CloudAnchor): Boolean = withContext(Dispatchers.IO) {
         try {
             firestoreDatabase.collection(COLLECTION_ANCHORS)
                 .document(DOCUMENT_FLAG)
@@ -25,7 +27,7 @@ class FirebaseManager {
         }
     }
 
-    suspend fun getUploadedAnchorID(): CloudAnchor = withContext(Dispatchers.IO) {
+    override suspend fun getUploadedAnchor(): CloudAnchor = withContext(Dispatchers.IO) {
         firestoreDatabase.collection(COLLECTION_ANCHORS)
             .document(DOCUMENT_FLAG)
             .get()
