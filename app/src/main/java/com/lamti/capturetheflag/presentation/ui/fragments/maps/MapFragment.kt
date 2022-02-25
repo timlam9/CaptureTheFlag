@@ -8,10 +8,10 @@ import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.Fragment
-import com.google.android.gms.maps.GoogleMapOptions
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.rememberCameraPositionState
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.FragmentMapBinding
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
@@ -39,12 +39,13 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     @Composable
     fun MapView() {
-        val singapore = LatLng(37.93997336615248, 23.693031663615965)
+        val randomPosition = LatLng(37.93997336615248, 23.693031663615965)
+        val cameraPositionState = rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(randomPosition, 15f)
+        }
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
-            googleMapOptionsFactory = {
-                GoogleMapOptions().camera(CameraPosition.fromLatLngZoom(singapore, 24f))
-            }
+            cameraPositionState = cameraPositionState
         )
     }
 
