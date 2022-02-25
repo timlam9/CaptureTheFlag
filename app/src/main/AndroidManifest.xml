@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.lamti.capturetheflag">
 
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- This tag indicates that this application requires ARCore.  This results in the application
@@ -19,6 +24,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CaptureTheFlag">
         <activity
+            android:launchMode="singleInstance"
             android:name=".presentation.MainActivity"
             android:exported="true">
             <intent-filter>
@@ -27,6 +33,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:foregroundServiceType="location"
+            android:name=".presentation.location.LocationServiceImpl"
+            android:enabled="true"
+            android:exported="false"
+            />
         <!-- This tag indicates that this application requires ARCore.  This results in the Google Play
          Store downloading and installing ARCore along with the application.
          Application code must still call ArCoreApk.requestInstall() before beginning an ARCore

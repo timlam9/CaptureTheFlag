@@ -1,43 +1,38 @@
 package com.lamti.capturetheflag.presentation
 
+import android.Manifest
+import android.annotation.TargetApi
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.os.Parcelable
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.ActivityMainBinding
 import com.lamti.capturetheflag.presentation.arcore.helpers.FullScreenHelper
+import com.lamti.capturetheflag.presentation.components.BottomNavigationView
 import com.lamti.capturetheflag.presentation.fragments.navigation.MainFragmentFactory
 import com.lamti.capturetheflag.presentation.fragments.navigation.Screen
 import com.lamti.capturetheflag.presentation.fragments.navigation.navigateToScreen
+import com.lamti.capturetheflag.presentation.location.LocationServiceCommand
+import com.lamti.capturetheflag.presentation.location.LocationServiceImpl
+import com.lamti.capturetheflag.presentation.location.LocationServiceImpl.Companion.SERVICE_COMMAND
+import com.lamti.capturetheflag.presentation.location.isLocationEnabledOrNot
+import com.lamti.capturetheflag.presentation.location.showAlertLocation
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
+@ExperimentalCoroutinesApi
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
-
-    private var collectFlowsJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         supportFragmentManager.fragmentFactory = MainFragmentFactory()
@@ -47,11 +42,12 @@ class MainActivity : AppCompatActivity() {
 
         setupUI()
         collectFlows()
+        startLocationUpdates()
     }
 
-    override fun onStop() {
-        collectFlowsJob?.cancel()
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
+        sendCommandToForegroundService(LocationServiceCommand.Stop)
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -70,42 +66,49 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun collectFlows() {
-        collectFlowsJob = lifecycleScope.launchWhenCreated {
+        lifecycleScope.launchWhenCreated {
             viewModel.currentScreen.onEach(::navigate).launchIn(lifecycleScope)
         }
+    }
+
+    private fun startLocationUpdates() {
+        if (!isLocationEnabledOrNot(this)) {
+            showAlertLocation(
+                this,
+                getString(R.string.gps_enable),
+                getString(R.string.please_turn_on_gps),
+                getString(R.string.ok)
+            )
+        }
+
+        requestPermissionsSafely()
+        sendCommandToForegroundService(LocationServiceCommand.Start)
+    }
+
+    @TargetApi(Build.VERSION_CODES.M)
+    private fun requestPermissionsSafely(
+        permissions: Array<String> = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+        requestCode: Int = PERMISSION_REQUEST_CODE
+    ) {
+        requestPermissions(permissions, requestCode)
     }
 
     private fun navigate(screen: Screen) {
         supportFragmentManager.navigateToScreen(screen)
     }
 
-}
-
-
-@Composable
-fun BottomNavigationView(
-    modifier: Modifier = Modifier,
-    onStatsClicked: () -> Unit,
-    onMapClicked: () -> Unit,
-    onChatClicked: () -> Unit,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxSize()
-            .clip(RoundedCornerShape(20.dp).copy())
-            .background(Color.Magenta),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onStatsClicked) {
-            Icon(Icons.Filled.Phone, null)
-        }
-        IconButton(onClick = onMapClicked) {
-            Icon(Icons.Filled.Home, null)
-        }
-        IconButton(onClick = onChatClicked) {
-            Icon(Icons.Filled.Share, null)
-        }
+    private fun sendCommandToForegroundService(command: LocationServiceCommand) {
+        ContextCompat.startForegroundService(this, getServiceIntent(command))
     }
-}
 
+    private fun getServiceIntent(command: LocationServiceCommand) =
+        Intent(this, LocationServiceImpl::class.java).apply {
+            putExtra(SERVICE_COMMAND, command as Parcelable)
+        }
+
+    companion object {
+
+        private const val PERMISSION_REQUEST_CODE = 200
+    }
+
+}
