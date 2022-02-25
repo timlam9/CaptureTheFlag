@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.presentation.ui
+package com.lamti.capturetheflag.presentation.ui.style
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Shapes

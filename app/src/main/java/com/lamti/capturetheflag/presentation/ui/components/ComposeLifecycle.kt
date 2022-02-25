@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.presentation.components
+package com.lamti.capturetheflag.presentation.ui.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect

@@ -1,7 +1,7 @@
-package com.lamti.capturetheflag.presentation
+package com.lamti.capturetheflag.presentation.ui.activity
 
 import androidx.lifecycle.ViewModel
-import com.lamti.capturetheflag.presentation.fragments.navigation.Screen
+import com.lamti.capturetheflag.presentation.ui.fragments.navigation.Screen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

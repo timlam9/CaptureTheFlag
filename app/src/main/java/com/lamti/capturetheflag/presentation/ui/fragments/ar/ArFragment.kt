@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.presentation.fragments.ar
+package com.lamti.capturetheflag.presentation.ui.fragments.ar
 
 import android.annotation.SuppressLint
 import android.opengl.GLES20

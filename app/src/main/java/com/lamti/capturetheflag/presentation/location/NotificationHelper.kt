@@ -11,7 +11,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.lamti.capturetheflag.R
-import com.lamti.capturetheflag.presentation.MainActivity
+import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 

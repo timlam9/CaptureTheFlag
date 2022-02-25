@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.presentation
+package com.lamti.capturetheflag.presentation.ui.activity
 
 import android.Manifest
 import android.annotation.TargetApi
@@ -13,10 +13,10 @@ import androidx.lifecycle.lifecycleScope
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.ActivityMainBinding
 import com.lamti.capturetheflag.presentation.arcore.helpers.FullScreenHelper
-import com.lamti.capturetheflag.presentation.components.BottomNavigationView
-import com.lamti.capturetheflag.presentation.fragments.navigation.MainFragmentFactory
-import com.lamti.capturetheflag.presentation.fragments.navigation.Screen
-import com.lamti.capturetheflag.presentation.fragments.navigation.navigateToScreen
+import com.lamti.capturetheflag.presentation.ui.components.BottomNavigationView
+import com.lamti.capturetheflag.presentation.ui.fragments.navigation.MainFragmentFactory
+import com.lamti.capturetheflag.presentation.ui.fragments.navigation.Screen
+import com.lamti.capturetheflag.presentation.ui.fragments.navigation.navigateToScreen
 import com.lamti.capturetheflag.presentation.location.LocationServiceCommand
 import com.lamti.capturetheflag.presentation.location.LocationServiceImpl
 import com.lamti.capturetheflag.presentation.location.LocationServiceImpl.Companion.SERVICE_COMMAND
