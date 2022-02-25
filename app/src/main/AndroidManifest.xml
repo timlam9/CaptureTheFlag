@@ -49,6 +49,9 @@
         <meta-data
             android:name="com.google.android.ar.API_KEY"
             android:value="${AR_CLOUD_ANCHORS_KEY}" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
     </application>
 
 </manifest>

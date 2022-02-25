@@ -94,9 +94,13 @@ dependencies {
     implementation 'com.google.android.gms:play-services-location:19.0.1'
 
     // Lifecycle
-    def lifecycle_version = "2.4.0-alpha01"
+    def lifecycle_version = "2.5.0-alpha02"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-service:$lifecycle_version"
+
+    // Maps
+    implementation 'com.google.maps.android:maps-compose:1.0.0'
+    implementation 'com.google.android.gms:play-services-maps:18.0.2'
 
 }
 
