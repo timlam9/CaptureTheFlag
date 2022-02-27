@@ -39,6 +39,7 @@
             android:enabled="true"
             android:exported="false"
             />
+        <receiver android:name=".presentation.location.geofences.GeofenceBroadcastReceiver"/>
         <!-- This tag indicates that this application requires ARCore.  This results in the Google Play
          Store downloading and installing ARCore along with the application.
          Application code must still call ArCoreApk.requestInstall() before beginning an ARCore

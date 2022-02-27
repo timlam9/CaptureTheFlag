@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -24,23 +25,38 @@ fun BottomNavigationView(
     onStatsClicked: () -> Unit,
     onMapClicked: () -> Unit,
     onChatClicked: () -> Unit,
+    color: Color = Color.Blue,
+    iconsColor: Color = Color.White,
+    cornerRadius: Dp = 20.dp
 ) {
     Row(
         modifier = modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(20.dp).copy())
-            .background(Color.Magenta),
+            .clip(RoundedCornerShape(cornerRadius).copy())
+            .background(color),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onStatsClicked) {
-            Icon(Icons.Filled.Phone, null)
+            Icon(
+                imageVector = Icons.Filled.Phone,
+                contentDescription = null,
+                tint = iconsColor
+            )
         }
         IconButton(onClick = onMapClicked) {
-            Icon(Icons.Filled.Home, null)
+            Icon(
+                imageVector = Icons.Filled.Home,
+                contentDescription = null,
+                tint = iconsColor
+            )
         }
         IconButton(onClick = onChatClicked) {
-            Icon(Icons.Filled.Share, null)
+            Icon(
+                imageVector = Icons.Filled.Share,
+                contentDescription = null,
+                tint = iconsColor
+            )
         }
     }
 }

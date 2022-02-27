@@ -1,31 +1,33 @@
 package com.lamti.capturetheflag.presentation.ui.fragments.maps
 
+import android.annotation.SuppressLint
+import android.app.PendingIntent
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.Fragment
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.android.gms.maps.MapsInitializer
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.FragmentMapBinding
-import com.lamti.capturetheflag.presentation.ui.bitmapDescriptorFromVector
+import com.lamti.capturetheflag.presentation.location.geofences.GeofenceBroadcastReceiver
+import com.lamti.capturetheflag.presentation.ui.components.map.MapScreen
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
+@SuppressLint("UnspecifiedImmutableFlag")
 class MapFragment : Fragment(R.layout.fragment_map) {
 
     private var binding: FragmentMapBinding? = null
+
+    private val geofencePendingIntent: PendingIntent by lazy {
+        val intent = Intent(requireContext(), GeofenceBroadcastReceiver::class.java)
+        PendingIntent.getBroadcast(requireContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -34,56 +36,21 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         setupMapView()
     }
 
-    private fun setupMapView() = binding?.run {
-        mapComposeView.setContent {
-            CaptureTheFlagTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
-                    MapView()
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun MapView() {
-        val randomPosition = LatLng(37.93997336615248, 23.693031663615965)
-        val cameraPositionState = rememberCameraPositionState {
-            position = CameraPosition.fromLatLngZoom(randomPosition, 15f)
-        }
-        val mapProperties by remember {
-            mutableStateOf(MapProperties(isMyLocationEnabled = true))
-        }
-        val uiSettings by remember {
-            mutableStateOf(
-                MapUiSettings(
-                    myLocationButtonEnabled = true,
-                    zoomControlsEnabled = false,
-                    mapToolbarEnabled = false
-                )
-            )
-        }
-
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-            properties = mapProperties,
-            uiSettings = uiSettings
-        ) {
-            val icon = requireContext().bitmapDescriptorFromVector(R.drawable.ic_launcher_foreground, R.color.teal_700)
-            Marker(
-                position = randomPosition,
-                title = "Random title",
-                icon = icon,
-                onClick = {
-                    return@Marker false
-                }
-            )
-        }
-    }
-
     override fun onDestroyView() {
         binding = null
         super.onDestroyView()
+    }
+
+    private fun setupMapView() = binding?.run {
+        MapsInitializer.initialize(requireContext())
+
+        mapComposeView.setContent {
+            CaptureTheFlagTheme {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
+                    MapScreen(geofencePendingIntent = geofencePendingIntent)
+                }
+            }
+        }
     }
 
 }
