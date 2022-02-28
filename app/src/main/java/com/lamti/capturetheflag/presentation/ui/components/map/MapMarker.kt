@@ -6,7 +6,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.Marker
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.testFlagRadius
+import com.lamti.capturetheflag.presentation.ui.fragments.maps.DEFAULT_FLAG_RADIUS
 import com.lamti.capturetheflag.presentation.ui.style.BlueOpacity
 
 @Composable
@@ -17,7 +17,7 @@ fun MapMarker(
     hasGeofence: Boolean = false,
     fillColor: Color = BlueOpacity,
     strokeColor: Color = Color.Blue,
-    radius: Double = testFlagRadius.toDouble(),
+    radius: Double = DEFAULT_FLAG_RADIUS.toDouble(),
     strokeWidth: Float = 4f
 ) {
     Marker(

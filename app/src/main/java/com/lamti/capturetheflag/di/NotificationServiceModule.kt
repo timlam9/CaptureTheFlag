@@ -1,7 +1,7 @@
 package com.lamti.capturetheflag.di
 
-import com.lamti.capturetheflag.presentation.location.LocationService
-import com.lamti.capturetheflag.presentation.location.LocationServiceImpl
+import com.lamti.capturetheflag.presentation.location.service.LocationService
+import com.lamti.capturetheflag.presentation.location.service.LocationServiceImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

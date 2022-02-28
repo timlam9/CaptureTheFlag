@@ -16,14 +16,15 @@ import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
-import com.lamti.capturetheflag.data.CloudAnchor
-import com.lamti.capturetheflag.domain.CloudAnchorRepository
+import com.lamti.capturetheflag.domain.anchors.CloudAnchor
+import com.lamti.capturetheflag.domain.anchors.CloudAnchorRepository
 import com.lamti.capturetheflag.presentation.arcore.helpers.CloudAnchorManager
 import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
 import com.lamti.capturetheflag.presentation.arcore.rendering.BackgroundRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PointCloudRenderer
+import com.lamti.capturetheflag.utils.EMPTY
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,7 +42,7 @@ class ArViewModel @Inject constructor(private val cloudAnchorRepository: CloudAn
     private var _session: MutableStateFlow<Session?> = MutableStateFlow(null)
     val session: StateFlow<Session?> = _session
 
-    private val _message = MutableStateFlow("")
+    private val _message = MutableStateFlow(EMPTY)
     val message: StateFlow<String> = _message.asStateFlow()
 
     private val _resolveButtonEnabled = MutableStateFlow(true)
@@ -93,7 +94,7 @@ class ArViewModel @Inject constructor(private val cloudAnchorRepository: CloudAn
                 _message.update { "Failed to create AR session" }
                 exception = e
             }
-            if (_message.value != "") {
+            if (_message.value != EMPTY) {
                 Log.e(TAG, "Exception creating session", exception)
                 return
             }

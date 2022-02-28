@@ -2,6 +2,7 @@ package com.lamti.capturetheflag.presentation.ui.components.map
 
 import android.app.PendingIntent
 import android.util.Log
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -13,16 +14,19 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.lamti.capturetheflag.presentation.location.geofences.GeofenceBroadcastReceiver
+import com.lamti.capturetheflag.presentation.ui.MapStyle
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.GameState
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.testFlagPosition
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.testFlagRadius
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.testOpponentFlagPosition
+import com.lamti.capturetheflag.presentation.ui.fragments.maps.testGreenFlagPosition
+import com.lamti.capturetheflag.presentation.ui.fragments.maps.DEFAULT_FLAG_RADIUS
+import com.lamti.capturetheflag.presentation.ui.fragments.maps.DEFAULT_GAME_BOUNDARIES_RADIUS
+import com.lamti.capturetheflag.presentation.ui.fragments.maps.testRedFlagPosition
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.testSafeHousePosition
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.testSafeHouseRadius
+import com.lamti.capturetheflag.presentation.ui.fragments.maps.DEFAULT_SAFEHOUSE_RADIUS
 
 @Composable
 fun MapScreen(
@@ -31,11 +35,14 @@ fun MapScreen(
     geofencePendingIntent: PendingIntent,
 ) {
     val gameState by viewModel.gameState.collectAsState()
+    val player by viewModel.player.collectAsState()
+
     val (mapProperties, uiSettings) = setupMap(lifecycleOwner, viewModel, geofencePendingIntent)
 
     when (gameState) {
         is GameState.Started -> GameStartedUI(
             gameState = gameState,
+            player = player,
             mapProperties = mapProperties,
             uiSettings = uiSettings
         )
@@ -46,15 +53,17 @@ fun MapScreen(
 private fun setupMap(
     lifecycleOwner: LifecycleOwner,
     viewModel: MapViewModel,
-    geofencePendingIntent: PendingIntent
+    geofencePendingIntent: PendingIntent,
+    darkTheme: Boolean = isSystemInDarkTheme()
 ): Pair<MapProperties, MapUiSettings> {
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
                 Log.i(GeofenceBroadcastReceiver.TAG, "On start")
-                viewModel.addGeofence(testFlagPosition, "MyFlagGeofence", testFlagRadius)
-                viewModel.addGeofence(testOpponentFlagPosition, "OpponentFlagGeofence", testFlagRadius)
-                viewModel.addGeofence(testSafeHousePosition, "SafeHouseGeofence", testSafeHouseRadius)
+                viewModel.addGeofence(testGreenFlagPosition, "GreenFlagGeofence", DEFAULT_FLAG_RADIUS)
+                viewModel.addGeofence(testRedFlagPosition, "RedFlagGeofence", DEFAULT_FLAG_RADIUS)
+                viewModel.addGeofence(testSafeHousePosition, "SafehouseGeofence", DEFAULT_SAFEHOUSE_RADIUS)
+                viewModel.addGeofence(testSafeHousePosition, "GameBoundariesGeofence", DEFAULT_GAME_BOUNDARIES_RADIUS)
                 viewModel.startGeofencesListener(geofencePendingIntent)
             } else if (event == Lifecycle.Event.ON_STOP) {
                 Log.i(GeofenceBroadcastReceiver.TAG, "On stop")
@@ -71,7 +80,12 @@ private fun setupMap(
     }
 
     val mapProperties by remember {
-        mutableStateOf(MapProperties(isMyLocationEnabled = true))
+        mutableStateOf(
+            MapProperties(
+                isMyLocationEnabled = true,
+                mapStyleOptions = if (darkTheme) MapStyleOptions(MapStyle.sinCity) else MapStyleOptions(MapStyle.cleanGrey)
+            )
+        )
     }
     val uiSettings by remember {
         mutableStateOf(

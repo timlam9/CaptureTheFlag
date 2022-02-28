@@ -25,7 +25,6 @@ object NetworkingModule {
     @Provides
     fun provideGeofencingClient(@ApplicationContext context: Context) = LocationServices.getGeofencingClient(context)
 
-
     @Provides
     fun provideGeofencingHelper(geofencingClient: GeofencingClient): GeofencingHelper = GeofencingHelperImpl(geofencingClient)
 

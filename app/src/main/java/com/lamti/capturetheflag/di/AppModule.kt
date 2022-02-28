@@ -3,7 +3,7 @@ package com.lamti.capturetheflag.di
 import android.content.Context
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.lamti.capturetheflag.presentation.location.NotificationHelper
+import com.lamti.capturetheflag.presentation.location.service.NotificationHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

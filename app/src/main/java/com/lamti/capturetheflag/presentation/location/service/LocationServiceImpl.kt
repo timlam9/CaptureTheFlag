@@ -1,10 +1,11 @@
-package com.lamti.capturetheflag.presentation.location
+package com.lamti.capturetheflag.presentation.location.service
 
 import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.lamti.capturetheflag.presentation.location.locationFlow
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

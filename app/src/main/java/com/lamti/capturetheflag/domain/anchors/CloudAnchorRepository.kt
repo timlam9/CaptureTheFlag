@@ -1,6 +1,5 @@
-package com.lamti.capturetheflag.domain
+package com.lamti.capturetheflag.domain.anchors
 
-import com.lamti.capturetheflag.data.CloudAnchor
 
 interface CloudAnchorRepository {
 

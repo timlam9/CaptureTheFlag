@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.presentation.location
+package com.lamti.capturetheflag.presentation.location.service
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
