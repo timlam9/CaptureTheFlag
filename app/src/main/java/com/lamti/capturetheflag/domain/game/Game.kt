@@ -1,5 +1,8 @@
 package com.lamti.capturetheflag.domain.game
 
+import com.google.android.gms.maps.model.LatLng
+
+
 data class Game(
     val gameID: String,
     val title: String,
@@ -7,12 +10,22 @@ data class Game(
 )
 
 data class GameState(
-    val isGreenFlagDiscovered: Boolean,
-    val isRedFlagDiscovered: Boolean,
+    val safehouse: GeofenceObject,
+    val greenFlag: GeofenceObject,
+    val redFlag: GeofenceObject,
     val state: ProgressState
 )
 
+data class GeofenceObject(
+    val position: LatLng,
+    val isPlaced: Boolean,
+    val isDiscovered: Boolean
+)
+
 enum class ProgressState {
+
     Waiting,
-    Started
+    Initializing,
+    Started,
+    Ended
 }

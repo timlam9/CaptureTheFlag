@@ -7,10 +7,13 @@ import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 
+@ExperimentalCoroutinesApi
 class GeofencingHelperImpl @Inject constructor(
-    private val geofencingClient: GeofencingClient
+    private val geofencingClient: GeofencingClient,
+    private val geofencePendingIntent: PendingIntent
 ) : GeofencingHelper {
 
     private val geofenceList: MutableList<Geofence> = mutableListOf()
@@ -31,7 +34,7 @@ class GeofencingHelperImpl @Inject constructor(
     }
 
     @SuppressLint("MissingPermission")
-    override fun addGeofences(geofencePendingIntent: PendingIntent) {
+    override fun addGeofences() {
         geofencingClient.addGeofences(getGeofencingRequest(), geofencePendingIntent).run {
             addOnSuccessListener {
                 Log.i(GeofenceBroadcastReceiver.TAG, "Geofence added")
@@ -42,7 +45,7 @@ class GeofencingHelperImpl @Inject constructor(
         }
     }
 
-    override fun removeGeofences(geofencePendingIntent: PendingIntent) {
+    override fun removeGeofences() {
         geofencingClient.removeGeofences(geofencePendingIntent).run {
             addOnSuccessListener {
                 Log.i(GeofenceBroadcastReceiver.TAG, "Geofence removed")
@@ -64,5 +67,4 @@ class GeofencingHelperImpl @Inject constructor(
 
         const val GEOFENCE_EXPIRATION_IN_MILLISECONDS: Long = 3 * 60 * 1000
     }
-
 }

@@ -25,5 +25,4 @@ class AppModule {
     @Singleton
     fun provideFusedLocationClient(@ApplicationContext context: Context): FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
-
 }

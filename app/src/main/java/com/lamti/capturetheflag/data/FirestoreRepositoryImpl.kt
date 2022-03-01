@@ -2,6 +2,7 @@ package com.lamti.capturetheflag.data
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.lamti.capturetheflag.data.GameRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.game.Game
@@ -69,20 +70,22 @@ class FirestoreRepositoryImpl @Inject constructor(private val firestore: Firebas
         val updatedGame = when {
             player.team == Team.Red && flagFound == Flag.Green -> game.copy(
                 gameState = game.gameState.copy(
-                    isGreenFlagDiscovered = true
+                    greenFlag = game.gameState.greenFlag.copy(isDiscovered = true)
                 )
             )
             player.team == Team.Green && flagFound == Flag.Red -> game.copy(
                 gameState = game.gameState.copy(
-                    isRedFlagDiscovered = true
+                    redFlag = game.gameState.redFlag.copy(isDiscovered = true)
                 )
             )
             else -> return false
         }
 
+        val gameRaw = updatedGame.toRaw()
+
         firestore.collection(COLLECTION_GAMES)
             .document(gameID)
-            .set(updatedGame, SetOptions.merge())
+            .set(gameRaw, SetOptions.merge())
             .await()
 
         return true

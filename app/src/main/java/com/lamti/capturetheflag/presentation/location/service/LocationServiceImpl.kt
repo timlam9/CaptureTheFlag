@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.lamti.capturetheflag.presentation.location.geofences.GeofencingHelper
 import com.lamti.capturetheflag.presentation.location.locationFlow
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +22,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService(), LocationSe
 
     @Inject lateinit var fusedLocationClient: FusedLocationProviderClient
     @Inject lateinit var notificationHelper: NotificationHelper
+    @Inject lateinit var geofencingHelper: GeofencingHelper
 
     private var isServiceRunning = false
     private var locationUpdates: Job? = null
@@ -41,8 +43,6 @@ class LocationServiceImpl @Inject constructor() : LifecycleService(), LocationSe
                     locationUpdates?.cancel()
                 }
                 LocationServiceCommand.Stop -> {
-                    isServiceRunning = false
-                    locationUpdates?.cancel()
                     stopSelf()
                     return START_NOT_STICKY
                 }
@@ -72,6 +72,14 @@ class LocationServiceImpl @Inject constructor() : LifecycleService(), LocationSe
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "Service is destroyed")
+
+        isServiceRunning = false
+        locationUpdates?.cancel()
+        removeGeofencesListener()
+    }
+
+    private fun removeGeofencesListener() {
+        geofencingHelper.removeGeofences()
     }
 
     companion object {
