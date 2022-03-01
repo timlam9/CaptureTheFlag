@@ -29,7 +29,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService(), LocationSe
         super.onStartCommand(intent, flags, startId)
 
         intent?.extras?.run {
-            Log.d(TAG,"${getSerializable(SERVICE_COMMAND)} command is received")
+            Log.d(TAG, "${getSerializable(SERVICE_COMMAND)} command is received")
 
             when (getSerializable(SERVICE_COMMAND) as LocationServiceCommand) {
                 LocationServiceCommand.Start -> {
@@ -66,17 +66,17 @@ class LocationServiceImpl @Inject constructor() : LifecycleService(), LocationSe
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG,"Service is created")
+        Log.d(TAG, "Service is created")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(TAG,"Service is destroyed")
+        Log.d(TAG, "Service is destroyed")
     }
 
     companion object {
 
-        private const val TAG = "location_service" 
+        private const val TAG = "location_service"
         const val SERVICE_COMMAND = "service_command"
     }
 

@@ -10,12 +10,14 @@ const val DEFAULT_GAME_BOUNDARIES_RADIUS = 750f
 const val DEFAULT_SAFEHOUSE_RADIUS = 100f
 const val DEFAULT_FLAG_RADIUS = 40f
 
-sealed class GameState {
+sealed class GameUiState {
 
     data class Started(
         val safeHousePosition: LatLng = testSafeHousePosition,
         val greenFlagPosition: LatLng = testGreenFlagPosition,
         val redFlagPosition: LatLng = testRedFlagPosition,
-    ) : GameState()
+        val isGreenFlagFound: Boolean = false,
+        val isRedFlagFound: Boolean = false,
+    ) : GameUiState()
 
 }

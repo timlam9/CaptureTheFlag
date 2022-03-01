@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,28 +18,30 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.lamti.capturetheflag.presentation.location.geofences.GeofenceBroadcastReceiver
 import com.lamti.capturetheflag.presentation.ui.MapStyle
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.GameState
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.testGreenFlagPosition
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.DEFAULT_FLAG_RADIUS
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.DEFAULT_GAME_BOUNDARIES_RADIUS
+import com.lamti.capturetheflag.presentation.ui.fragments.maps.DEFAULT_SAFEHOUSE_RADIUS
+import com.lamti.capturetheflag.presentation.ui.fragments.maps.GameUiState
+import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
+import com.lamti.capturetheflag.presentation.ui.fragments.maps.testGreenFlagPosition
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.testRedFlagPosition
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.testSafeHousePosition
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.DEFAULT_SAFEHOUSE_RADIUS
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
+@ExperimentalCoroutinesApi
 @Composable
 fun MapScreen(
     lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
     viewModel: MapViewModel = viewModel(),
     geofencePendingIntent: PendingIntent,
 ) {
-    val gameState by viewModel.gameState.collectAsState()
-    val player by viewModel.player.collectAsState()
+    val gameState by viewModel.gameState
+    val player by viewModel.player
 
     val (mapProperties, uiSettings) = setupMap(lifecycleOwner, viewModel, geofencePendingIntent)
 
     when (gameState) {
-        is GameState.Started -> GameStartedUI(
+        is GameUiState.Started -> GameStartedUI(
             gameState = gameState,
             player = player,
             mapProperties = mapProperties,
@@ -49,6 +50,7 @@ fun MapScreen(
     }
 }
 
+@ExperimentalCoroutinesApi
 @Composable
 private fun setupMap(
     lifecycleOwner: LifecycleOwner,

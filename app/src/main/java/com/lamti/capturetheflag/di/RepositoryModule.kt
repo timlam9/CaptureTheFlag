@@ -16,7 +16,4 @@ abstract class RepositoryModule {
     @Binds
     abstract fun bindCloudAnchorRepository(cloudAnchorRepositoryImpl: CloudAnchorRepositoryImpl): CloudAnchorRepository
 
-    @Binds
-    abstract fun bindFirestoreRepository(firestoreRepositoryImpl: FirestoreRepositoryImpl): FirestoreRepository
-
 }
