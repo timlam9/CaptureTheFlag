@@ -2,6 +2,9 @@ package com.lamti.capturetheflag.presentation.ui.components.map
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -19,22 +22,37 @@ import com.lamti.capturetheflag.presentation.ui.bitmapDescriptorFromVector
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.DEFAULT_GAME_BOUNDARIES_RADIUS
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.DEFAULT_SAFEHOUSE_RADIUS
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.GameUiState
+import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
 import com.lamti.capturetheflag.presentation.ui.style.GreenOpacity
 import com.lamti.capturetheflag.presentation.ui.style.RedOpacity
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.flow.collect
 
+@ExperimentalCoroutinesApi
+@InternalCoroutinesApi
 @Composable
 fun GameStartedUI(
     gameState: GameUiState,
     player: Player,
     mapProperties: MapProperties,
     uiSettings: MapUiSettings,
+    viewModel: MapViewModel,
     greenFlagMarkerTitle: String = "Green Flag",
     redFlagMarkerTitle: String = "Red Flag",
     safeHouseTitle: String = "Safe House"
 ) {
     val startedGameState = gameState as GameUiState.Started
+    val currentPosition by viewModel.currentPosition
+
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(startedGameState.safeHousePosition, 15f)
+        position = CameraPosition.fromLatLngZoom(currentPosition, 15f)
+    }
+
+    LaunchedEffect(viewModel) {
+        snapshotFlow { currentPosition }.collect {
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(currentPosition, 15f)
+        }
     }
 
     val context = LocalContext.current

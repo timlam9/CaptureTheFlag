@@ -24,9 +24,11 @@ import com.lamti.capturetheflag.presentation.ui.fragments.navigation.Screen
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.navigateToScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
+@InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {

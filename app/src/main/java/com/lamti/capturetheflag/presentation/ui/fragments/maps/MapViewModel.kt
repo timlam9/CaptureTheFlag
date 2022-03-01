@@ -1,9 +1,12 @@
 package com.lamti.capturetheflag.presentation.ui.fragments.maps
 
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.maps.model.LatLng
 import com.lamti.capturetheflag.data.gameID
 import com.lamti.capturetheflag.data.playerID
 import com.lamti.capturetheflag.domain.FirestoreRepository
@@ -11,17 +14,25 @@ import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.presentation.location.geofences.GeofencingHelper
+import com.lamti.capturetheflag.presentation.location.service.awaitLastLocation
+import com.lamti.capturetheflag.utils.emptyPosition
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@ExperimentalCoroutinesApi
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val geofencingHelper: GeofencingHelper,
-    private val firestoreRepository: FirestoreRepository
+    private val firestoreRepository: FirestoreRepository,
+    private val locationProviderClient: FusedLocationProviderClient
 ) : ViewModel() {
+
+    private val _currentPosition: MutableState<LatLng> = mutableStateOf(emptyPosition())
+    val currentPosition: State<LatLng> = _currentPosition
 
     private val _gameState = mutableStateOf(GameUiState.Started())
     val gameState: State<GameUiState> = _gameState
@@ -30,8 +41,16 @@ class MapViewModel @Inject constructor(
     val player: State<Player> = _player
 
     init {
+        getLastLocation()
         getPlayer()
         observeGameState()
+    }
+
+    private fun getLastLocation() {
+        viewModelScope.launch {
+            val location = locationProviderClient.awaitLastLocation()
+            _currentPosition.value = LatLng(location.latitude, location.longitude)
+        }
     }
 
     private fun getPlayer() {

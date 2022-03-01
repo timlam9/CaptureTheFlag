@@ -12,12 +12,15 @@ import com.google.maps.android.compose.MapUiSettings
 import com.lamti.capturetheflag.presentation.ui.MapStyle
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.GameUiState
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 
+@InternalCoroutinesApi
+@ExperimentalCoroutinesApi
 @Composable
 fun MapScreen(viewModel: MapViewModel = viewModel()) {
     val gameState by viewModel.gameState
     val player by viewModel.player
-
     val (mapProperties, uiSettings) = setupMap()
 
     when (gameState) {
@@ -25,7 +28,8 @@ fun MapScreen(viewModel: MapViewModel = viewModel()) {
             gameState = gameState,
             player = player,
             mapProperties = mapProperties,
-            uiSettings = uiSettings
+            uiSettings = uiSettings,
+            viewModel = viewModel,
         )
     }
 }

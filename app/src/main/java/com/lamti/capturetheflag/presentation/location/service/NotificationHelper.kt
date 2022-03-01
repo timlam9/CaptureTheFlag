@@ -13,12 +13,14 @@ import androidx.core.app.NotificationCompat
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 
 
 private const val CHANNEL_ID = "com.capturetheflag.location"
 private const val CHANNEL_NAME = "Capture the flag channel"
 private const val CHANNEL_DESCRIPTION = "This is the CTF - Capture the flag channel"
 
+@InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @SuppressLint("UnspecifiedImmutableFlag")
 class NotificationHelper (private val context: Context) {
