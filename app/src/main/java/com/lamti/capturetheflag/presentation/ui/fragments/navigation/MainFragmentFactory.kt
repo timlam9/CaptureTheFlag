@@ -6,7 +6,9 @@ import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArFragment
 import com.lamti.capturetheflag.presentation.ui.fragments.chat.ChatFragment
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapFragment
 import com.lamti.capturetheflag.presentation.ui.fragments.stats.StatsFragment
+import kotlinx.coroutines.InternalCoroutinesApi
 
+@InternalCoroutinesApi
 class MainFragmentFactory : FragmentFactory() {
 
     override fun instantiate(classLoader: ClassLoader, className: String): Fragment =

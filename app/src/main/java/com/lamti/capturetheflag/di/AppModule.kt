@@ -10,6 +10,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Singleton
 
 @ExperimentalCoroutinesApi
@@ -17,6 +18,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 class AppModule {
 
+    @InternalCoroutinesApi
     @Provides
     @Singleton
     fun provideNotificationHelper(@ApplicationContext context: Context): NotificationHelper = NotificationHelper(context)
