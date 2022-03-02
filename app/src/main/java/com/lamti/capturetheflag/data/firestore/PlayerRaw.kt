@@ -1,6 +1,5 @@
-package com.lamti.capturetheflag.data
+package com.lamti.capturetheflag.data.firestore
 
-import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.PlayerDetails
@@ -9,7 +8,6 @@ import com.lamti.capturetheflag.utils.EMPTY
 
 @IgnoreExtraProperties
 data class PlayerRaw(
-//    @DocumentId
     val userID: String = EMPTY,
     val team: String = "Unknown",
     val details: PlayerDetailsRaw = PlayerDetailsRaw()

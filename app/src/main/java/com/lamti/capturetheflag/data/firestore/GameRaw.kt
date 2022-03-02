@@ -1,9 +1,9 @@
-package com.lamti.capturetheflag.data
+package com.lamti.capturetheflag.data.firestore
 
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.GeoPoint
-import com.lamti.capturetheflag.data.GameStateRaw.Companion.toRaw
-import com.lamti.capturetheflag.data.GeofenceObjectRaw.Companion.toRaw
+import com.lamti.capturetheflag.data.firestore.GameStateRaw.Companion.toRaw
+import com.lamti.capturetheflag.data.firestore.GeofenceObjectRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.GeofenceObject

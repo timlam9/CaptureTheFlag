@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.presentation.location.geofences
+package com.lamti.capturetheflag.data.location.geofences
 
 import android.content.BroadcastReceiver
 import android.content.Context

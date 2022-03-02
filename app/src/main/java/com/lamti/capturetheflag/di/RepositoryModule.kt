@@ -1,8 +1,6 @@
 package com.lamti.capturetheflag.di
 
-import com.lamti.capturetheflag.data.FirestoreRepositoryImpl
 import com.lamti.capturetheflag.data.anchors.CloudAnchorRepositoryImpl
-import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.anchors.CloudAnchorRepository
 import dagger.Binds
 import dagger.Module

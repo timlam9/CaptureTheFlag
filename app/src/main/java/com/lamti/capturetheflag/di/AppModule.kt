@@ -3,8 +3,9 @@ package com.lamti.capturetheflag.di
 import android.content.Context
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.lamti.capturetheflag.data.LocationRepository
-import com.lamti.capturetheflag.presentation.location.service.NotificationHelper
+import com.lamti.capturetheflag.data.location.LocationRepository
+import com.lamti.capturetheflag.data.location.service.LocationServiceImpl
+import com.lamti.capturetheflag.data.location.service.NotificationHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -39,5 +40,10 @@ class AppModule {
     @Provides
     @Singleton
     fun provideLocationRepository(client: FusedLocationProviderClient, scope: CoroutineScope) = LocationRepository(client, scope)
+
+    @InternalCoroutinesApi
+    @ExperimentalCoroutinesApi
+    @Provides
+    fun provideLocationService() = LocationServiceImpl()
 
 }

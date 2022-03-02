@@ -10,11 +10,10 @@ import com.google.android.gms.location.LocationServices
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import com.lamti.capturetheflag.data.FirestoreRepositoryImpl
+import com.lamti.capturetheflag.data.firestore.FirestoreRepositoryImpl
 import com.lamti.capturetheflag.domain.FirestoreRepository
-import com.lamti.capturetheflag.presentation.location.geofences.GeofenceBroadcastReceiver
-import com.lamti.capturetheflag.presentation.location.geofences.GeofencingHelper
-import com.lamti.capturetheflag.presentation.location.geofences.GeofencingHelperImpl
+import com.lamti.capturetheflag.data.location.geofences.GeofenceBroadcastReceiver
+import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -46,8 +45,8 @@ object NetworkingModule {
     fun provideGeofencingHelper(
         geofencingClient: GeofencingClient,
         geofencePendingIntent: PendingIntent
-    ): GeofencingHelper =
-        GeofencingHelperImpl(geofencingClient, geofencePendingIntent)
+    ): GeofencingRepository =
+        GeofencingRepository(geofencingClient, geofencePendingIntent)
 
     @ExperimentalCoroutinesApi
     @Provides

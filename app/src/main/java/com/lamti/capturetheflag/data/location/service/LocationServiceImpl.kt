@@ -1,12 +1,11 @@
-package com.lamti.capturetheflag.presentation.location.service
+package com.lamti.capturetheflag.data.location.service
 
 import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.lamti.capturetheflag.data.LocationRepository
-import com.lamti.capturetheflag.presentation.location.geofences.GeofencingHelper
+import com.lamti.capturetheflag.data.location.LocationRepository
+import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,11 +19,11 @@ import javax.inject.Inject
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @AndroidEntryPoint
-class LocationServiceImpl @Inject constructor() : LifecycleService(), LocationService {
+class LocationServiceImpl @Inject constructor() : LifecycleService() {
 
     @Inject lateinit var locationRepository: LocationRepository
     @Inject lateinit var notificationHelper: NotificationHelper
-    @Inject lateinit var geofencingHelper: GeofencingHelper
+    @Inject lateinit var geofencingRepository: GeofencingRepository
 
     private var isServiceRunning = false
     private var locationUpdates: Job? = null
@@ -81,7 +80,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService(), LocationSe
     }
 
     private fun removeGeofencesListener() {
-        geofencingHelper.removeGeofences()
+        geofencingRepository.removeGeofences()
     }
 
     companion object {

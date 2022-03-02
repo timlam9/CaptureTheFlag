@@ -1,8 +1,8 @@
-package com.lamti.capturetheflag.data
+package com.lamti.capturetheflag.data.firestore
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
-import com.lamti.capturetheflag.data.GameRaw.Companion.toRaw
+import com.lamti.capturetheflag.data.firestore.GameRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.game.Game
