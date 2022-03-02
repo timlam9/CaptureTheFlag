@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.model.LatLng
+import com.lamti.capturetheflag.data.LocationRepository
 import com.lamti.capturetheflag.data.gameID
 import com.lamti.capturetheflag.data.playerID
 import com.lamti.capturetheflag.domain.FirestoreRepository
@@ -14,7 +15,6 @@ import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.presentation.location.geofences.GeofencingHelper
-import com.lamti.capturetheflag.presentation.location.service.awaitLastLocation
 import com.lamti.capturetheflag.utils.emptyPosition
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,7 +28,7 @@ import javax.inject.Inject
 class MapViewModel @Inject constructor(
     private val geofencingHelper: GeofencingHelper,
     private val firestoreRepository: FirestoreRepository,
-    private val locationProviderClient: FusedLocationProviderClient
+    private val locationRepository: LocationRepository
 ) : ViewModel() {
 
     private val _currentPosition: MutableState<LatLng> = mutableStateOf(emptyPosition())
@@ -48,7 +48,7 @@ class MapViewModel @Inject constructor(
 
     private fun getLastLocation() {
         viewModelScope.launch {
-            val location = locationProviderClient.awaitLastLocation()
+            val location = locationRepository.awaitLastLocation()
             _currentPosition.value = LatLng(location.latitude, location.longitude)
         }
     }

@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.lamti.capturetheflag.data.LocationRepository
 import com.lamti.capturetheflag.presentation.location.geofences.GeofencingHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +22,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class LocationServiceImpl @Inject constructor() : LifecycleService(), LocationService {
 
-    @Inject lateinit var fusedLocationClient: FusedLocationProviderClient
+    @Inject lateinit var locationRepository: LocationRepository
     @Inject lateinit var notificationHelper: NotificationHelper
     @Inject lateinit var geofencingHelper: GeofencingHelper
 
@@ -59,7 +60,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService(), LocationSe
     }
 
     private fun startLocationUpdates() {
-        locationUpdates = fusedLocationClient.locationFlow()
+        locationUpdates = locationRepository.locationFlow()
             .onEach { notificationHelper.updateNotification("Position: ${it.latitude}, ${it.longitude}") }
             .flowOn(Dispatchers.IO)
             .launchIn(lifecycleScope)
