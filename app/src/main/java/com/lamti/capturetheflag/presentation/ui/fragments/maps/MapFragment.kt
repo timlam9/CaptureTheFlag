@@ -6,28 +6,51 @@ import android.view.View
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.maps.MapsInitializer
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.FragmentMapBinding
 import com.lamti.capturetheflag.presentation.ui.components.map.MapScreen
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
+import com.lamti.capturetheflag.utils.EMPTY
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 
+@ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 @AndroidEntryPoint
 @SuppressLint("UnspecifiedImmutableFlag")
 class MapFragment : Fragment(R.layout.fragment_map) {
 
     private var binding: FragmentMapBinding? = null
+    private val viewModel: MapViewModel by viewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding = FragmentMapBinding.bind(view)
 
+        initializeDataOnSplashScreen()
         setupMapView()
+    }
+
+    private fun initializeDataOnSplashScreen() {
+        requireActivity().installSplashScreen().apply {
+            setKeepOnScreenCondition {
+                viewModel.getLastLocation()
+                viewModel.observePlayer()
+                return@setKeepOnScreenCondition viewModel.stayInSplashScreen.value
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -40,10 +63,49 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
         mapComposeView.setContent {
             CaptureTheFlagTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
-                    MapScreen()
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colors.background
+                ) {
+                    GameNavigation(viewModel)
                 }
             }
         }
     }
+}
+
+@InternalCoroutinesApi
+@ExperimentalCoroutinesApi
+@Composable
+fun GameNavigation(viewModel: MapViewModel) {
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = viewModel.currentScreen.value.route,
+    ) {
+        composable(route = Screen.Menu.route) { MenuScreen() }
+        composable(route = Screen.Map.route) { MapScreen(viewModel = viewModel) }
+    }
+}
+
+@Composable
+fun MenuScreen() {
+    Text(text = "Menu Screen")
+}
+
+fun NavHostController.navigateTo(from: String = Screen.Menu.route, to: String = Screen.Map.route) {
+    navigate(from) {
+        popUpTo(to) {
+            inclusive = true
+        }
+    }
+}
+
+sealed class Screen(open val route: String = EMPTY) {
+
+    object Map : Screen("map")
+
+    object Menu : Screen("menu")
+
 }

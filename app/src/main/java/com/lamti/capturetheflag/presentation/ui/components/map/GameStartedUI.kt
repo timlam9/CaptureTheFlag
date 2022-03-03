@@ -108,7 +108,7 @@ private fun ShowFlags(
     greenFlagIcon: BitmapDescriptor?,
     greenFlagMarkerTitle: String
 ) {
-    if (player.team == Team.Red || startedGameState.isRedFlagFound) {
+    if (player.gameDetails?.team == Team.Red || startedGameState.isRedFlagFound) {
         MapMarker(
             position = startedGameState.redFlagPosition,
             icon = redFlagIcon,
@@ -118,7 +118,7 @@ private fun ShowFlags(
             strokeColor = Color.Red,
         )
     }
-    if (player.team == Team.Green || startedGameState.isGreenFlagFound) {
+    if (player.gameDetails?.team == Team.Green || startedGameState.isGreenFlagFound) {
         MapMarker(
             position = startedGameState.greenFlagPosition,
             icon = greenFlagIcon,

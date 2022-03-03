@@ -18,7 +18,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @Composable
-fun MapScreen(viewModel: MapViewModel = viewModel()) {
+fun MapScreen(viewModel: MapViewModel) {
     val gameState by viewModel.gameState
     val player by viewModel.player
     val (mapProperties, uiSettings) = setupMap()

@@ -15,27 +15,27 @@ private const val TAG_FRAGMENT_CHAT = "tag_fragment_chat"
 private const val TAG_FRAGMENT_AR = "tag_fragment_ar"
 
 @InternalCoroutinesApi
-fun FragmentManager.navigateToScreen(screen: Screen) {
+fun FragmentManager.navigateToScreen(screen: FragmentScreen) {
     when (screen) {
-        Screen.Stats -> {
+        FragmentScreen.Stats -> {
             show(TAG_FRAGMENT_STATS)
             show(TAG_FRAGMENT_MAP, false)
             show(TAG_FRAGMENT_CHAT, false)
             show(TAG_FRAGMENT_AR, false)
         }
-        Screen.Map -> {
+        FragmentScreen.Map -> {
             show(TAG_FRAGMENT_STATS, false)
             show(TAG_FRAGMENT_MAP)
             show(TAG_FRAGMENT_CHAT, false)
             show(TAG_FRAGMENT_AR, false)
         }
-        Screen.Chat -> {
+        FragmentScreen.Chat -> {
             show(TAG_FRAGMENT_STATS, false)
             show(TAG_FRAGMENT_MAP, false)
             show(TAG_FRAGMENT_CHAT)
             show(TAG_FRAGMENT_AR, false)
         }
-        Screen.Ar -> {
+        FragmentScreen.Ar -> {
             show(TAG_FRAGMENT_STATS, false)
             show(TAG_FRAGMENT_MAP, false)
             show(TAG_FRAGMENT_CHAT, false)

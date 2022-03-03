@@ -1,6 +1,6 @@
 package com.lamti.capturetheflag.presentation.ui.fragments.navigation
 
-enum class Screen {
+enum class FragmentScreen {
     Stats,
     Map,
     Chat,

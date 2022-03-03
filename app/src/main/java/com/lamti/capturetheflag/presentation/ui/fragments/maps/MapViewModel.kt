@@ -1,23 +1,23 @@
 package com.lamti.capturetheflag.presentation.ui.fragments.maps
 
+import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
-import com.lamti.capturetheflag.data.firestore.gameID
 import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Player
-import com.lamti.capturetheflag.domain.player.PlayerDetails
-import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.emptyPosition
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -31,48 +31,53 @@ class MapViewModel @Inject constructor(
     private val locationRepository: LocationRepository
 ) : ViewModel() {
 
+    private val _stayInSplashScreen = mutableStateOf(true)
+    val stayInSplashScreen: State<Boolean> = _stayInSplashScreen
+
+    private val _currentScreen: MutableState<Screen> = mutableStateOf(Screen.Menu)
+    val currentScreen: State<Screen> = _currentScreen
+
     private val _currentPosition: MutableState<LatLng> = mutableStateOf(emptyPosition())
     val currentPosition: State<LatLng> = _currentPosition
 
-    private val _gameState = mutableStateOf(GameUiState.Started())
+    private val _gameState: MutableState<GameUiState.Started> = mutableStateOf(GameUiState.Started())
     val gameState: State<GameUiState> = _gameState
 
     private val _player = mutableStateOf(Player.emptyPlayer())
     val player: State<Player> = _player
 
-    init {
-        getLastLocation()
-        getPlayer()
-        observeGameState()
-    }
-
-    private fun getLastLocation() {
+    fun getLastLocation() {
         viewModelScope.launch {
             val location = locationRepository.awaitLastLocation()
             _currentPosition.value = LatLng(location.latitude, location.longitude)
         }
     }
 
-    private fun getPlayer() {
-        viewModelScope.launch {
-            _player.value = firestoreRepository.getPlayer() ?: Player(
-                userID = "",
-                team = Team.Red,
-                details = PlayerDetails(fullName = "", username = "", email = "")
-            )
-        }
+    fun observePlayer() {
+        firestoreRepository.observePlayer().onEach { updatedPlayer ->
+            _player.value = updatedPlayer
+
+            val gameID = _player.value.gameDetails?.gameID ?: EMPTY
+            _currentScreen.value = if (gameID.isEmpty()) Screen.Menu else Screen.Map
+            observeGameState(gameID)
+        }.catch {
+            Log.d("TAGARA", "Catch error")
+        }.launchIn(viewModelScope)
     }
 
-    private fun observeGameState() {
+
+    private fun observeGameState(gameID: String) {
         viewModelScope.launch {
             firestoreRepository.observeGameState(gameID).onEach { gameState ->
                 updateUiGameStateValue(gameState)
                 handleGameStateEvents(gameState)
+                _stayInSplashScreen.value = false
             }.launchIn(viewModelScope)
         }
     }
 
     private fun updateUiGameStateValue(gameState: GameState) = with(gameState) {
+
         _gameState.value = _gameState.value.copy(
             isGreenFlagFound = greenFlag.isDiscovered,
             isRedFlagFound = redFlag.isDiscovered,

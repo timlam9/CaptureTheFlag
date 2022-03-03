@@ -20,7 +20,7 @@ import com.lamti.capturetheflag.data.location.service.LocationServiceImpl.Compan
 import com.lamti.capturetheflag.data.location.service.isLocationEnabledOrNot
 import com.lamti.capturetheflag.data.location.service.showAlertLocation
 import com.lamti.capturetheflag.presentation.ui.components.BottomNavigationView
-import com.lamti.capturetheflag.presentation.ui.fragments.navigation.Screen
+import com.lamti.capturetheflag.presentation.ui.fragments.navigation.FragmentScreen
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.navigateToScreen
 import com.lamti.capturetheflag.presentation.ui.login.LoginActivity
 import dagger.hilt.android.AndroidEntryPoint
@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
         requestPermissions(permissions, requestCode)
     }
 
-    private fun navigate(screen: Screen) {
+    private fun navigate(screen: FragmentScreen) {
         supportFragmentManager.navigateToScreen(screen)
     }
 

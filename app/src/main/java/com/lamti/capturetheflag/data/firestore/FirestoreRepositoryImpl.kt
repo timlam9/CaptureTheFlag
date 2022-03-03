@@ -1,6 +1,8 @@
 package com.lamti.capturetheflag.data.firestore
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import com.lamti.capturetheflag.data.authentication.AuthenticationRepository
 import com.lamti.capturetheflag.data.authentication.PlayerRaw
@@ -12,6 +14,7 @@ import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.PlayerDetails
 import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.utils.EMPTY
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -19,58 +22,81 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-
-const val gameID = "XzlbdvpAWxNaOeVOKx7T"
-
 @ExperimentalCoroutinesApi
 class FirestoreRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val authenticationRepository: AuthenticationRepository
 ) : FirestoreRepository {
 
+    private val userID = authenticationRepository.currentUser?.uid ?: EMPTY
+
     override suspend fun getPlayer(): Player? = firestore
-        .collection(COLLECTION_GAMES)
-        .document(gameID)
         .collection(COLLECTION_PLAYERS)
-        .document(authenticationRepository.currentUser?.uid ?: "no_id")
+        .document(userID)
         .get()
         .await()
         .toObject(PlayerRaw::class.java)
         ?.toPlayer()
 
+    override fun observePlayer(): Flow<Player> = callbackFlow {
+        var snapshotListener: ListenerRegistration? = null
+        try {
+            snapshotListener = firestore
+                .collection(COLLECTION_PLAYERS)
+                .document(userID)
+                .addSnapshotListener { snapshot, e ->
+                    val state = snapshot?.toObject(PlayerRaw::class.java)?.toPlayer() ?: return@addSnapshotListener
+                    trySend(state).isSuccess
+                }
+        } catch (e: Exception) {
+            Log.d("TAGARA", "error: ${e.message}")
+        }
+
+        awaitClose {
+            snapshotListener?.remove()
+        }
+    }
 
     override suspend fun getGame(id: String): Game = firestore
         .collection(COLLECTION_GAMES)
-        .document(gameID)
+        .document(id)
         .get()
         .await()
         .toObject(GameRaw::class.java)
         ?.toGame() ?: GameRaw().toGame()
 
     override fun observeGameState(id: String): Flow<GameState> = callbackFlow {
-        val snapshotListener = firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .addSnapshotListener { snapshot, e ->
-                val state = snapshot?.toObject(GameRaw::class.java)?.toGame()?.gameState ?: return@addSnapshotListener
-                trySend(state).isSuccess
-            }
+        var snapshotListener: ListenerRegistration? = null
+        try {
+            snapshotListener = firestore
+                .collection(COLLECTION_GAMES)
+                .document(id)
+                .addSnapshotListener { snapshot, e ->
+                    val state = snapshot?.toObject(GameRaw::class.java)?.toGame()?.gameState ?: return@addSnapshotListener
+                    trySend(state).isSuccess
+                }
+        } catch (e: Exception) {
+            Log.d("TAGARA", "error: ${e.message}")
+        }
+
         awaitClose {
-            snapshotListener.remove()
+            snapshotListener?.remove()
         }
     }
 
     override suspend fun discoverFlag(flagFound: Flag): Boolean {
-        val game = getGame(gameID)
         val player = getPlayer()
+        val gameID = player?.gameDetails?.gameID ?: return false
+        val team = player.gameDetails.team
+        val game = getGame(gameID)
 
         val updatedGame = when {
-            player?.team == Team.Red && flagFound == Flag.Green -> game.copy(
+            team == Team.Red && flagFound == Flag.Green -> game.copy(
                 gameState = game.gameState.copy(
                     greenFlag = game.gameState.greenFlag.copy(isDiscovered = true)
                 )
             )
-            player?.team == Team.Green && flagFound == Flag.Red -> game.copy(
+            team == Team.Green && flagFound == Flag.Red -> game.copy(
                 gameState = game.gameState.copy(
                     redFlag = game.gameState.redFlag.copy(isDiscovered = true)
                 )
@@ -100,12 +126,13 @@ class FirestoreRepositoryImpl @Inject constructor(
         val uid = authenticationRepository.registerUser(email = email, password = password)
         val newUser = Player(
             userID = uid,
-            team = Team.Red,
+            status = Player.Status.Online,
             details = PlayerDetails(
                 fullName = fullName,
                 username = username,
                 email = email
-            )
+            ),
+            gameDetails = null
         )
         addPlayer(newUser)
         onSuccess()
