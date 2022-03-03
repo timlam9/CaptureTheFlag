@@ -19,6 +19,7 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.maps.MapsInitializer
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.FragmentMapBinding
+import com.lamti.capturetheflag.presentation.ui.components.MenuScreen
 import com.lamti.capturetheflag.presentation.ui.components.map.MapScreen
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
 import com.lamti.capturetheflag.utils.EMPTY
@@ -84,19 +85,22 @@ fun GameNavigation(viewModel: MapViewModel) {
         navController = navController,
         startDestination = viewModel.currentScreen.value.route,
     ) {
-        composable(route = Screen.Menu.route) { MenuScreen() }
+        composable(route = Screen.Menu.route) {
+            MenuScreen(
+                onNewGameClicked = {
+                    navController.navigate(Screen.CreateGame.route)
+                },
+                onAvailableGamesClicked = {}
+            )
+        }
         composable(route = Screen.Map.route) { MapScreen(viewModel = viewModel) }
+        composable(route = Screen.CreateGame.route) { CreateGameScreen(viewModel = viewModel) }
     }
 }
 
-@Composable
-fun MenuScreen() {
-    Text(text = "Menu Screen")
-}
-
-fun NavHostController.navigateTo(from: String = Screen.Menu.route, to: String = Screen.Map.route) {
-    navigate(from) {
-        popUpTo(to) {
+fun NavHostController.navigateToFrom(to: String, from: String) {
+    navigate(to) {
+        popUpTo(from) {
             inclusive = true
         }
     }
@@ -108,4 +112,13 @@ sealed class Screen(open val route: String = EMPTY) {
 
     object Menu : Screen("menu")
 
+    object CreateGame : Screen("create_game")
+
+}
+
+
+@ExperimentalCoroutinesApi
+@Composable
+fun CreateGameScreen(viewModel: MapViewModel) {
+    Text(text = "Create Game")
 }

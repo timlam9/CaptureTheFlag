@@ -8,4 +8,8 @@
     <string name="ok">OK</string>
     <string name="title_activity_login">LoginActivity</string>
     <string name="logout">logout</string>
+    <string name="capture_the_flag">Capture The Flag</string>
+    <string name="are_you_ready_to_play">Are you ready to play the ultimate outdoor game?</string>
+    <string name="new_game">New Game</string>
+    <string name="available_games">Available Games</string>
 </resources>

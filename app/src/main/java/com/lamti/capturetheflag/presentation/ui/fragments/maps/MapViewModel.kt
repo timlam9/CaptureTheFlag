@@ -60,6 +60,7 @@ class MapViewModel @Inject constructor(
             val gameID = _player.value.gameDetails?.gameID ?: EMPTY
             _currentScreen.value = if (gameID.isEmpty()) Screen.Menu else Screen.Map
             observeGameState(gameID)
+            _stayInSplashScreen.value = false
         }.catch {
             Log.d("TAGARA", "Catch error")
         }.launchIn(viewModelScope)
@@ -71,7 +72,6 @@ class MapViewModel @Inject constructor(
             firestoreRepository.observeGameState(gameID).onEach { gameState ->
                 updateUiGameStateValue(gameState)
                 handleGameStateEvents(gameState)
-                _stayInSplashScreen.value = false
             }.launchIn(viewModelScope)
         }
     }

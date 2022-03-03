@@ -12,14 +12,13 @@ import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.lamti.capturetheflag.R
-import com.lamti.capturetheflag.databinding.ActivityMainBinding
-import com.lamti.capturetheflag.presentation.arcore.helpers.FullScreenHelper
 import com.lamti.capturetheflag.data.location.service.LocationServiceCommand
 import com.lamti.capturetheflag.data.location.service.LocationServiceImpl
 import com.lamti.capturetheflag.data.location.service.LocationServiceImpl.Companion.SERVICE_COMMAND
 import com.lamti.capturetheflag.data.location.service.isLocationEnabledOrNot
 import com.lamti.capturetheflag.data.location.service.showAlertLocation
-import com.lamti.capturetheflag.presentation.ui.components.BottomNavigationView
+import com.lamti.capturetheflag.databinding.ActivityMainBinding
+import com.lamti.capturetheflag.presentation.arcore.helpers.FullScreenHelper
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.FragmentScreen
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.navigateToScreen
 import com.lamti.capturetheflag.presentation.ui.login.LoginActivity
@@ -44,7 +43,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupUI()
         collectFlows()
         startLocationUpdates()
     }
@@ -71,16 +69,6 @@ class MainActivity : AppCompatActivity() {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         FullScreenHelper.setFullScreenOnWindowFocusChanged(this, hasFocus)
-    }
-
-    private fun setupUI() = with(binding) {
-        bottomView.setContent {
-            BottomNavigationView(
-                onStatsClicked = { viewModel.onStatsClicked() },
-                onMapClicked = { viewModel.onMapClicked() },
-                onChatClicked = { viewModel.onChatClicked() }
-            )
-        }
     }
 
     private fun collectFlows() {
