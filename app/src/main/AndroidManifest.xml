@@ -6,11 +6,12 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <!-- This tag indicates that this application requires ARCore.  This results in the application
-         only being visible in the Google Play Store on devices that support ARCore. -->
+    <!--
+ This tag indicates that this application requires ARCore.  This results in the application
+         only being visible in the Google Play Store on devices that support ARCore.
+    -->
     <uses-feature
         android:name="android.hardware.camera.ar"
         android:required="true" />
@@ -22,28 +23,37 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.CaptureTheFlag">
+        android:theme="@style/Theme.CustomSplashScreenTheme">
         <activity
-            android:launchMode="singleInstance"
+            android:name=".presentation.ui.login.LoginActivity"
+            android:exported="false"
+            android:label="@string/title_activity_login"
+            android:theme="@style/Theme.CaptureTheFlag" />
+        <activity
             android:name=".presentation.ui.activity.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleInstance"
+            android:theme="@style/Theme.CustomSplashScreenTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <service
-            android:foregroundServiceType="location"
-            android:name="com.lamti.capturetheflag.data.location.service.LocationServiceImpl"
+            android:name=".data.location.service.LocationServiceImpl"
             android:enabled="true"
             android:exported="false"
-            />
-        <receiver android:name="com.lamti.capturetheflag.data.location.geofences.GeofenceBroadcastReceiver"/>
-        <!-- This tag indicates that this application requires ARCore.  This results in the Google Play
+            android:foregroundServiceType="location" />
+
+        <receiver android:name=".data.location.geofences.GeofenceBroadcastReceiver" />
+        <!--
+ This tag indicates that this application requires ARCore.  This results in the Google Play
          Store downloading and installing ARCore along with the application.
          Application code must still call ArCoreApk.requestInstall() before beginning an ARCore
-         sessions, in case the user uninstalls ARCore for any reason. -->
+         sessions, in case the user uninstalls ARCore for any reason.
+        -->
         <meta-data
             android:name="com.google.ar.core"
             android:value="required" />

@@ -2,10 +2,14 @@ package com.lamti.capturetheflag.presentation.ui.style
 
 import androidx.compose.ui.graphics.Color
 
-val Purple200 = Color(0xFFBB86FC)
-val Purple500 = Color(0xFF6200EE)
-val Purple700 = Color(0xFF3700B3)
-val Teal200 = Color(0xFF03DAC5)
+val Orange = Color(0xFFE64A19)
+val Red = Color(0xFFD32F2F)
+val Green = Color(0xFF388E3C)
+val Blue = Color(0xFF1976D2)
+val Blue900 = Color(0xFF0D47A1)
+
+val DarkBlue = Color(0xFF000813)
+val LightBlue = Color(0xFFE0F7FA)
 
 val BlueOpacity = Color(0x28303F9F)
 val GreenOpacity = Color(0x29388E3C)

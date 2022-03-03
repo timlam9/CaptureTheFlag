@@ -2,6 +2,8 @@ package com.lamti.capturetheflag.data.firestore
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.lamti.capturetheflag.data.authentication.AuthenticationRepository
+import com.lamti.capturetheflag.data.authentication.PlayerRaw
 import com.lamti.capturetheflag.data.firestore.GameRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Flag
@@ -18,25 +20,24 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 
-const val playerID = "qTrrjR2cvHCtSeYcARAS"
 const val gameID = "XzlbdvpAWxNaOeVOKx7T"
 
 @ExperimentalCoroutinesApi
-class FirestoreRepositoryImpl @Inject constructor(private val firestore: FirebaseFirestore) : FirestoreRepository {
+class FirestoreRepositoryImpl @Inject constructor(
+    private val firestore: FirebaseFirestore,
+    private val authenticationRepository: AuthenticationRepository
+) : FirestoreRepository {
 
-    override suspend fun getPlayer(playerID: String): Player = firestore
+    override suspend fun getPlayer(): Player? = firestore
         .collection(COLLECTION_GAMES)
         .document(gameID)
         .collection(COLLECTION_PLAYERS)
-        .document(playerID)
+        .document(authenticationRepository.currentUser?.uid ?: "no_id")
         .get()
         .await()
         .toObject(PlayerRaw::class.java)
-        ?.toPlayer() ?: Player(
-        userID = "no id",
-        team = Team.Red,
-        details = PlayerDetails(fullName = "no name", username = "no username", email = "no email")
-    )
+        ?.toPlayer()
+
 
     override suspend fun getGame(id: String): Game = firestore
         .collection(COLLECTION_GAMES)
@@ -59,21 +60,17 @@ class FirestoreRepositoryImpl @Inject constructor(private val firestore: Firebas
         }
     }
 
-    override suspend fun addPlayer(player: Player): Boolean {
-        TODO("Not yet implemented")
-    }
-
     override suspend fun discoverFlag(flagFound: Flag): Boolean {
         val game = getGame(gameID)
-        val player = getPlayer(playerID)
+        val player = getPlayer()
 
         val updatedGame = when {
-            player.team == Team.Red && flagFound == Flag.Green -> game.copy(
+            player?.team == Team.Red && flagFound == Flag.Green -> game.copy(
                 gameState = game.gameState.copy(
                     greenFlag = game.gameState.greenFlag.copy(isDiscovered = true)
                 )
             )
-            player.team == Team.Green && flagFound == Flag.Red -> game.copy(
+            player?.team == Team.Green && flagFound == Flag.Red -> game.copy(
                 gameState = game.gameState.copy(
                     redFlag = game.gameState.redFlag.copy(isDiscovered = true)
                 )
@@ -89,6 +86,37 @@ class FirestoreRepositoryImpl @Inject constructor(private val firestore: Firebas
             .await()
 
         return true
+    }
+
+    override suspend fun loginUser(email: String, password: String) = authenticationRepository.loginUser(email, password)
+
+    override suspend fun registerUser(
+        email: String,
+        password: String,
+        username: String,
+        fullName: String,
+        onSuccess: () -> Unit
+    ) {
+        val uid = authenticationRepository.registerUser(email = email, password = password)
+        val newUser = Player(
+            userID = uid,
+            team = Team.Red,
+            details = PlayerDetails(
+                fullName = fullName,
+                username = username,
+                email = email
+            )
+        )
+        addPlayer(newUser)
+        onSuccess()
+    }
+
+    private suspend fun addPlayer(newUser: Player) {
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(newUser.userID)
+            .set(newUser)
+            .await()
     }
 
     companion object {

@@ -9,6 +9,7 @@ import android.os.Parcelable
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.ActivityMainBinding
@@ -19,9 +20,9 @@ import com.lamti.capturetheflag.data.location.service.LocationServiceImpl.Compan
 import com.lamti.capturetheflag.data.location.service.isLocationEnabledOrNot
 import com.lamti.capturetheflag.data.location.service.showAlertLocation
 import com.lamti.capturetheflag.presentation.ui.components.BottomNavigationView
-import com.lamti.capturetheflag.presentation.ui.fragments.navigation.MainFragmentFactory
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.Screen
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.navigateToScreen
+import com.lamti.capturetheflag.presentation.ui.login.LoginActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -37,14 +38,29 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        supportFragmentManager.fragmentFactory = MainFragmentFactory()
         super.onCreate(savedInstanceState)
+
+        navigateToLoginIfNeededDuringSplashScreen()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         setupUI()
         collectFlows()
         startLocationUpdates()
+    }
+
+    private fun navigateToLoginIfNeededDuringSplashScreen() {
+        installSplashScreen().apply {
+            var isEnterFirstTime = false
+            setKeepOnScreenCondition {
+                if (!viewModel.isUserLoggedIn && !isEnterFirstTime) {
+                    isEnterFirstTime = true
+                    startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+                    finish()
+                }
+                return@setKeepOnScreenCondition !viewModel.isUserLoggedIn
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -57,8 +73,13 @@ class MainActivity : AppCompatActivity() {
         FullScreenHelper.setFullScreenOnWindowFocusChanged(this, hasFocus)
     }
 
-    private fun setupUI() {
-        binding.bottomView.setContent {
+    private fun setupUI() = with(binding) {
+        logoutButton.setOnClickListener {
+            viewModel.onLogoutClicked()
+            startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+            finish()
+        }
+        bottomView.setContent {
             BottomNavigationView(
                 onStatsClicked = { viewModel.onStatsClicked() },
                 onMapClicked = { viewModel.onMapClicked() },

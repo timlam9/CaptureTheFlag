@@ -7,13 +7,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
 import com.lamti.capturetheflag.data.firestore.gameID
-import com.lamti.capturetheflag.data.firestore.playerID
 import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Player
+import com.lamti.capturetheflag.domain.player.PlayerDetails
+import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.utils.emptyPosition
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -54,7 +55,11 @@ class MapViewModel @Inject constructor(
 
     private fun getPlayer() {
         viewModelScope.launch {
-            _player.value = firestoreRepository.getPlayer(playerID)
+            _player.value = firestoreRepository.getPlayer() ?: Player(
+                userID = "",
+                team = Team.Red,
+                details = PlayerDetails(fullName = "", username = "", email = "")
+            )
         }
     }
 

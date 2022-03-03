@@ -2,7 +2,6 @@ package com.lamti.capturetheflag.presentation.ui.fragments.navigation
 
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
-import androidx.fragment.app.replace
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArFragment
 import com.lamti.capturetheflag.presentation.ui.fragments.chat.ChatFragment
@@ -17,39 +16,26 @@ private const val TAG_FRAGMENT_AR = "tag_fragment_ar"
 
 @InternalCoroutinesApi
 fun FragmentManager.navigateToScreen(screen: Screen) {
-    commit {
-        setReorderingAllowed(true)
-        when (screen) {
-            Screen.Stats -> showFragment(TAG_FRAGMENT_STATS)
-            Screen.Map -> showFragment(TAG_FRAGMENT_MAP)
-            Screen.Chat -> showFragment(TAG_FRAGMENT_CHAT)
-            Screen.Ar -> showFragment(TAG_FRAGMENT_AR)
-        }
-    }
-}
-
-@InternalCoroutinesApi
-private fun FragmentManager.showFragment(tag: String) {
-    when (tag) {
-        TAG_FRAGMENT_STATS -> {
+    when (screen) {
+        Screen.Stats -> {
             show(TAG_FRAGMENT_STATS)
             show(TAG_FRAGMENT_MAP, false)
             show(TAG_FRAGMENT_CHAT, false)
             show(TAG_FRAGMENT_AR, false)
         }
-        TAG_FRAGMENT_MAP -> {
+        Screen.Map -> {
             show(TAG_FRAGMENT_STATS, false)
             show(TAG_FRAGMENT_MAP)
             show(TAG_FRAGMENT_CHAT, false)
             show(TAG_FRAGMENT_AR, false)
         }
-        TAG_FRAGMENT_CHAT -> {
+        Screen.Chat -> {
             show(TAG_FRAGMENT_STATS, false)
             show(TAG_FRAGMENT_MAP, false)
             show(TAG_FRAGMENT_CHAT)
             show(TAG_FRAGMENT_AR, false)
         }
-        TAG_FRAGMENT_AR -> {
+        Screen.Ar -> {
             show(TAG_FRAGMENT_STATS, false)
             show(TAG_FRAGMENT_MAP, false)
             show(TAG_FRAGMENT_CHAT, false)
@@ -59,20 +45,21 @@ private fun FragmentManager.showFragment(tag: String) {
 }
 
 @InternalCoroutinesApi
-private fun FragmentManager.show(tag: String, show: Boolean = true) {
+private fun FragmentManager.show(tag: String, show: Boolean = true) = commit {
     if (findFragmentByTag(tag) == null && !show) return
+    setReorderingAllowed(true)
 
     when (findFragmentByTag(tag) == null && show) {
         true -> createFragment(tag)
         false -> when (show) {
-            true -> beginTransaction().show(findFragmentByTag(tag)!!).commit()
-            false -> beginTransaction().hide(findFragmentByTag(tag)!!).commit()
+            true -> show(findFragmentByTag(tag)!!)
+            false -> hide(findFragmentByTag(tag)!!)
         }
     }
 }
 
 @InternalCoroutinesApi
-private fun FragmentManager.createFragment(tag: String) {
+private fun FragmentManager.createFragment(tag: String) = commit {
     val fragment = when (tag) {
         TAG_FRAGMENT_STATS -> StatsFragment()
         TAG_FRAGMENT_MAP -> MapFragment()
@@ -80,7 +67,8 @@ private fun FragmentManager.createFragment(tag: String) {
         TAG_FRAGMENT_AR -> ArFragment()
         else -> MapFragment()
     }
-    beginTransaction().add(R.id.fragment_container_view, fragment, tag).commit()
+
+    add(R.id.fragment_container_view, fragment, tag)
 }
 
 

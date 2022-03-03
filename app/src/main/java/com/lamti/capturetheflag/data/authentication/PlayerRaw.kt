@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.data.firestore
+package com.lamti.capturetheflag.data.authentication
 
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.lamti.capturetheflag.domain.player.Player

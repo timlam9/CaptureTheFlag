@@ -7,13 +7,16 @@ import android.content.Context
 import android.content.Intent
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.lamti.capturetheflag.data.authentication.AuthenticationRepository
 import com.lamti.capturetheflag.data.firestore.FirestoreRepositoryImpl
-import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.data.location.geofences.GeofenceBroadcastReceiver
 import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
+import com.lamti.capturetheflag.domain.FirestoreRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,6 +34,26 @@ object NetworkingModule {
     fun provideFirebaseFirestore(): FirebaseFirestore = Firebase.firestore
 
     @Provides
+    fun provideFirebaseAuthentication(): FirebaseAuth = Firebase.auth
+
+    @Provides
+    fun provideFirebaseAuthenticationRepository(auth: FirebaseAuth) = AuthenticationRepository(auth)
+
+    @ExperimentalCoroutinesApi
+    @Provides
+    fun provideFirestoreRepository(
+        firestore: FirebaseFirestore,
+        authenticationRepository: AuthenticationRepository
+    ): FirestoreRepository = FirestoreRepositoryImpl(firestore, authenticationRepository)
+
+}
+
+@ExperimentalCoroutinesApi
+@Module
+@InstallIn(SingletonComponent::class)
+object GeofenceModule {
+
+    @Provides
     fun provideGeofencingClient(@ApplicationContext context: Context) = LocationServices.getGeofencingClient(context)
 
     @SuppressLint("UnspecifiedImmutableFlag")
@@ -42,14 +65,10 @@ object NetworkingModule {
     }
 
     @Provides
-    fun provideGeofencingHelper(
+    fun provideGeofencingRepository(
         geofencingClient: GeofencingClient,
         geofencePendingIntent: PendingIntent
     ): GeofencingRepository =
         GeofencingRepository(geofencingClient, geofencePendingIntent)
-
-    @ExperimentalCoroutinesApi
-    @Provides
-    fun provideFirestoreRepository(firestore: FirebaseFirestore): FirestoreRepository = FirestoreRepositoryImpl(firestore)
 
 }
