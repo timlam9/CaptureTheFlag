@@ -7,5 +7,5 @@
     <string name="please_turn_on_gps">Please turn on GPS</string>
     <string name="ok">OK</string>
     <string name="title_activity_login">LoginActivity</string>
-    <string name="log_out">log out</string>
+    <string name="logout">logout</string>
 </resources>

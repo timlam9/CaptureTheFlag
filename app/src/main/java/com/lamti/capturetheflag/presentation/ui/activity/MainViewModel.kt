@@ -35,8 +35,4 @@ class MainViewModel @Inject constructor(
         _currentScreen.update { Screen.Chat }
     }
 
-    fun onLogoutClicked() {
-        authenticationRepository.logout()
-    }
-
 }

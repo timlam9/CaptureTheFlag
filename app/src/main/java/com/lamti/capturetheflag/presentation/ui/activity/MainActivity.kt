@@ -74,11 +74,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUI() = with(binding) {
-        logoutButton.setOnClickListener {
-            viewModel.onLogoutClicked()
-            startActivity(Intent(this@MainActivity, LoginActivity::class.java))
-            finish()
-        }
         bottomView.setContent {
             BottomNavigationView(
                 onStatsClicked = { viewModel.onStatsClicked() },
