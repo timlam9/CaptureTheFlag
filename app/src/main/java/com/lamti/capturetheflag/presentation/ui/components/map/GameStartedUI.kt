@@ -10,18 +10,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.lamti.capturetheflag.R
+import com.lamti.capturetheflag.domain.game.GameState
+import com.lamti.capturetheflag.domain.game.GeofenceObject
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_BOUNDARIES_RADIUS
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
 import com.lamti.capturetheflag.presentation.ui.bitmapDescriptorFromVector
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.DEFAULT_GAME_BOUNDARIES_RADIUS
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.DEFAULT_SAFEHOUSE_RADIUS
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.GameUiState
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
 import com.lamti.capturetheflag.presentation.ui.style.GreenOpacity
 import com.lamti.capturetheflag.presentation.ui.style.RedOpacity
@@ -33,7 +35,7 @@ import kotlinx.coroutines.flow.collect
 @InternalCoroutinesApi
 @Composable
 fun GameStartedUI(
-    gameState: GameUiState,
+    gameState: GameState,
     player: Player,
     mapProperties: MapProperties,
     uiSettings: MapUiSettings,
@@ -42,9 +44,7 @@ fun GameStartedUI(
     redFlagMarkerTitle: String = "Red Flag",
     safeHouseTitle: String = "Safe House"
 ) {
-    val startedGameState = gameState as GameUiState.Started
     val currentPosition by viewModel.currentPosition
-
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(currentPosition, 15f)
     }
@@ -66,10 +66,11 @@ fun GameStartedUI(
         properties = mapProperties,
         uiSettings = uiSettings
     ) {
-        GameBoundariesGeofence(startedGameState, safeHouseIcon, safeHouseTitle)
+        GameBoundariesGeofence(gameState.safehouse.position, safeHouseIcon, safeHouseTitle)
         ShowFlags(
-            player = player,
-            startedGameState = startedGameState,
+            team = player.gameDetails?.team ?: Team.Unknown,
+            redFlag = gameState.redFlag,
+            greenFlag = gameState.greenFlag,
             redFlagIcon = redFlagIcon,
             redFlagMarkerTitle = redFlagMarkerTitle,
             greenFlagIcon = greenFlagIcon,
@@ -80,19 +81,19 @@ fun GameStartedUI(
 
 @Composable
 private fun GameBoundariesGeofence(
-    startedGameState: GameUiState.Started,
+    safehousePosition: LatLng,
     safeHouseIcon: BitmapDescriptor?,
     safeHouseTitle: String
 ) {
     MapMarker(
-        position = startedGameState.safeHousePosition,
+        position = safehousePosition,
         icon = safeHouseIcon,
         title = safeHouseTitle,
         hasGeofence = true,
         radius = DEFAULT_SAFEHOUSE_RADIUS.toDouble(),
     )
     Circle(
-        center = startedGameState.safeHousePosition,
+        center = safehousePosition,
         radius = DEFAULT_GAME_BOUNDARIES_RADIUS.toDouble(),
         strokeColor = Color.Blue,
         strokeWidth = 10f,
@@ -101,16 +102,17 @@ private fun GameBoundariesGeofence(
 
 @Composable
 private fun ShowFlags(
-    player: Player,
-    startedGameState: GameUiState.Started,
+    team: Team,
+    redFlag: GeofenceObject,
+    greenFlag: GeofenceObject,
     redFlagIcon: BitmapDescriptor?,
     redFlagMarkerTitle: String,
     greenFlagIcon: BitmapDescriptor?,
     greenFlagMarkerTitle: String
 ) {
-    if (player.gameDetails?.team == Team.Red || startedGameState.isRedFlagFound) {
+    if (team == Team.Red || redFlag.isDiscovered) {
         MapMarker(
-            position = startedGameState.redFlagPosition,
+            position = redFlag.position,
             icon = redFlagIcon,
             title = redFlagMarkerTitle,
             hasGeofence = true,
@@ -118,9 +120,9 @@ private fun ShowFlags(
             strokeColor = Color.Red,
         )
     }
-    if (player.gameDetails?.team == Team.Green || startedGameState.isGreenFlagFound) {
+    if (team == Team.Green || greenFlag.isDiscovered) {
         MapMarker(
-            position = startedGameState.greenFlagPosition,
+            position = greenFlag.position,
             icon = greenFlagIcon,
             title = greenFlagMarkerTitle,
             hasGeofence = true,

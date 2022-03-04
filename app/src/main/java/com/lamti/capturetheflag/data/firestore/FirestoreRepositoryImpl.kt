@@ -1,20 +1,26 @@
 package com.lamti.capturetheflag.data.firestore
 
 import android.util.Log
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import com.lamti.capturetheflag.data.authentication.AuthenticationRepository
 import com.lamti.capturetheflag.data.authentication.PlayerRaw
+import com.lamti.capturetheflag.data.authentication.PlayerRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.GameRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GameState
+import com.lamti.capturetheflag.domain.game.GeofenceObject
+import com.lamti.capturetheflag.domain.game.ProgressState
+import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.PlayerDetails
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.utils.EMPTY
+import com.lamti.capturetheflag.utils.emptyPosition
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -112,6 +118,67 @@ class FirestoreRepositoryImpl @Inject constructor(
             .await()
 
         return true
+    }
+
+    override suspend fun createGame(id: String, title: String, position: LatLng): Game {
+
+        val game = Game(
+            gameID = id,
+            title = title,
+            gameState = GameState(
+                safehouse = GeofenceObject(
+                    position = position,
+                    isPlaced = true,
+                    isDiscovered = true
+                ),
+                greenFlag = GeofenceObject(
+                    position = emptyPosition(),
+                    isPlaced = false,
+                    isDiscovered = false
+                ),
+                redFlag = GeofenceObject(
+                    position = emptyPosition(),
+                    isPlaced = false,
+                    isDiscovered = false
+                ),
+                state = ProgressState.Created
+            )
+        )
+
+        firestore
+            .collection(COLLECTION_GAMES)
+            .document(id)
+            .set(game.toRaw())
+            .await()
+
+        val currentPlayer = getPlayer()
+        val updatedPlayer = currentPlayer!!.copy(
+            gameDetails = currentPlayer.gameDetails?.copy(gameID = id) ?: GameDetails(
+                gameID = id,
+                team = Team.Red,
+                rank = GameDetails.Rank.Captain
+            ),
+            status = Player.Status.Connected
+        ).toRaw()
+
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(userID)
+            .set(updatedPlayer)
+            .await()
+
+        return game
+    }
+
+    override suspend fun updatePlayerStatus(status: Player.Status) {
+        val currentPlayer = getPlayer()
+        val updatedPlayer = currentPlayer!!.copy(status = status).toRaw()
+
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(userID)
+            .set(updatedPlayer)
+            .await()
     }
 
     override suspend fun loginUser(email: String, password: String) = authenticationRepository.loginUser(email, password)

@@ -1,5 +1,7 @@
 package com.lamti.capturetheflag.presentation.ui.fragments.maps
 
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -7,12 +9,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
 import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Player
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_BOUNDARIES_RADIUS
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
+import com.lamti.capturetheflag.presentation.ui.components.Screen
+import com.lamti.capturetheflag.presentation.ui.getRandomString
 import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.emptyPosition
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,6 +31,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 
 @ExperimentalCoroutinesApi
 @HiltViewModel
@@ -40,8 +50,8 @@ class MapViewModel @Inject constructor(
     private val _currentPosition: MutableState<LatLng> = mutableStateOf(emptyPosition())
     val currentPosition: State<LatLng> = _currentPosition
 
-    private val _gameState: MutableState<GameUiState.Started> = mutableStateOf(GameUiState.Started())
-    val gameState: State<GameUiState> = _gameState
+    private val _gameState: MutableState<GameState> = mutableStateOf(GameState.initialGameState(_currentPosition.value))
+    val gameState: State<GameState> = _gameState
 
     private val _player = mutableStateOf(Player.emptyPlayer())
     val player: State<Player> = _player
@@ -55,49 +65,47 @@ class MapViewModel @Inject constructor(
 
     fun observePlayer() {
         firestoreRepository.observePlayer().onEach { updatedPlayer ->
+            _currentScreen.value = if (updatedPlayer.status == Player.Status.Playing) Screen.Map else Screen.Menu
             _player.value = updatedPlayer
-
-            val gameID = _player.value.gameDetails?.gameID ?: EMPTY
-            _currentScreen.value = if (gameID.isEmpty()) Screen.Menu else Screen.Map
-            observeGameState(gameID)
             _stayInSplashScreen.value = false
         }.catch {
             Log.d("TAGARA", "Catch error")
         }.launchIn(viewModelScope)
     }
 
+    fun onCreateGameClicked(title: String) {
+        viewModelScope.launch {
+            val gameID = getRandomString(5)
+            firestoreRepository.createGame(gameID, title, _currentPosition.value)
+            _gameState.value = _gameState.value.copy(state = ProgressState.Created)
+        }
+    }
 
-    private fun observeGameState(gameID: String) {
+    fun observeGameState(gameID: String) {
         viewModelScope.launch {
             firestoreRepository.observeGameState(gameID).onEach { gameState ->
-                updateUiGameStateValue(gameState)
-                handleGameStateEvents(gameState)
+                gameState.updateUiGameStateValue()
+                gameState.handleGameStateEvents()
             }.launchIn(viewModelScope)
         }
     }
 
-    private fun updateUiGameStateValue(gameState: GameState) = with(gameState) {
-
-        _gameState.value = _gameState.value.copy(
-            isGreenFlagFound = greenFlag.isDiscovered,
-            isRedFlagFound = redFlag.isDiscovered,
-            greenFlagPosition = greenFlag.position,
-            redFlagPosition = redFlag.position,
-            safeHousePosition = safehouse.position
-        )
+    private fun GameState.updateUiGameStateValue() {
+        _gameState.value = this
+        Log.d("TAGARA", this.state.name)
     }
 
-    private fun handleGameStateEvents(gameState: GameState) = with(gameState) {
-        when (state) {
-            ProgressState.Waiting -> Unit
-            ProgressState.Initializing -> Unit
-            ProgressState.Started -> {
-                if (safehouse.isPlaced && redFlag.isPlaced && greenFlag.isPlaced) {
-                    startGeofencesListener(this)
-                }
-            }
-            ProgressState.Ended -> removeGeofencesListener()
-        }
+    private fun GameState.handleGameStateEvents() = when (state) {
+        ProgressState.Idle -> Unit
+        ProgressState.Created -> Unit
+        ProgressState.Started -> onGameStarted()
+        ProgressState.Ended -> removeGeofencesListener()
+        ProgressState.Preparing -> Unit
+    }
+
+    private fun GameState.onGameStarted() {
+        if (safehouse.isPlaced && redFlag.isPlaced && greenFlag.isPlaced)
+            startGeofencesListener(this)
     }
 
     private fun startGeofencesListener(gameState: GameState) = with(gameState) {
@@ -110,6 +118,30 @@ class MapViewModel @Inject constructor(
 
     private fun removeGeofencesListener() {
         geofencingHelper.removeGeofences()
+    }
+
+    fun onStartGameClicked() {
+        viewModelScope.launch {
+            firestoreRepository.updatePlayerStatus(Player.Status.Playing)
+        }
+        observeGameState(_player.value.gameDetails?.gameID ?: EMPTY)
+    }
+
+    fun generateQrCode(text: String): Bitmap? {
+        try {
+            val qrCodeWriter = QRCodeWriter()
+            val bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 200, 200)
+            val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.RGB_565)
+            for (x in 0..199) {
+                for (y in 0..199) {
+                    bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.DKGRAY else Color.WHITE)
+                }
+            }
+            return bitmap
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
     }
 
     companion object {

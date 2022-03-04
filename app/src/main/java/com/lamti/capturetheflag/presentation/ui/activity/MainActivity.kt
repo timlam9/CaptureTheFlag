@@ -43,8 +43,18 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        collectFlows()
+        collectScreenFlow()
         startLocationUpdates()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        sendCommandToForegroundService(LocationServiceCommand.Stop)
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        FullScreenHelper.setFullScreenOnWindowFocusChanged(this, hasFocus)
     }
 
     private fun navigateToLoginIfNeededDuringSplashScreen() {
@@ -61,20 +71,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        sendCommandToForegroundService(LocationServiceCommand.Stop)
-    }
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        FullScreenHelper.setFullScreenOnWindowFocusChanged(this, hasFocus)
-    }
-
-    private fun collectFlows() {
+    private fun collectScreenFlow() {
         lifecycleScope.launchWhenCreated {
             viewModel.currentScreen.onEach(::navigate).launchIn(lifecycleScope)
         }
+    }
+
+    private fun navigate(screen: FragmentScreen) {
+        supportFragmentManager.navigateToScreen(screen)
+    }
+
+    @TargetApi(Build.VERSION_CODES.M)
+    private fun requestPermissionsSafely(
+        permissions: Array<String> = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+        requestCode: Int = PERMISSION_REQUEST_CODE
+    ) {
+        requestPermissions(permissions, requestCode)
     }
 
     private fun startLocationUpdates() {
@@ -91,26 +103,14 @@ class MainActivity : AppCompatActivity() {
         sendCommandToForegroundService(LocationServiceCommand.Start)
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
-    private fun requestPermissionsSafely(
-        permissions: Array<String> = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-        requestCode: Int = PERMISSION_REQUEST_CODE
-    ) {
-        requestPermissions(permissions, requestCode)
-    }
-
-    private fun navigate(screen: FragmentScreen) {
-        supportFragmentManager.navigateToScreen(screen)
-    }
-
-    private fun sendCommandToForegroundService(command: LocationServiceCommand) {
-        ContextCompat.startForegroundService(this, getServiceIntent(command))
-    }
-
     private fun getServiceIntent(command: LocationServiceCommand) =
         Intent(this, LocationServiceImpl::class.java).apply {
             putExtra(SERVICE_COMMAND, command as Parcelable)
         }
+
+    private fun sendCommandToForegroundService(command: LocationServiceCommand) {
+        ContextCompat.startForegroundService(this, getServiceIntent(command))
+    }
 
     companion object {
 

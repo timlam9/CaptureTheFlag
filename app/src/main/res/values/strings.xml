@@ -12,4 +12,11 @@
     <string name="are_you_ready_to_play">Are you ready to play the ultimate outdoor game?</string>
     <string name="new_game">New Game</string>
     <string name="available_games">Available Games</string>
+    <string name="type_password">type password</string>
+    <string name="password">password</string>
+    <string name="create_game">Create Game</string>
+    <string name="type_title">type game title</string>
+    <string name="start">Start</string>
+    <string name="gr_code">QR Code</string>
+    <string name="game_created">Game has been created</string>
 </resources>

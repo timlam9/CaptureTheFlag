@@ -6,7 +6,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.Marker
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.DEFAULT_FLAG_RADIUS
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
 import com.lamti.capturetheflag.presentation.ui.style.BlueOpacity
 
 @Composable

@@ -1,5 +1,6 @@
 package com.lamti.capturetheflag.domain
 
+import com.google.android.gms.maps.model.LatLng
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GameState
@@ -21,5 +22,9 @@ interface FirestoreRepository {
     suspend fun registerUser(email: String, password: String, username: String, fullName: String, onSuccess: () -> Unit)
 
     suspend fun discoverFlag(flagFound: Flag): Boolean
+
+    suspend fun createGame(id: String, title: String, position: LatLng): Game
+
+    suspend fun updatePlayerStatus(status: Player.Status)
 
 }

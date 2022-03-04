@@ -84,9 +84,9 @@ private fun GeoPoint.toLatLng() = LatLng(latitude, longitude)
 private fun LatLng.toGeoPoint() = GeoPoint(latitude, longitude)
 
 private fun String.toState(): ProgressState = when (this) {
-    "Waiting" -> ProgressState.Waiting
-    "Initializing" -> ProgressState.Initializing
+    "Waiting" -> ProgressState.Created
+    "Idle" -> ProgressState.Idle
     "Started" -> ProgressState.Started
     "Ended" -> ProgressState.Ended
-    else -> ProgressState.Waiting
+    else -> ProgressState.Preparing
 }
