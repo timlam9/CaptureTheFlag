@@ -16,17 +16,14 @@ import kotlinx.coroutines.InternalCoroutinesApi
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @Composable
-fun MapScreen(viewModel: MapViewModel) {
-    val gameState by viewModel.gameState
-    val player by viewModel.player
+fun MapScreen(viewModel: MapViewModel, onSettingFlagsButtonClicked: () -> Unit) {
     val (mapProperties, uiSettings) = setupMap()
 
     GameStartedUI(
-        gameState = gameState,
-        player = player,
         mapProperties = mapProperties,
         uiSettings = uiSettings,
         viewModel = viewModel,
+        onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
     )
 }
 
@@ -43,7 +40,7 @@ private fun setupMap(darkTheme: Boolean = isSystemInDarkTheme()): Pair<MapProper
     val uiSettings by remember {
         mutableStateOf(
             MapUiSettings(
-                myLocationButtonEnabled = true,
+                myLocationButtonEnabled = false,
                 zoomControlsEnabled = false,
                 mapToolbarEnabled = false
             )

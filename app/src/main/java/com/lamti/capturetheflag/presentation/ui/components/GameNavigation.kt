@@ -14,12 +14,12 @@ import kotlinx.coroutines.InternalCoroutinesApi
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @Composable
-fun GameNavigation(viewModel: MapViewModel) {
+fun GameNavigation(viewModel: MapViewModel, onSettingFlagsButtonClicked: () -> Unit) {
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
-        startDestination = viewModel.currentScreen.value.route,
+        startDestination = viewModel.initialScreen.value.route,
     ) {
         composable(route = Screen.Menu.route) {
             MenuScreen(
@@ -34,7 +34,12 @@ fun GameNavigation(viewModel: MapViewModel) {
                 navController.popNavigate(Screen.Map.route)
             }
         }
-        composable(route = Screen.Map.route) { MapScreen(viewModel = viewModel) }
+        composable(route = Screen.Map.route) {
+            MapScreen(
+                viewModel = viewModel,
+                onSettingFlagsButtonClicked = onSettingFlagsButtonClicked
+            )
+        }
     }
 }
 

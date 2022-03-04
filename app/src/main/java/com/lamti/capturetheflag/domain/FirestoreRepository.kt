@@ -4,6 +4,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GameState
+import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Player
 import kotlinx.coroutines.flow.Flow
 
@@ -27,4 +28,7 @@ interface FirestoreRepository {
 
     suspend fun updatePlayerStatus(status: Player.Status)
 
+    suspend fun updateSafehousePosition(gameID: String, position: LatLng)
+
+    suspend fun updateGameStatus(gameID: String, state: ProgressState)
 }

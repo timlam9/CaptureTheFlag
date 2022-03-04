@@ -13,6 +13,7 @@ import androidx.fragment.app.viewModels
 import com.google.android.gms.maps.MapsInitializer
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.FragmentMapBinding
+import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
 import com.lamti.capturetheflag.presentation.ui.components.GameNavigation
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
 import com.lamti.capturetheflag.utils.EMPTY
@@ -47,7 +48,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             setKeepOnScreenCondition {
                 viewModel.getLastLocation()
                 viewModel.observePlayer()
-                viewModel.observeGameState(viewModel.player.value.gameDetails?.gameID ?: EMPTY)
+                if (viewModel.player.value.gameDetails != null && viewModel.player.value.gameDetails?.gameID != EMPTY)
+                    viewModel.observeGameState(viewModel.player.value.gameDetails!!.gameID )
                 return@setKeepOnScreenCondition viewModel.stayInSplashScreen.value
             }
         }
@@ -59,7 +61,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         mapComposeView.setContent {
             CaptureTheFlagTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
-                    GameNavigation(viewModel)
+                    GameNavigation(viewModel) {
+                        (requireActivity() as MainActivity).onSettingFlagsClicked()
+                    }
                 }
             }
         }

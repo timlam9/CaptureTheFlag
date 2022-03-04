@@ -47,7 +47,8 @@ enum class ProgressState {
 
     Idle,
     Created,
-    Preparing,
+    SettingGame,
+    SettingFlags,
     Started,
     Ended
 }

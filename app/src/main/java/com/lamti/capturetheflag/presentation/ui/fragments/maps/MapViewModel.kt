@@ -22,7 +22,6 @@ import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_BOUNDARIES_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
 import com.lamti.capturetheflag.presentation.ui.components.Screen
 import com.lamti.capturetheflag.presentation.ui.getRandomString
-import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.emptyPosition
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,7 +30,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
 
 @ExperimentalCoroutinesApi
 @HiltViewModel
@@ -44,8 +42,8 @@ class MapViewModel @Inject constructor(
     private val _stayInSplashScreen = mutableStateOf(true)
     val stayInSplashScreen: State<Boolean> = _stayInSplashScreen
 
-    private val _currentScreen: MutableState<Screen> = mutableStateOf(Screen.Menu)
-    val currentScreen: State<Screen> = _currentScreen
+    private val _initialScreen: MutableState<Screen> = mutableStateOf(Screen.Menu)
+    val initialScreen: State<Screen> = _initialScreen
 
     private val _currentPosition: MutableState<LatLng> = mutableStateOf(emptyPosition())
     val currentPosition: State<LatLng> = _currentPosition
@@ -56,6 +54,9 @@ class MapViewModel @Inject constructor(
     private val _player = mutableStateOf(Player.emptyPlayer())
     val player: State<Player> = _player
 
+    private val _isSafehouseDraggable = mutableStateOf(false)
+    val isSafehouseDraggable: State<Boolean> = _isSafehouseDraggable
+
     fun getLastLocation() {
         viewModelScope.launch {
             val location = locationRepository.awaitLastLocation()
@@ -65,7 +66,7 @@ class MapViewModel @Inject constructor(
 
     fun observePlayer() {
         firestoreRepository.observePlayer().onEach { updatedPlayer ->
-            _currentScreen.value = if (updatedPlayer.status == Player.Status.Playing) Screen.Map else Screen.Menu
+            _initialScreen.value = if (updatedPlayer.status == Player.Status.Playing) Screen.Map else Screen.Menu
             _player.value = updatedPlayer
             _stayInSplashScreen.value = false
         }.catch {
@@ -77,30 +78,30 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             val gameID = getRandomString(5)
             firestoreRepository.createGame(gameID, title, _currentPosition.value)
-            _gameState.value = _gameState.value.copy(state = ProgressState.Created)
+            observeGameState(gameID)
         }
     }
 
     fun observeGameState(gameID: String) {
         viewModelScope.launch {
             firestoreRepository.observeGameState(gameID).onEach { gameState ->
-                gameState.updateUiGameStateValue()
+                _gameState.value = gameState
                 gameState.handleGameStateEvents()
             }.launchIn(viewModelScope)
         }
     }
 
-    private fun GameState.updateUiGameStateValue() {
-        _gameState.value = this
-        Log.d("TAGARA", this.state.name)
-    }
-
     private fun GameState.handleGameStateEvents() = when (state) {
-        ProgressState.Idle -> Unit
-        ProgressState.Created -> Unit
-        ProgressState.Started -> onGameStarted()
-        ProgressState.Ended -> removeGeofencesListener()
-        ProgressState.Preparing -> Unit
+        ProgressState.Created -> _isSafehouseDraggable.value = true
+        ProgressState.Started -> {
+            _isSafehouseDraggable.value = false
+            onGameStarted()
+        }
+        ProgressState.Ended -> {
+            _isSafehouseDraggable.value = false
+            removeGeofencesListener()
+        }
+        else -> _isSafehouseDraggable.value = false
     }
 
     private fun GameState.onGameStarted() {
@@ -120,11 +121,10 @@ class MapViewModel @Inject constructor(
         geofencingHelper.removeGeofences()
     }
 
-    fun onStartGameClicked() {
+    fun onSetGameClicked() {
         viewModelScope.launch {
             firestoreRepository.updatePlayerStatus(Player.Status.Playing)
         }
-        observeGameState(_player.value.gameDetails?.gameID ?: EMPTY)
     }
 
     fun generateQrCode(text: String): Bitmap? {
@@ -142,6 +142,27 @@ class MapViewModel @Inject constructor(
             e.printStackTrace()
         }
         return null
+    }
+
+    fun updateSafeHousePosition(position: LatLng) {
+        val gameID = _player.value.gameDetails?.gameID ?: return
+        viewModelScope.launch {
+            firestoreRepository.updateSafehousePosition(gameID, position)
+        }
+    }
+
+    fun onSetFlagsClicked() {
+        val gameID = _player.value.gameDetails?.gameID ?: return
+        viewModelScope.launch {
+            firestoreRepository.updateGameStatus(gameID, ProgressState.SettingFlags)
+        }
+    }
+
+    fun onStartGameClicked() {
+        val gameID = _player.value.gameDetails?.gameID ?: return
+        viewModelScope.launch {
+            firestoreRepository.updateGameStatus(gameID, ProgressState.Started)
+        }
     }
 
     companion object {

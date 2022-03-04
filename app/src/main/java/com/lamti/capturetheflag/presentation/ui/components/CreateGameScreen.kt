@@ -36,7 +36,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
 @Composable
-fun CreateGameScreen(viewModel: MapViewModel, onStartGameClicked: () -> Unit) {
+fun CreateGameScreen(viewModel: MapViewModel, onSetGameClicked: () -> Unit) {
     var gameName by remember { mutableStateOf(EMPTY) }
     var isGameCreated by remember { mutableStateOf(false) }
     var title by remember { mutableStateOf(EMPTY) }
@@ -46,8 +46,8 @@ fun CreateGameScreen(viewModel: MapViewModel, onStartGameClicked: () -> Unit) {
     when (viewModel.gameState.value.state) {
         ProgressState.Created -> {
             isGameCreated = true
-            buttonName = stringResource(R.string.start)
             title = stringResource(R.string.game_created)
+            buttonName = stringResource(R.string.set_game)
         }
         else -> {
             title = stringResource(R.string.create_game)
@@ -78,7 +78,7 @@ fun CreateGameScreen(viewModel: MapViewModel, onStartGameClicked: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
-                    .weight(4f),
+                    .weight(3f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -103,7 +103,7 @@ fun CreateGameScreen(viewModel: MapViewModel, onStartGameClicked: () -> Unit) {
             ) {
                 gameName = it
             }
-            Spacer(modifier = Modifier.weight(2f))
+            Spacer(modifier = Modifier.weight(3f))
         }
         DefaultButton(
             modifier = Modifier.padding(20.dp),
@@ -112,8 +112,8 @@ fun CreateGameScreen(viewModel: MapViewModel, onStartGameClicked: () -> Unit) {
         ) {
             when {
                 isGameCreated -> {
-                    viewModel.onStartGameClicked()
-                    onStartGameClicked()
+                    viewModel.onSetGameClicked()
+                    onSetGameClicked()
                 }
                 else ->
                     viewModel.onCreateGameClicked(gameName)

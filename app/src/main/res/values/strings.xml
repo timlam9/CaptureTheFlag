@@ -17,6 +17,11 @@
     <string name="create_game">Create Game</string>
     <string name="type_title">type game title</string>
     <string name="start">Start</string>
+    <string name="start_game">Start Game</string>
     <string name="gr_code">QR Code</string>
     <string name="game_created">Game has been created</string>
+    <string name="instructions_set_safehouse">Long click on safehouse marker and drag to move it. Then single click on it to confirm it\'s location</string>
+    <string name="instructions_set_flags">Place your flag by tapping the flag button</string>
+    <string name="set_game">Set Game</string>
+    <string name="ready">Ready</string>
 </resources>

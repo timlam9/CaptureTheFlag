@@ -44,6 +44,41 @@ class FirestoreRepositoryImpl @Inject constructor(
         .toObject(PlayerRaw::class.java)
         ?.toPlayer()
 
+    override suspend fun updatePlayerStatus(status: Player.Status) {
+        val currentPlayer = getPlayer()
+        val updatedPlayer = currentPlayer!!.copy(status = status).toRaw()
+
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(userID)
+            .set(updatedPlayer)
+            .await()
+    }
+
+    override suspend fun registerUser(
+        email: String,
+        password: String,
+        username: String,
+        fullName: String,
+        onSuccess: () -> Unit
+    ) {
+        val uid = authenticationRepository.registerUser(email = email, password = password)
+        val newUser = Player(
+            userID = uid,
+            status = Player.Status.Online,
+            details = PlayerDetails(
+                fullName = fullName,
+                username = username,
+                email = email
+            ),
+            gameDetails = null
+        )
+        addPlayer(newUser)
+        onSuccess()
+    }
+
+    override suspend fun loginUser(email: String, password: String) = authenticationRepository.loginUser(email, password)
+
     override fun observePlayer(): Flow<Player> = callbackFlow {
         var snapshotListener: ListenerRegistration? = null
         try {
@@ -63,65 +98,7 @@ class FirestoreRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getGame(id: String): Game = firestore
-        .collection(COLLECTION_GAMES)
-        .document(id)
-        .get()
-        .await()
-        .toObject(GameRaw::class.java)
-        ?.toGame() ?: GameRaw().toGame()
-
-    override fun observeGameState(id: String): Flow<GameState> = callbackFlow {
-        var snapshotListener: ListenerRegistration? = null
-        try {
-            snapshotListener = firestore
-                .collection(COLLECTION_GAMES)
-                .document(id)
-                .addSnapshotListener { snapshot, e ->
-                    val state = snapshot?.toObject(GameRaw::class.java)?.toGame()?.gameState ?: return@addSnapshotListener
-                    trySend(state).isSuccess
-                }
-        } catch (e: Exception) {
-            Log.d("TAGARA", "error: ${e.message}")
-        }
-
-        awaitClose {
-            snapshotListener?.remove()
-        }
-    }
-
-    override suspend fun discoverFlag(flagFound: Flag): Boolean {
-        val player = getPlayer()
-        val gameID = player?.gameDetails?.gameID ?: return false
-        val team = player.gameDetails.team
-        val game = getGame(gameID)
-
-        val updatedGame = when {
-            team == Team.Red && flagFound == Flag.Green -> game.copy(
-                gameState = game.gameState.copy(
-                    greenFlag = game.gameState.greenFlag.copy(isDiscovered = true)
-                )
-            )
-            team == Team.Green && flagFound == Flag.Red -> game.copy(
-                gameState = game.gameState.copy(
-                    redFlag = game.gameState.redFlag.copy(isDiscovered = true)
-                )
-            )
-            else -> return false
-        }
-
-        val gameRaw = updatedGame.toRaw()
-
-        firestore.collection(COLLECTION_GAMES)
-            .document(gameID)
-            .set(gameRaw, SetOptions.merge())
-            .await()
-
-        return true
-    }
-
     override suspend fun createGame(id: String, title: String, position: LatLng): Game {
-
         val game = Game(
             gameID = id,
             title = title,
@@ -170,39 +147,91 @@ class FirestoreRepositoryImpl @Inject constructor(
         return game
     }
 
-    override suspend fun updatePlayerStatus(status: Player.Status) {
-        val currentPlayer = getPlayer()
-        val updatedPlayer = currentPlayer!!.copy(status = status).toRaw()
+    override suspend fun getGame(id: String): Game = firestore
+        .collection(COLLECTION_GAMES)
+        .document(id)
+        .get()
+        .await()
+        .toObject(GameRaw::class.java)
+        ?.toGame() ?: GameRaw().toGame()
+
+    override suspend fun updateGameStatus(gameID: String, state: ProgressState) {
+        val currentGame = getGame(gameID)
+        val updatedGame = currentGame.copy(
+            gameState = currentGame.gameState.copy(state = state)
+        ).toRaw()
 
         firestore
-            .collection(COLLECTION_PLAYERS)
-            .document(userID)
-            .set(updatedPlayer)
+            .collection(COLLECTION_GAMES)
+            .document(gameID)
+            .set(updatedGame)
             .await()
     }
 
-    override suspend fun loginUser(email: String, password: String) = authenticationRepository.loginUser(email, password)
+    override suspend fun updateSafehousePosition(gameID: String, position: LatLng) {
+        val currentGame = getGame(gameID)
+        val updatedGame = currentGame.copy(
+            gameState = currentGame.gameState.copy(
+                safehouse = currentGame.gameState.safehouse.copy(
+                    position = position
+                )
+            )
+        ).toRaw()
 
-    override suspend fun registerUser(
-        email: String,
-        password: String,
-        username: String,
-        fullName: String,
-        onSuccess: () -> Unit
-    ) {
-        val uid = authenticationRepository.registerUser(email = email, password = password)
-        val newUser = Player(
-            userID = uid,
-            status = Player.Status.Online,
-            details = PlayerDetails(
-                fullName = fullName,
-                username = username,
-                email = email
-            ),
-            gameDetails = null
-        )
-        addPlayer(newUser)
-        onSuccess()
+        firestore
+            .collection(COLLECTION_GAMES)
+            .document(gameID)
+            .set(updatedGame)
+            .await()
+    }
+
+    override fun observeGameState(id: String): Flow<GameState> = callbackFlow {
+        var snapshotListener: ListenerRegistration? = null
+        try {
+            snapshotListener = firestore
+                .collection(COLLECTION_GAMES)
+                .document(id)
+                .addSnapshotListener { snapshot, e ->
+                    val state = snapshot?.toObject(GameRaw::class.java)?.toGame()?.gameState ?: return@addSnapshotListener
+                    trySend(state).isSuccess
+                }
+        } catch (e: Exception) {
+            Log.d("TAGARA", "error: ${e.message}")
+        }
+
+        awaitClose {
+            snapshotListener?.remove()
+        }
+    }
+
+    override suspend fun discoverFlag(flagFound: Flag): Boolean {
+        val player = getPlayer()
+        val gameID = player?.gameDetails?.gameID ?: return false
+        val team = player.gameDetails.team
+        val game = getGame(gameID)
+
+        val updatedGame = when {
+            team == Team.Red && flagFound == Flag.Green -> game.copy(
+                gameState = game.gameState.copy(
+                    greenFlag = game.gameState.greenFlag.copy(isDiscovered = true)
+                )
+            )
+            team == Team.Green && flagFound == Flag.Red -> game.copy(
+                gameState = game.gameState.copy(
+                    redFlag = game.gameState.redFlag.copy(isDiscovered = true)
+                )
+            )
+            else -> return false
+        }
+
+        val gameRaw = updatedGame.toRaw()
+
+        firestore.collection(COLLECTION_GAMES)
+            .document(gameID)
+            .set(gameRaw, SetOptions.merge())
+            .await()
+
+        return true
     }
 
     private suspend fun addPlayer(newUser: Player) {

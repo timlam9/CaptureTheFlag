@@ -63,7 +63,7 @@ data class GameStateRaw(
     val safehouse: GeofenceObjectRaw = GeofenceObjectRaw(),
     val greenFlag: GeofenceObjectRaw = GeofenceObjectRaw(),
     val redFlag: GeofenceObjectRaw = GeofenceObjectRaw(),
-    val state: String = "Waiting"
+    val state: String = "Idle"
 ) {
 
     companion object {
@@ -84,9 +84,10 @@ private fun GeoPoint.toLatLng() = LatLng(latitude, longitude)
 private fun LatLng.toGeoPoint() = GeoPoint(latitude, longitude)
 
 private fun String.toState(): ProgressState = when (this) {
-    "Waiting" -> ProgressState.Created
-    "Idle" -> ProgressState.Idle
+    "Created" -> ProgressState.Created
+    "SettingGame" -> ProgressState.SettingGame
+    "SettingFlags" -> ProgressState.SettingFlags
     "Started" -> ProgressState.Started
     "Ended" -> ProgressState.Ended
-    else -> ProgressState.Preparing
+    else -> ProgressState.Idle
 }

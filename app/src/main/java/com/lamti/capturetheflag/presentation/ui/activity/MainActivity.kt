@@ -57,6 +57,22 @@ class MainActivity : AppCompatActivity() {
         FullScreenHelper.setFullScreenOnWindowFocusChanged(this, hasFocus)
     }
 
+    override fun onBackPressed() {
+        when(viewModel.currentScreen.value) {
+            FragmentScreen.Map -> {
+                super.onBackPressed()
+
+            }
+            FragmentScreen.Ar -> {
+                viewModel.onArBackPressed()
+            }
+        }
+    }
+
+    fun onSettingFlagsClicked() {
+        viewModel.onSettingFlagsClicked()
+    }
+
     private fun navigateToLoginIfNeededDuringSplashScreen() {
         installSplashScreen().apply {
             var isEnterFirstTime = false
