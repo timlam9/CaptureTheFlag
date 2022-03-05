@@ -55,9 +55,9 @@ fun MenuScreen(onNewGameClicked: () -> Unit, onAvailableGamesClicked: () -> Unit
 @Composable
 fun NewGameButton(modifier: Modifier = Modifier, onNewGameClicked: () -> Unit) {
     DefaultButton(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         text = stringResource(R.string.new_game),
-        color = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primaryVariant)
+        color = MaterialTheme.colors.primaryVariant
     ) {
         onNewGameClicked()
     }
@@ -66,9 +66,9 @@ fun NewGameButton(modifier: Modifier = Modifier, onNewGameClicked: () -> Unit) {
 @Composable
 fun AvailableGamesButton(modifier: Modifier = Modifier, onAvailableGamesClicked: () -> Unit) {
     DefaultButton(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         text = stringResource(R.string.available_games),
-        color = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.secondary)
+        color = MaterialTheme.colors.secondary
     ) {
         onAvailableGamesClicked()
     }
@@ -77,19 +77,18 @@ fun AvailableGamesButton(modifier: Modifier = Modifier, onAvailableGamesClicked:
 @Composable
 fun DefaultButton(
     modifier: Modifier = Modifier,
-    text: String = EMPTY,
+    text: String,
     textColor: Color = Color.White,
-    color: ButtonColors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primaryVariant),
+    color: Color = MaterialTheme.colors.primaryVariant,
     shape: Shape = MaterialTheme.shapes.small.copy(CornerSize(20)),
     onclick: () -> Unit
 ) {
     Button(
         onClick = onclick,
         modifier = modifier
-            .height(60.dp)
-            .fillMaxWidth(),
+            .height(60.dp),
         shape = shape,
-        colors = color
+        colors = ButtonDefaults.buttonColors(backgroundColor = color)
     ) {
         Text(
             text = text,

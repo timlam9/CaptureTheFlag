@@ -106,9 +106,9 @@ fun CreateGameScreen(viewModel: MapViewModel, onSetGameClicked: () -> Unit) {
             Spacer(modifier = Modifier.weight(3f))
         }
         DefaultButton(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(20.dp).fillMaxWidth(),
             text = buttonName,
-            color = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primaryVariant)
+            color = MaterialTheme.colors.primaryVariant
         ) {
             when {
                 isGameCreated -> {

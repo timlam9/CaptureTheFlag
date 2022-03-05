@@ -23,6 +23,7 @@ import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
 import com.lamti.capturetheflag.presentation.ui.components.Screen
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
 import com.lamti.capturetheflag.presentation.ui.getRandomString
+import com.lamti.capturetheflag.presentation.ui.toLatLng
 import com.lamti.capturetheflag.utils.emptyPosition
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -66,8 +67,7 @@ class MapViewModel @Inject constructor(
 
     fun getLastLocation() {
         viewModelScope.launch {
-            val location = locationRepository.awaitLastLocation()
-            _currentPosition.value = LatLng(location.latitude, location.longitude)
+            _currentPosition.value = locationRepository.awaitLastLocation().toLatLng()
         }
     }
 

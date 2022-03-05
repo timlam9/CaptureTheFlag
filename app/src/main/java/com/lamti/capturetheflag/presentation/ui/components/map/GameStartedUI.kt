@@ -1,6 +1,8 @@
 package com.lamti.capturetheflag.presentation.ui.components.map
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,6 +46,7 @@ import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
 import com.lamti.capturetheflag.presentation.ui.bitmapDescriptorFromVector
 import com.lamti.capturetheflag.presentation.ui.components.DefaultButton
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
+import com.lamti.capturetheflag.presentation.ui.style.DarkBlueOpacity
 import com.lamti.capturetheflag.presentation.ui.style.GreenOpacity
 import com.lamti.capturetheflag.presentation.ui.style.RedOpacity
 import com.lamti.capturetheflag.utils.EMPTY
@@ -59,12 +62,24 @@ fun GameStartedUI(
     onSettingFlagsButtonClicked: () -> Unit
 ) {
     val instructions: String = when (viewModel.gameState.value.state) {
-        ProgressState.Idle -> EMPTY
         ProgressState.Created -> stringResource(R.string.instructions_set_safehouse)
-        ProgressState.SettingGame -> EMPTY
-        ProgressState.SettingFlags -> stringResource(R.string.instructions_set_flags)
-        ProgressState.Started -> EMPTY
-        ProgressState.Ended -> EMPTY
+        ProgressState.SettingFlags -> {
+            if (
+                viewModel.player.value.gameDetails?.team == Team.Red &&
+                viewModel.gameState.value.redFlag.isPlaced &&
+                !viewModel.gameState.value.greenFlag.isPlaced
+            )
+                stringResource(R.string.wait_for_green_flag)
+            else if (
+                viewModel.player.value.gameDetails?.team == Team.Green &&
+                viewModel.gameState.value.greenFlag.isPlaced &&
+                !viewModel.gameState.value.redFlag.isPlaced
+            )
+                stringResource(R.string.wait_for_red_flag)
+            else
+                stringResource(R.string.instructions_set_flags)
+        }
+        else -> EMPTY
     }
 
     BoxWithConstraints(
@@ -75,29 +90,45 @@ fun GameStartedUI(
             uiSettings = uiSettings,
             viewModel = viewModel
         )
+        if (viewModel.gameState.value.state == ProgressState.SettingFlags) {
+            if (viewModel.player.value.gameDetails?.rank == GameDetails.Rank.Captain ||
+                viewModel.player.value.gameDetails?.rank == GameDetails.Rank.Leader
+            ) {
+                val showArButton = when (viewModel.player.value.gameDetails?.team) {
+                    Team.Red -> !viewModel.gameState.value.redFlag.isPlaced
+                    Team.Green -> !viewModel.gameState.value.greenFlag.isPlaced
+                    Team.Unknown -> false
+                    null -> false
+                }
+                if (showArButton) {
+                    FloatingActionButton(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 64.dp),
+                        onClick = onSettingFlagsButtonClicked,
+                        backgroundColor = MaterialTheme.colors.secondary,
+                        contentColor = Color.White
+                    ) {
+                        Icon(painterResource(id = R.drawable.ic_flag), EMPTY)
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(color = DarkBlueOpacity)
+                            .fillMaxSize()
+                    )
+                }
+            }
+        }
         if (viewModel.gameState.value.state != ProgressState.Started)
             InstructionsCard(instructions)
         if (viewModel.gameState.value.state == ProgressState.Created) {
             DefaultButton(
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
                 text = stringResource(id = R.string.ready)
             ) {
                 viewModel.onSetFlagsClicked()
-            }
-        }
-        if (viewModel.gameState.value.state == ProgressState.SettingFlags &&
-            (viewModel.player.value.gameDetails?.rank == GameDetails.Rank.Captain ||
-                    viewModel.player.value.gameDetails?.rank == GameDetails.Rank.Leader)
-        ) {
-            FloatingActionButton(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 64.dp),
-                onClick = onSettingFlagsButtonClicked,
-                backgroundColor = MaterialTheme.colors.secondary,
-                contentColor = Color.White
-            ) {
-                Icon(painterResource(id = R.drawable.ic_flag), EMPTY)
             }
         }
     }

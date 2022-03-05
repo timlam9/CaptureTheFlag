@@ -2,11 +2,13 @@ package com.lamti.capturetheflag.presentation.ui
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.location.Location
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
 import com.lamti.capturetheflag.utils.EMPTY
 
 fun Int.secondsToTime(): String {
@@ -37,12 +39,14 @@ fun Context.bitmapDescriptorFromVector(vectorResId: Int, @ColorRes tintColor: In
     return BitmapDescriptorFactory.fromBitmap(bm)
 }
 
-fun getRandomString(length: Int) : String {
+fun getRandomString(length: Int): String {
     val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
     return (1..length)
         .map { allowedChars.random() }
         .joinToString(EMPTY)
 }
+
+fun Location.toLatLng() = LatLng(latitude, longitude)
 
 const val DEFAULT_GAME_BOUNDARIES_RADIUS = 750f
 const val DEFAULT_SAFEHOUSE_RADIUS = 100f

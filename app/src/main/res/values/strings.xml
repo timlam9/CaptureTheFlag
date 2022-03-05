@@ -26,4 +26,8 @@
     <string name="ready">Ready</string>
     <string name="tap_to_place_flag">Tap to a discovered area to place your flag</string>
     <string name="search_flag">Search for opponent\'s flag</string>
+    <string name="cancel">Cancel</string>
+    <string name="wait_for_green_flag">Wait for green team to place her flag</string>
+    <string name="wait_for_red_flag">Wait for red team to place her flag</string>
+    <string name="game_started">Game has finaly been started, enjoy!</string>
 </resources>

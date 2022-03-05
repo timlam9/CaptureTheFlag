@@ -12,6 +12,8 @@ interface FirestoreRepository {
 
     fun observeGameState(id: String): Flow<GameState>
 
+    fun observeGame(): Flow<Game>
+
     fun observePlayer(): Flow<Player>
 
     suspend fun getPlayer(): Player?

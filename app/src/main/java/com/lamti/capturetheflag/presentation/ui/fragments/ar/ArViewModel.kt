@@ -1,9 +1,11 @@
 package com.lamti.capturetheflag.presentation.ui.fragments.ar
 
+import android.location.Location
 import android.util.Log
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.maps.model.LatLng
 import com.google.ar.core.Anchor
 import com.google.ar.core.Camera
 import com.google.ar.core.Config
@@ -18,33 +20,48 @@ import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 import com.lamti.capturetheflag.data.location.LocationRepository
-import com.lamti.capturetheflag.domain.anchors.CloudAnchor
+import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.anchors.CloudAnchorRepository
+import com.lamti.capturetheflag.domain.game.Game
+import com.lamti.capturetheflag.domain.game.Game.Companion.initialGame
+import com.lamti.capturetheflag.domain.game.GameState
+import com.lamti.capturetheflag.domain.game.ProgressState
+import com.lamti.capturetheflag.domain.player.Player
+import com.lamti.capturetheflag.domain.player.Player.Companion.emptyPlayer
+import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.arcore.helpers.CloudAnchorManager
 import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
 import com.lamti.capturetheflag.presentation.arcore.rendering.BackgroundRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PointCloudRenderer
+import com.lamti.capturetheflag.presentation.ui.toLatLng
 import com.lamti.capturetheflag.utils.EMPTY
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.IOException
+import java.util.Date
 import javax.inject.Inject
 
+@InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 val TAG: String = ArFragment::class.java.simpleName
 
+@InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @HiltViewModel
 class ArViewModel @Inject constructor(
     private val cloudAnchorRepository: CloudAnchorRepository,
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val firestoreRepository: FirestoreRepository
 ) : ViewModel() {
 
     private var _session: MutableStateFlow<Session?> = MutableStateFlow(null)
@@ -56,6 +73,12 @@ class ArViewModel @Inject constructor(
     private val _instructions = MutableStateFlow(EMPTY)
     val instructions: StateFlow<String> = _instructions.asStateFlow()
 
+    private val _player = mutableStateOf(emptyPlayer())
+    val player: State<Player> = _player
+
+    private val _game = MutableStateFlow(initialGame())
+    val game: StateFlow<Game> = _game.asStateFlow()
+
     private val cloudAnchorManager = CloudAnchorManager()
     private val backgroundRenderer: BackgroundRenderer = BackgroundRenderer()
     private val virtualObject: ObjectRenderer = ObjectRenderer()
@@ -65,8 +88,20 @@ class ArViewModel @Inject constructor(
 
     // Temporary matrix allocated here to reduce number of allocations for each frame.
     private val anchorMatrix = FloatArray(16)
-    private val andyColor = floatArrayOf(139.0f, 195.0f, 74.0f, 255.0f)
+    private var flagColor = floatArrayOf(139.0f, 195.0f, 74.0f, 255.0f)
     private var currentAnchor: Anchor? = null
+
+    init {
+        viewModelScope.launch {
+            _player.value = firestoreRepository.getPlayer() ?: emptyPlayer()
+            if(_player.value.gameDetails?.team == Team.Red) {
+                flagColor = floatArrayOf(255.0f, 0.0f, 0.0f, 255.0f)
+            }
+        }
+        firestoreRepository.observeGame().onEach {
+            _game.value = it
+        }.launchIn(viewModelScope)
+    }
 
     fun createSession(session: Session?) {
         if (_session.value == null) {
@@ -186,8 +221,8 @@ class ArViewModel @Inject constructor(
                 // Update and draw the model and its shadow.
                 virtualObject.updateModelMatrix(anchorMatrix, 1f)
                 virtualObjectShadow.updateModelMatrix(anchorMatrix, 1f)
-                virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, andyColor)
-                virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, andyColor)
+                virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, flagColor)
+                virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, flagColor)
             }
         } catch (t: Throwable) {
             // Avoid crashing the application due to unhandled exceptions.
@@ -205,7 +240,7 @@ class ArViewModel @Inject constructor(
     }
 
     @Synchronized
-    fun onClearButtonPressed() {
+    fun onCancelButtonPressed() {
         // Clear the anchor from the scene.
         cloudAnchorManager.clearListeners()
         currentAnchor = null
@@ -214,15 +249,20 @@ class ArViewModel @Inject constructor(
     @Synchronized
     fun onResolveObjects() {
         viewModelScope.launch {
-            val cloudAnchor: CloudAnchor = cloudAnchorRepository.getUploadedAnchor()
-            val anchorID = cloudAnchor.anchorID
 
-            if (anchorID.isEmpty()) {
+            val redFlagID = _game.value.gameState.redFlag.id
+            val greenFlagID = _game.value.gameState.greenFlag.id
+
+            if (redFlagID.isEmpty() || greenFlagID.isEmpty()) {
                 _message.update { "A Cloud Anchor ID was not found." }
                 return@launch
             }
 
-            cloudAnchorManager.resolveCloudAnchor(_session.value, anchorID) { anchor ->
+            cloudAnchorManager.resolveCloudAnchor(_session.value, redFlagID) { anchor ->
+                onResolvedAnchorAvailable(anchor)
+            }
+
+            cloudAnchorManager.resolveCloudAnchor(_session.value, greenFlagID) { anchor ->
                 onResolvedAnchorAvailable(anchor)
             }
         }
@@ -255,13 +295,35 @@ class ArViewModel @Inject constructor(
             val cloudAnchorId = anchor.cloudAnchorId
 
             viewModelScope.launch {
-                val currentPosition = locationRepository.awaitLastLocation()
-                cloudAnchorRepository.uploadAnchor(
-                    CloudAnchor(
-                        anchorID = cloudAnchorId,
-                        position = LatLng(currentPosition.latitude, currentPosition.longitude)
-                    )
-                )
+                val currentPosition: Location = locationRepository.awaitLastLocation()
+                val newGame = when (_player.value.gameDetails?.team) {
+                    Team.Red -> {
+                        val redFlag = _game.value.gameState.redFlag.copy(
+                            id = cloudAnchorId,
+                            position = currentPosition.toLatLng(),
+                            isPlaced = false,
+                            isDiscovered = false,
+                            timestamp = Date(),
+                        )
+                        val newGameState: GameState = _game.value.gameState.copy(redFlag = redFlag)
+                        _game.value.copy(gameState = newGameState)
+                    }
+                    Team.Green -> {
+                        val greenFlag = _game.value.gameState.greenFlag.copy(
+                            id = cloudAnchorId,
+                            position = currentPosition.toLatLng(),
+                            isPlaced = false,
+                            isDiscovered = false,
+                            timestamp = Date(),
+                        )
+                        val newGameState: GameState = _game.value.gameState.copy(greenFlag = greenFlag)
+                        _game.value.copy(gameState = newGameState)
+                    }
+                    Team.Unknown -> return@launch
+                    null -> return@launch
+                }
+
+                cloudAnchorRepository.uploadGeofenceObject(newGame)
             }
             _message.update { "Cloud Anchor Hosted. ID: $cloudAnchorId" }
             currentAnchor = anchor
@@ -291,6 +353,34 @@ class ArViewModel @Inject constructor(
 
     fun setInstructions(text: String) {
         _instructions.update { text }
+    }
+
+    fun onOkButtonPressed() {
+        viewModelScope.launch {
+            val newGame = when (_player.value.gameDetails?.team) {
+                Team.Red -> {
+                    val redFlag = _game.value.gameState.redFlag.copy(isPlaced = true)
+                    val newGameState: GameState = _game.value.gameState.copy(redFlag = redFlag)
+                    _game.value.copy(gameState = newGameState)
+                }
+                Team.Green -> {
+                    val greenFlag = _game.value.gameState.greenFlag.copy(isPlaced = true)
+                    val newGameState: GameState = _game.value.gameState.copy(redFlag = greenFlag)
+                    _game.value.copy(gameState = newGameState)
+                }
+                Team.Unknown -> return@launch
+                null -> return@launch
+            }
+
+            val latestGameState = if (newGame.gameState.redFlag.isPlaced && newGame.gameState.greenFlag.isPlaced) {
+                newGame.gameState.copy(state = ProgressState.Started)
+            } else {
+                newGame.gameState
+            }
+            val latestGame = newGame.copy(gameState = latestGameState)
+
+            cloudAnchorRepository.uploadGeofenceObject(latestGame)
+        }
     }
 
 }

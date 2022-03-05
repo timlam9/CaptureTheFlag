@@ -12,5 +12,6 @@ val DarkBlue = Color(0xFF000813)
 val LightBlue = Color(0xFFE0F7FA)
 
 val BlueOpacity = Color(0x28303F9F)
+val DarkBlueOpacity = Color(0xCC000813)
 val GreenOpacity = Color(0x29388E3C)
 val RedOpacity = Color(0x29D32F2F)

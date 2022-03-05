@@ -8,9 +8,14 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -37,14 +42,18 @@ import com.lamti.capturetheflag.presentation.arcore.helpers.TapHelper
 import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
 import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
+import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
+import com.lamti.capturetheflag.presentation.ui.components.DefaultButton
 import com.lamti.capturetheflag.presentation.ui.components.map.InstructionsCard
 import com.lamti.capturetheflag.utils.get
 import com.lamti.capturetheflag.utils.myAppPreferences
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
+@InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @AndroidEntryPoint
 class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
@@ -105,6 +114,24 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
                 Column {
                     InstructionsCard(instructions = instructions)
                     InstructionsCard(instructions = message)
+                    Spacer(modifier = Modifier.weight(3.5f))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        DefaultButton(text = getString(R.string.cancel)) {
+                            viewModel.onCancelButtonPressed()
+                        }
+                        DefaultButton(
+                            text = getString(R.string.ok),
+                            color = MaterialTheme.colors.secondary
+                        ) {
+                            viewModel.onOkButtonPressed()
+                            (requireActivity() as MainActivity).onBackPressed()
+                        }
+                    }
                 }
             }
         }

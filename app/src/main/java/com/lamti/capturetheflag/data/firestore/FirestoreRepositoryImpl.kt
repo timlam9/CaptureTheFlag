@@ -26,6 +26,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 import javax.inject.Inject
 
 @ExperimentalCoroutinesApi
@@ -106,17 +107,23 @@ class FirestoreRepositoryImpl @Inject constructor(
                 safehouse = GeofenceObject(
                     position = position,
                     isPlaced = true,
-                    isDiscovered = true
+                    isDiscovered = true,
+                    id = EMPTY,
+                    timestamp = Date()
                 ),
                 greenFlag = GeofenceObject(
                     position = emptyPosition(),
                     isPlaced = false,
-                    isDiscovered = false
+                    isDiscovered = false,
+                    id = EMPTY,
+                    timestamp = Date()
                 ),
                 redFlag = GeofenceObject(
                     position = emptyPosition(),
                     isPlaced = false,
-                    isDiscovered = false
+                    isDiscovered = false,
+                    id = EMPTY,
+                    timestamp = Date()
                 ),
                 state = ProgressState.Created
             )
@@ -197,6 +204,28 @@ class FirestoreRepositoryImpl @Inject constructor(
                 }
         } catch (e: Exception) {
             Log.d("TAGARA", "error: ${e.message}")
+        }
+
+        awaitClose {
+            snapshotListener?.remove()
+        }
+    }
+
+    override fun observeGame(): Flow<Game> = callbackFlow {
+        var snapshotListener: ListenerRegistration? = null
+        try {
+            val player = getPlayer()
+            val gameID = player?.gameDetails?.gameID ?: EMPTY
+
+            snapshotListener = firestore
+                .collection(COLLECTION_GAMES)
+                .document(gameID)
+                .addSnapshotListener { snapshot, e ->
+                    val state = snapshot?.toObject(GameRaw::class.java)?.toGame() ?: return@addSnapshotListener
+                    trySend(state).isSuccess
+                }
+        } catch (e: Exception) {
+            Log.d("TAGARA", "Game error: ${e.message}")
         }
 
         awaitClose {
