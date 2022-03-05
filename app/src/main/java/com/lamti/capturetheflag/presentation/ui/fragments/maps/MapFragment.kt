@@ -10,16 +10,22 @@ import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.MapsInitializer
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.FragmentMapBinding
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
 import com.lamti.capturetheflag.presentation.ui.components.GameNavigation
+import com.lamti.capturetheflag.presentation.ui.fragments.ar.AR_MODE_KEY
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
 import com.lamti.capturetheflag.utils.EMPTY
+import com.lamti.capturetheflag.utils.myAppPreferences
+import com.lamti.capturetheflag.utils.set
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
@@ -35,7 +41,14 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         binding = FragmentMapBinding.bind(view)
 
         initializeDataOnSplashScreen()
+        observeArMode()
         setupMapView()
+    }
+
+    private fun observeArMode() {
+        lifecycleScope.launchWhenStarted {
+            viewModel.arMode.onEach { requireActivity().myAppPreferences[AR_MODE_KEY] = it.name }.launchIn(lifecycleScope)
+        }
     }
 
     override fun onDestroyView() {

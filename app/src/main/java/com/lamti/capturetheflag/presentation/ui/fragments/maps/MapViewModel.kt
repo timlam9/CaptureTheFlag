@@ -21,10 +21,14 @@ import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_BOUNDARIES_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
 import com.lamti.capturetheflag.presentation.ui.components.Screen
+import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
 import com.lamti.capturetheflag.presentation.ui.getRandomString
 import com.lamti.capturetheflag.utils.emptyPosition
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -56,6 +60,9 @@ class MapViewModel @Inject constructor(
 
     private val _isSafehouseDraggable = mutableStateOf(false)
     val isSafehouseDraggable: State<Boolean> = _isSafehouseDraggable
+
+    private val _arMode = MutableStateFlow(ArMode.Placer)
+    val arMode: StateFlow<ArMode> = _arMode.asStateFlow()
 
     fun getLastLocation() {
         viewModelScope.launch {
@@ -93,8 +100,13 @@ class MapViewModel @Inject constructor(
 
     private fun GameState.handleGameStateEvents() = when (state) {
         ProgressState.Created -> _isSafehouseDraggable.value = true
+        ProgressState.SettingFlags -> {
+            _isSafehouseDraggable.value = false
+            _arMode.value = ArMode.Placer
+        }
         ProgressState.Started -> {
             _isSafehouseDraggable.value = false
+            _arMode.value = ArMode.Scanner
             onGameStarted()
         }
         ProgressState.Ended -> {

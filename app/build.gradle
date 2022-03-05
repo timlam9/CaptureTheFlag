@@ -127,6 +127,9 @@ dependencies {
 
     // Zxing
     implementation 'com.google.zxing:core:3.3.3'
+
+    // Gson
+    implementation 'com.google.code.gson:gson:2.8.7'
 }
 
 secrets {

@@ -3,6 +3,7 @@ package com.lamti.capturetheflag.presentation.ui.fragments.ar
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.maps.model.LatLng
 import com.google.ar.core.Anchor
 import com.google.ar.core.Camera
 import com.google.ar.core.Config
@@ -16,6 +17,7 @@ import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
+import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.domain.anchors.CloudAnchor
 import com.lamti.capturetheflag.domain.anchors.CloudAnchorRepository
 import com.lamti.capturetheflag.presentation.arcore.helpers.CloudAnchorManager
@@ -26,6 +28,7 @@ import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PointCloudRenderer
 import com.lamti.capturetheflag.utils.EMPTY
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,25 +37,26 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
 
+@ExperimentalCoroutinesApi
 val TAG: String = ArFragment::class.java.simpleName
 
+@ExperimentalCoroutinesApi
 @HiltViewModel
-class ArViewModel @Inject constructor(private val cloudAnchorRepository: CloudAnchorRepository) : ViewModel() {
+class ArViewModel @Inject constructor(
+    private val cloudAnchorRepository: CloudAnchorRepository,
+    private val locationRepository: LocationRepository
+) : ViewModel() {
 
     private var _session: MutableStateFlow<Session?> = MutableStateFlow(null)
     val session: StateFlow<Session?> = _session
 
-    private val _message = MutableStateFlow("Tap to a discovered area to place your flag")
+    private val _message = MutableStateFlow(EMPTY)
     val message: StateFlow<String> = _message.asStateFlow()
 
-    private val _resolveButtonEnabled = MutableStateFlow(true)
-    val resolveButtonEnabled: StateFlow<Boolean> = _resolveButtonEnabled.asStateFlow()
-
-    private val _clearButtonEnabled = MutableStateFlow(true)
-    val clearButtonEnabled: StateFlow<Boolean> = _clearButtonEnabled.asStateFlow()
+    private val _instructions = MutableStateFlow(EMPTY)
+    val instructions: StateFlow<String> = _instructions.asStateFlow()
 
     private val cloudAnchorManager = CloudAnchorManager()
-
     private val backgroundRenderer: BackgroundRenderer = BackgroundRenderer()
     private val virtualObject: ObjectRenderer = ObjectRenderer()
     private val virtualObjectShadow: ObjectRenderer = ObjectRenderer()
@@ -204,12 +208,11 @@ class ArViewModel @Inject constructor(private val cloudAnchorRepository: CloudAn
     fun onClearButtonPressed() {
         // Clear the anchor from the scene.
         cloudAnchorManager.clearListeners()
-        _resolveButtonEnabled.update { true }
         currentAnchor = null
     }
 
     @Synchronized
-    fun onResolveButtonPressed() {
+    fun onResolveObjects() {
         viewModelScope.launch {
             val cloudAnchor: CloudAnchor = cloudAnchorRepository.getUploadedAnchor()
             val anchorID = cloudAnchor.anchorID
@@ -219,7 +222,6 @@ class ArViewModel @Inject constructor(private val cloudAnchorRepository: CloudAn
                 return@launch
             }
 
-            _resolveButtonEnabled.update { false }
             cloudAnchorManager.resolveCloudAnchor(_session.value, anchorID) { anchor ->
                 onResolvedAnchorAvailable(anchor)
             }
@@ -252,7 +254,15 @@ class ArViewModel @Inject constructor(private val cloudAnchorRepository: CloudAn
         if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
             val cloudAnchorId = anchor.cloudAnchorId
 
-            viewModelScope.launch { cloudAnchorRepository.uploadAnchor(CloudAnchor(cloudAnchorId)) }
+            viewModelScope.launch {
+                val currentPosition = locationRepository.awaitLastLocation()
+                cloudAnchorRepository.uploadAnchor(
+                    CloudAnchor(
+                        anchorID = cloudAnchorId,
+                        position = LatLng(currentPosition.latitude, currentPosition.longitude)
+                    )
+                )
+            }
             _message.update { "Cloud Anchor Hosted. ID: $cloudAnchorId" }
             currentAnchor = anchor
         } else {
@@ -268,17 +278,19 @@ class ArViewModel @Inject constructor(private val cloudAnchorRepository: CloudAn
             currentAnchor = anchor
         } else {
             _message.update { "Error while resolving anchor with id: ${anchor.cloudAnchorId}. Error: $cloudState" }
-            _resolveButtonEnabled.update { true }
         }
     }
 
     private fun sendAnchorToCloud() {
         // host cloud anchor
-        _resolveButtonEnabled.update { false }
         _message.update { "Now hosting anchor..." }
         cloudAnchorManager.hostCloudAnchor(_session.value, currentAnchor) { anchor: Anchor? ->
             onHostedAnchorAvailable(anchor!!)
         }
+    }
+
+    fun setInstructions(text: String) {
+        _instructions.update { text }
     }
 
 }

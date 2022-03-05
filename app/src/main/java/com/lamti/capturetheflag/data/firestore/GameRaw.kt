@@ -77,11 +77,11 @@ data class GameStateRaw(
     }
 }
 
-private val emptyGeoPoint: GeoPoint = GeoPoint(0.0, 0.0)
+val emptyGeoPoint: GeoPoint = GeoPoint(0.0, 0.0)
 
-private fun GeoPoint.toLatLng() = LatLng(latitude, longitude)
+fun GeoPoint.toLatLng() = LatLng(latitude, longitude)
 
-private fun LatLng.toGeoPoint() = GeoPoint(latitude, longitude)
+fun LatLng.toGeoPoint() = GeoPoint(latitude, longitude)
 
 private fun String.toState(): ProgressState = when (this) {
     "Created" -> ProgressState.Created

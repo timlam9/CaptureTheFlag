@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,7 +22,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
@@ -38,12 +38,14 @@ import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
 import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.ui.components.map.InstructionsCard
+import com.lamti.capturetheflag.utils.get
+import com.lamti.capturetheflag.utils.myAppPreferences
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
+@ExperimentalCoroutinesApi
 @AndroidEntryPoint
 class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
 
@@ -55,20 +57,37 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
     private var tapHelper: TapHelper? = null
 
     private var installRequested = false
+    private var arMode = ArMode.Scanner
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding = FragmentArBinding.bind(view)
 
+        setArMode()
         setupUI()
         setupHelpers()
         setupSurfaceView()
-        setupListeners()
-        collectFlows()
+    }
+
+    private fun setArMode() {
+        val mode = requireActivity().myAppPreferences.get(AR_MODE_KEY, ArMode.Scanner.name)
+
+        arMode = when (mode) {
+            ArMode.Placer.name -> {
+                viewModel.setInstructions(getString(R.string.tap_to_place_flag))
+                ArMode.Placer
+            }
+            else -> {
+                viewModel.setInstructions(getString(R.string.search_flag))
+                viewModel.onResolveObjects()
+                ArMode.Scanner
+            }
+        }
     }
 
     private fun setupUI() = binding?.run {
         topView.setContent {
+            val instructions by viewModel.instructions.collectAsState()
             val message by viewModel.message.collectAsState()
 
             Box(modifier = Modifier.fillMaxSize()) {
@@ -83,7 +102,10 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
                         }
                     }
                 )
-                InstructionsCard(instructions = message)
+                Column {
+                    InstructionsCard(instructions = instructions)
+                    InstructionsCard(instructions = message)
+                }
             }
         }
     }
@@ -111,28 +133,6 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
         surfaceView.setRenderer(this@ArFragment)
         surfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
         surfaceView.setWillNotDraw(false)
-    }
-
-    private fun setupListeners() = binding?.apply {
-        resolveButton.setOnClickListener {
-            viewModel.onResolveButtonPressed()
-        }
-        clearButton.setOnClickListener {
-            viewModel.onClearButtonPressed()
-        }
-    }
-
-    private fun collectFlows() {
-        viewModel.resolveButtonEnabled.onEach(::setResolveButtonActive).launchIn(lifecycleScope)
-        viewModel.clearButtonEnabled.onEach(::setClearButtonActive).launchIn(lifecycleScope)
-    }
-
-    private fun setResolveButtonActive(active: Boolean) {
-        binding?.resolveButton?.isEnabled = active
-    }
-
-    private fun setClearButtonActive(active: Boolean) {
-        binding?.clearButton?.isEnabled = active
     }
 
     override fun onResume() {
@@ -231,7 +231,7 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
             // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
             trackingStateHelper!!.updateKeepScreenOnFlag(camera.trackingState)
         }) { frame, camera ->
-            handleTap(frame, camera)
+            if (arMode == ArMode.Placer) handleTap(frame, camera)
         }
     }
 

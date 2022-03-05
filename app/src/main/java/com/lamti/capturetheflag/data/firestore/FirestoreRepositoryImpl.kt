@@ -245,7 +245,7 @@ class FirestoreRepositoryImpl @Inject constructor(
     companion object {
 
         private const val COLLECTION_PLAYERS = "players"
-        private const val COLLECTION_GAMES = "games"
+        const val COLLECTION_GAMES = "games"
     }
 
 }

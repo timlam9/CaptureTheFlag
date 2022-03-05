@@ -1,7 +1,11 @@
 package com.lamti.capturetheflag.data.anchors
 
+import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.ServerTimestamp
+import com.lamti.capturetheflag.data.firestore.emptyGeoPoint
+import com.lamti.capturetheflag.data.firestore.toGeoPoint
+import com.lamti.capturetheflag.data.firestore.toLatLng
 import com.lamti.capturetheflag.domain.anchors.CloudAnchor
 import com.lamti.capturetheflag.utils.EMPTY
 import java.util.Date
@@ -10,19 +14,22 @@ import java.util.Date
 data class CloudAnchorRaw(
     val anchorID: String = EMPTY,
     @ServerTimestamp
-    val timestamp: Date = Date()
+    val timestamp: Date = Date(),
+    val position: GeoPoint = emptyGeoPoint
 ) {
 
     fun toCloudAnchor() = CloudAnchor(
         anchorID = anchorID,
-        timestamp = timestamp
+        timestamp = timestamp,
+        position = position.toLatLng()
     )
 
     companion object {
 
         fun CloudAnchor.toRaw() = CloudAnchorRaw(
             anchorID = anchorID,
-            timestamp = timestamp
+            timestamp = timestamp,
+            position = position.toGeoPoint()
         )
 
     }
