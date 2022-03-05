@@ -4,8 +4,21 @@ import android.annotation.SuppressLint
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -20,11 +33,11 @@ import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.FragmentArBinding
 import com.lamti.capturetheflag.presentation.arcore.helpers.CameraPermissionHelper
 import com.lamti.capturetheflag.presentation.arcore.helpers.DisplayRotationHelper
-import com.lamti.capturetheflag.presentation.arcore.helpers.SnackbarHelper
 import com.lamti.capturetheflag.presentation.arcore.helpers.TapHelper
 import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
 import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
+import com.lamti.capturetheflag.presentation.ui.components.map.InstructionsCard
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -37,7 +50,6 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
     private var binding: FragmentArBinding? = null
     private val viewModel: ArViewModel by viewModels()
 
-    private val messageSnackbarHelper: SnackbarHelper = SnackbarHelper()
     private var displayRotationHelper: DisplayRotationHelper? = null
     private var trackingStateHelper: TrackingStateHelper? = null
     private var tapHelper: TapHelper? = null
@@ -48,13 +60,36 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
         super.onViewCreated(view, savedInstanceState)
         binding = FragmentArBinding.bind(view)
 
+        setupUI()
         setupHelpers()
         setupSurfaceView()
         setupListeners()
         collectFlows()
     }
 
+    private fun setupUI() = binding?.run {
+        topView.setContent {
+            val message by viewModel.message.collectAsState()
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                Canvas(
+                    modifier = Modifier.fillMaxSize(),
+                    onDraw = {
+                        val circlePath = Path().apply {
+                            addOval(Rect(center, size.minDimension / 2))
+                        }
+                        clipPath(circlePath, clipOp = ClipOp.Difference) {
+                            drawRect(SolidColor(Color.Black.copy(alpha = 0.8f)))
+                        }
+                    }
+                )
+                InstructionsCard(instructions = message)
+            }
+        }
+    }
+
     override fun onDestroyView() {
+        Log.d("TAGARA", "on destroy ")
         binding = null
         super.onDestroyView()
     }
@@ -88,13 +123,8 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
     }
 
     private fun collectFlows() {
-        viewModel.message.onEach(::showSnackbarMessage).launchIn(lifecycleScope)
         viewModel.resolveButtonEnabled.onEach(::setResolveButtonActive).launchIn(lifecycleScope)
         viewModel.clearButtonEnabled.onEach(::setClearButtonActive).launchIn(lifecycleScope)
-    }
-
-    private fun showSnackbarMessage(message: String) {
-        messageSnackbarHelper.showMessage(requireActivity(), message)
     }
 
     private fun setResolveButtonActive(active: Boolean) {
@@ -106,6 +136,7 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
     }
 
     override fun onResume() {
+        Log.d("TAGARA", "on resume")
         super.onResume()
 
         when (ArCoreApk.getInstance().requestInstall(requireActivity(), !installRequested)) {
@@ -132,6 +163,7 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
     }
 
     override fun onPause() {
+        Log.d("TAGARA", "on pause")
         super.onPause()
 
         viewModel.pauseSession()
@@ -161,6 +193,7 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
 
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
+        Log.d("TAGARA", "on surface created")
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f)
         viewModel.prepareRenderingObjects { backgroundRenderer, planeRenderer, pointCloudRenderer, virtualObject, virtualObjectShadow ->
             // Create the texture and pass it to ARCore session to be filled during update().
@@ -178,11 +211,13 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
+        Log.d("TAGAR", "on surface changed")
         displayRotationHelper!!.onSurfaceChanged(width, height)
         GLES20.glViewport(0, 0, width, height)
     }
 
     override fun onDrawFrame(gl: GL10?) {
+        Log.d("TAGAR", "on draw frame")
         // Clear screen to notify driver it should not load any pixels from previous frame.
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
         if (viewModel.session.value == null) return

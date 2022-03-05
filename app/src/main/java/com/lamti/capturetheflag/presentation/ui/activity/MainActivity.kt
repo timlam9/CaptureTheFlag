@@ -59,13 +59,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         when(viewModel.currentScreen.value) {
-            FragmentScreen.Map -> {
-                super.onBackPressed()
-
-            }
-            FragmentScreen.Ar -> {
-                viewModel.onArBackPressed()
-            }
+            FragmentScreen.Map -> super.onBackPressed()
+            FragmentScreen.Ar -> viewModel.onArBackPressed()
         }
     }
 

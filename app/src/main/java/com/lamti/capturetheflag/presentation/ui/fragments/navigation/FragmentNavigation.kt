@@ -17,7 +17,7 @@ fun FragmentManager.navigateToScreen(screen: FragmentScreen) {
     when (screen) {
         FragmentScreen.Map -> {
             show(TAG_FRAGMENT_MAP)
-            show(TAG_FRAGMENT_AR, false)
+            show(TAG_FRAGMENT_AR, show = false, destroy = true)
         }
         FragmentScreen.Ar -> {
             show(TAG_FRAGMENT_MAP, false)
@@ -28,7 +28,7 @@ fun FragmentManager.navigateToScreen(screen: FragmentScreen) {
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
-private fun FragmentManager.show(tag: String, show: Boolean = true) = commit {
+private fun FragmentManager.show(tag: String, show: Boolean = true, destroy: Boolean = false) = commit {
     if (findFragmentByTag(tag) == null && !show) return
     setReorderingAllowed(true)
 
@@ -36,7 +36,7 @@ private fun FragmentManager.show(tag: String, show: Boolean = true) = commit {
         true -> createFragment(tag)
         false -> when (show) {
             true -> show(findFragmentByTag(tag)!!)
-            false -> hide(findFragmentByTag(tag)!!)
+            false -> if (destroy) remove(findFragmentByTag(tag)!!) else hide(findFragmentByTag(tag)!!)
         }
     }
 }

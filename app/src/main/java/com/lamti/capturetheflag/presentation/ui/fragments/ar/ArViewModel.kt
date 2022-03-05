@@ -42,7 +42,7 @@ class ArViewModel @Inject constructor(private val cloudAnchorRepository: CloudAn
     private var _session: MutableStateFlow<Session?> = MutableStateFlow(null)
     val session: StateFlow<Session?> = _session
 
-    private val _message = MutableStateFlow(EMPTY)
+    private val _message = MutableStateFlow("Tap to a discovered area to place your flag")
     val message: StateFlow<String> = _message.asStateFlow()
 
     private val _resolveButtonEnabled = MutableStateFlow(true)
