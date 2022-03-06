@@ -16,14 +16,21 @@ import kotlinx.coroutines.InternalCoroutinesApi
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @Composable
-fun MapScreen(viewModel: MapViewModel, onSettingFlagsButtonClicked: () -> Unit) {
+fun MapScreen(
+    viewModel: MapViewModel,
+    enteredGeofenceId: String,
+    onSettingFlagsButtonClicked: () -> Unit,
+    onArScannerButtonClicked: () -> Unit
+) {
     val (mapProperties, uiSettings) = setupMap()
 
     GameStartedUI(
         mapProperties = mapProperties,
         uiSettings = uiSettings,
         viewModel = viewModel,
+        enteredGeofenceId = enteredGeofenceId,
         onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
+        onArScannerButtonClicked = onArScannerButtonClicked,
     )
 }
 

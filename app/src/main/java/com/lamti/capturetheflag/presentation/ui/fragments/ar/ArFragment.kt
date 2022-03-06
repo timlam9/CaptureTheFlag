@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ClipOp
@@ -98,6 +100,7 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
         topView.setContent {
             val instructions by viewModel.instructions.collectAsState()
             val message by viewModel.message.collectAsState()
+            val arModeState by remember { mutableStateOf(arMode) }
 
             Box(modifier = Modifier.fillMaxSize()) {
                 Canvas(
@@ -121,15 +124,17 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
                             .weight(1f),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        DefaultButton(text = getString(R.string.cancel)) {
-                            viewModel.onCancelButtonPressed()
-                        }
-                        DefaultButton(
-                            text = getString(R.string.ok),
-                            color = MaterialTheme.colors.secondary
-                        ) {
-                            viewModel.onOkButtonPressed()
-                            (requireActivity() as MainActivity).onBackPressed()
+                        if (arModeState == ArMode.Placer) {
+                            DefaultButton(text = getString(R.string.cancel)) {
+                                viewModel.onCancelButtonPressed()
+                            }
+                            DefaultButton(
+                                text = getString(R.string.ok),
+                                color = MaterialTheme.colors.secondary
+                            ) {
+                                viewModel.onOkButtonPressed()
+                                (requireActivity() as MainActivity).onBackPressed()
+                            }
                         }
                     }
                 }

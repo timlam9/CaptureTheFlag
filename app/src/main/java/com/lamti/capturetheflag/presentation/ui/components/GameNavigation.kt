@@ -14,7 +14,12 @@ import kotlinx.coroutines.InternalCoroutinesApi
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @Composable
-fun GameNavigation(viewModel: MapViewModel, onSettingFlagsButtonClicked: () -> Unit) {
+fun GameNavigation(
+    viewModel: MapViewModel,
+    enteredGeofenceId: String,
+    onSettingFlagsButtonClicked: () -> Unit,
+    onArScannerButtonClicked: () -> Unit,
+) {
     val navController = rememberNavController()
 
     NavHost(
@@ -37,7 +42,9 @@ fun GameNavigation(viewModel: MapViewModel, onSettingFlagsButtonClicked: () -> U
         composable(route = Screen.Map.route) {
             MapScreen(
                 viewModel = viewModel,
-                onSettingFlagsButtonClicked = onSettingFlagsButtonClicked
+                enteredGeofenceId = enteredGeofenceId,
+                onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
+                onArScannerButtonClicked = onArScannerButtonClicked
             )
         }
     }

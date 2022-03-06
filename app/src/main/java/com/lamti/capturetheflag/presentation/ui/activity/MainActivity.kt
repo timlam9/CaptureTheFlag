@@ -2,7 +2,9 @@ package com.lamti.capturetheflag.presentation.ui.activity
 
 import android.Manifest
 import android.annotation.TargetApi
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
@@ -12,6 +14,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.lamti.capturetheflag.R
+import com.lamti.capturetheflag.data.location.geofences.ENTER_GEOFENCE_KEY
+import com.lamti.capturetheflag.data.location.geofences.GEOFENCE_BROADCAST_RECEIVER_FILTER
+import com.lamti.capturetheflag.data.location.geofences.GeofenceBroadcastReceiver
 import com.lamti.capturetheflag.data.location.service.LocationServiceCommand
 import com.lamti.capturetheflag.data.location.service.LocationServiceImpl
 import com.lamti.capturetheflag.data.location.service.LocationServiceImpl.Companion.SERVICE_COMMAND
@@ -19,14 +24,21 @@ import com.lamti.capturetheflag.data.location.service.isLocationEnabledOrNot
 import com.lamti.capturetheflag.data.location.service.showAlertLocation
 import com.lamti.capturetheflag.databinding.ActivityMainBinding
 import com.lamti.capturetheflag.presentation.arcore.helpers.FullScreenHelper
+import com.lamti.capturetheflag.presentation.ui.fragments.ar.AR_MODE_KEY
+import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.FragmentScreen
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.navigateToScreen
 import com.lamti.capturetheflag.presentation.ui.login.LoginActivity
+import com.lamti.capturetheflag.utils.EMPTY
+import com.lamti.capturetheflag.utils.myAppPreferences
+import com.lamti.capturetheflag.utils.set
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+
 
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
@@ -45,6 +57,7 @@ class MainActivity : AppCompatActivity() {
 
         collectScreenFlow()
         startLocationUpdates()
+        registerReceiver(broadcastReceiver, IntentFilter(GEOFENCE_BROADCAST_RECEIVER_FILTER))
     }
 
     override fun onDestroy() {
@@ -58,7 +71,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        when(viewModel.currentScreen.value) {
+        when (viewModel.currentScreen.value) {
             FragmentScreen.Map -> super.onBackPressed()
             FragmentScreen.Ar -> viewModel.onArBackPressed()
         }
@@ -66,6 +79,20 @@ class MainActivity : AppCompatActivity() {
 
     fun onSettingFlagsClicked() {
         viewModel.onSettingFlagsClicked()
+    }
+
+    fun onArScannerButtonClicked() {
+        myAppPreferences[AR_MODE_KEY] = ArMode.Scanner
+        viewModel.onArScannerButtonClicked()
+    }
+
+    var geofenceIdFLow = MutableStateFlow(EMPTY)
+    private var broadcastReceiver: GeofenceBroadcastReceiver = object : GeofenceBroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            super.onReceive(context, intent)
+
+            geofenceIdFLow.value = intent?.getStringExtra(ENTER_GEOFENCE_KEY) ?: return
+        }
     }
 
     private fun navigateToLoginIfNeededDuringSplashScreen() {

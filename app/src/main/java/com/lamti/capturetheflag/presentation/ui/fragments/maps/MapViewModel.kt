@@ -170,13 +170,6 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun onStartGameClicked() {
-        val gameID = _player.value.gameDetails?.gameID ?: return
-        viewModelScope.launch {
-            firestoreRepository.updateGameStatus(gameID, ProgressState.Started)
-        }
-    }
-
     companion object {
 
         private const val GAME_BOUNDARIES_GEOFENCE_ID = "GameBoundariesGeofence"

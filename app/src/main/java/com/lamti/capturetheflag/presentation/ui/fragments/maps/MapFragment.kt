@@ -6,6 +6,7 @@ import android.view.View
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.Fragment
@@ -62,7 +63,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                 viewModel.getLastLocation()
                 viewModel.observePlayer()
                 if (viewModel.player.value.gameDetails != null && viewModel.player.value.gameDetails?.gameID != EMPTY)
-                    viewModel.observeGameState(viewModel.player.value.gameDetails!!.gameID )
+                    viewModel.observeGameState(viewModel.player.value.gameDetails!!.gameID)
                 return@setKeepOnScreenCondition viewModel.stayInSplashScreen.value
             }
         }
@@ -74,9 +75,15 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         mapComposeView.setContent {
             CaptureTheFlagTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
-                    GameNavigation(viewModel) {
-                        (requireActivity() as MainActivity).onSettingFlagsClicked()
-                    }
+                    val mainActivity = (requireActivity() as MainActivity)
+                    val enteredGeofenceIdState = mainActivity.geofenceIdFLow.collectAsState()
+
+                    GameNavigation(
+                        viewModel = viewModel,
+                        enteredGeofenceId = enteredGeofenceIdState.value,
+                        onSettingFlagsButtonClicked = { mainActivity.onSettingFlagsClicked() },
+                        onArScannerButtonClicked = { mainActivity.onArScannerButtonClicked() }
+                    )
                 }
             }
         }

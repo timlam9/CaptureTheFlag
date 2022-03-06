@@ -59,6 +59,8 @@ fun GameStartedUI(
     mapProperties: MapProperties,
     uiSettings: MapUiSettings,
     viewModel: MapViewModel,
+    enteredGeofenceId: String,
+    onArScannerButtonClicked: () -> Unit,
     onSettingFlagsButtonClicked: () -> Unit
 ) {
     val instructions: String = when (viewModel.gameState.value.state) {
@@ -125,10 +127,27 @@ fun GameStartedUI(
             InstructionsCard(instructions)
         if (viewModel.gameState.value.state == ProgressState.Created) {
             DefaultButton(
-                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
                 text = stringResource(id = R.string.ready)
             ) {
                 viewModel.onSetFlagsClicked()
+            }
+        }
+
+        if (viewModel.player.value.gameDetails?.team == Team.Red && enteredGeofenceId.contains("Green") ||
+            viewModel.player.value.gameDetails?.team == Team.Green && enteredGeofenceId.contains("Red")
+        ) {
+            FloatingActionButton(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 64.dp),
+                onClick = onArScannerButtonClicked,
+                backgroundColor = MaterialTheme.colors.secondary,
+                contentColor = Color.White
+            ) {
+                Icon(painterResource(id = R.drawable.ic_flag), EMPTY)
             }
         }
     }

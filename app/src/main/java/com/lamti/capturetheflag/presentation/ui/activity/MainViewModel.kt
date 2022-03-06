@@ -25,4 +25,8 @@ class MainViewModel @Inject constructor(authenticationRepository: Authentication
         _currentScreen.value = FragmentScreen.Ar
     }
 
+    fun onArScannerButtonClicked() {
+        _currentScreen.value = FragmentScreen.Ar
+    }
+
 }

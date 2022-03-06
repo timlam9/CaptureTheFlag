@@ -19,6 +19,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+const val GEOFENCE_BROADCAST_RECEIVER_FILTER = "geofence_broadcast_receiver_filter"
+const val ENTER_GEOFENCE_KEY = "enter_geofence_key"
+
 abstract class HiltBroadcastReceiver : BroadcastReceiver() {
     @CallSuper
     override fun onReceive(context: Context?, intent: Intent?) {}
@@ -26,7 +29,7 @@ abstract class HiltBroadcastReceiver : BroadcastReceiver() {
 
 @AndroidEntryPoint
 @ExperimentalCoroutinesApi
-class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
+open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     @Inject lateinit var firestoreRepository: FirestoreRepository
@@ -71,6 +74,14 @@ class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
                 geofenceTransition,
                 triggeringGeofences
             )
+
+            // if enter a geofence
+            if(geofenceTransition == 1) {
+                val geofenceID = triggeringGeofences[0].requestId
+                val intent = Intent(GEOFENCE_BROADCAST_RECEIVER_FILTER)
+                intent.putExtra(ENTER_GEOFENCE_KEY, geofenceID)
+                context.sendBroadcast(intent)
+            }
 
             Toast.makeText(context, geofenceTransitionDetails, Toast.LENGTH_SHORT).show()
             Log.i(TAG, geofenceTransitionDetails)
