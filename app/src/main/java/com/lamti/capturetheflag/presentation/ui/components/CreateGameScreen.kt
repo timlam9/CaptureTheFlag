@@ -32,9 +32,7 @@ import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
 import com.lamti.capturetheflag.utils.EMPTY
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-@ExperimentalCoroutinesApi
 @Composable
 fun CreateGameScreen(viewModel: MapViewModel, onSetGameClicked: () -> Unit) {
     var gameName by remember { mutableStateOf(EMPTY) }

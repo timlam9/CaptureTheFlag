@@ -5,14 +5,10 @@ import androidx.fragment.app.commit
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArFragment
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapFragment
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.InternalCoroutinesApi
 
 private const val TAG_FRAGMENT_MAP = "tag_fragment_map"
 private const val TAG_FRAGMENT_AR = "tag_fragment_ar"
 
-@ExperimentalCoroutinesApi
-@InternalCoroutinesApi
 fun FragmentManager.navigateToScreen(screen: FragmentScreen) {
     when (screen) {
         FragmentScreen.Map -> {
@@ -26,8 +22,6 @@ fun FragmentManager.navigateToScreen(screen: FragmentScreen) {
     }
 }
 
-@ExperimentalCoroutinesApi
-@InternalCoroutinesApi
 private fun FragmentManager.show(tag: String, show: Boolean = true, destroy: Boolean = false) = commit {
     if (findFragmentByTag(tag) == null && !show) return
     setReorderingAllowed(true)
@@ -41,8 +35,6 @@ private fun FragmentManager.show(tag: String, show: Boolean = true, destroy: Boo
     }
 }
 
-@ExperimentalCoroutinesApi
-@InternalCoroutinesApi
 private fun FragmentManager.createFragment(tag: String) = commit {
     val fragment = when (tag) {
         TAG_FRAGMENT_MAP -> MapFragment()

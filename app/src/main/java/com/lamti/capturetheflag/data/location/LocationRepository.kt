@@ -9,7 +9,6 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
@@ -20,7 +19,6 @@ import kotlin.coroutines.resumeWithException
 
 private const val TAG = "TAGARA_LOCATION"
 
-@ExperimentalCoroutinesApi
 @SuppressLint("MissingPermission")
 class LocationRepository @Inject constructor(
     private val client: FusedLocationProviderClient,

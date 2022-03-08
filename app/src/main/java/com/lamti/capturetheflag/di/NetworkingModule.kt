@@ -22,10 +22,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Singleton
 
-@ExperimentalCoroutinesApi
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkingModule {
@@ -39,7 +37,6 @@ object NetworkingModule {
     @Provides
     fun provideFirebaseAuthenticationRepository(auth: FirebaseAuth) = AuthenticationRepository(auth)
 
-    @ExperimentalCoroutinesApi
     @Provides
     fun provideFirestoreRepository(
         firestore: FirebaseFirestore,
@@ -48,7 +45,6 @@ object NetworkingModule {
 
 }
 
-@ExperimentalCoroutinesApi
 @Module
 @InstallIn(SingletonComponent::class)
 object GeofenceModule {

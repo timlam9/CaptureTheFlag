@@ -9,12 +9,7 @@ import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.FragmentStatsBinding
 import com.lamti.capturetheflag.presentation.ui.login.LoginActivity
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.InternalCoroutinesApi
-import javax.inject.Inject
 
-@ExperimentalCoroutinesApi
-@InternalCoroutinesApi
 @AndroidEntryPoint
 class StatsFragment: Fragment(R.layout.fragment_stats) {
 

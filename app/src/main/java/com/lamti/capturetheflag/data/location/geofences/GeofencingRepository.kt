@@ -7,10 +7,8 @@ import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.maps.model.LatLng
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 
-@ExperimentalCoroutinesApi
 class GeofencingRepository @Inject constructor(
     private val geofencingClient: GeofencingClient,
     private val geofencePendingIntent: PendingIntent

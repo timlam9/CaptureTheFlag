@@ -8,11 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import com.lamti.capturetheflag.presentation.ui.components.map.MapScreen
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
 import com.lamti.capturetheflag.utils.EMPTY
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.InternalCoroutinesApi
 
-@InternalCoroutinesApi
-@ExperimentalCoroutinesApi
 @Composable
 fun GameNavigation(
     viewModel: MapViewModel,

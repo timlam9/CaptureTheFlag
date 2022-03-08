@@ -10,11 +10,7 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.lamti.capturetheflag.presentation.ui.MapStyle
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.InternalCoroutinesApi
 
-@InternalCoroutinesApi
-@ExperimentalCoroutinesApi
 @Composable
 fun MapScreen(
     viewModel: MapViewModel,

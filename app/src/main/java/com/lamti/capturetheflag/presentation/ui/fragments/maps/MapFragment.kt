@@ -23,13 +23,9 @@ import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.myAppPreferences
 import com.lamti.capturetheflag.utils.set
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-@ExperimentalCoroutinesApi
-@InternalCoroutinesApi
 @AndroidEntryPoint
 @SuppressLint("UnspecifiedImmutableFlag")
 class MapFragment : Fragment(R.layout.fragment_map) {

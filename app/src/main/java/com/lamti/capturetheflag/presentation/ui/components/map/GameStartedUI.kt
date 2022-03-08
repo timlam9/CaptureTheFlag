@@ -50,10 +50,8 @@ import com.lamti.capturetheflag.presentation.ui.style.DarkBlueOpacity
 import com.lamti.capturetheflag.presentation.ui.style.GreenOpacity
 import com.lamti.capturetheflag.presentation.ui.style.RedOpacity
 import com.lamti.capturetheflag.utils.EMPTY
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 
-@ExperimentalCoroutinesApi
 @Composable
 fun GameStartedUI(
     mapProperties: MapProperties,
@@ -170,7 +168,6 @@ fun InstructionsCard(instructions: String) {
     }
 }
 
-@ExperimentalCoroutinesApi
 @Composable
 fun GoogleMapsView(
     modifier: Modifier = Modifier,

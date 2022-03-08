@@ -50,13 +50,9 @@ import com.lamti.capturetheflag.presentation.ui.components.map.InstructionsCard
 import com.lamti.capturetheflag.utils.get
 import com.lamti.capturetheflag.utils.myAppPreferences
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.InternalCoroutinesApi
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-@InternalCoroutinesApi
-@ExperimentalCoroutinesApi
 @AndroidEntryPoint
 class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
 

@@ -13,17 +13,13 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
-@ExperimentalCoroutinesApi
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
 
-    @InternalCoroutinesApi
     @Provides
     @Singleton
     fun provideNotificationHelper(@ApplicationContext context: Context): NotificationHelper = NotificationHelper(context)
@@ -41,8 +37,6 @@ class AppModule {
     @Singleton
     fun provideLocationRepository(client: FusedLocationProviderClient, scope: CoroutineScope) = LocationRepository(client, scope)
 
-    @InternalCoroutinesApi
-    @ExperimentalCoroutinesApi
     @Provides
     fun provideLocationService() = LocationServiceImpl()
 

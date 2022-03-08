@@ -50,8 +50,6 @@ import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -67,8 +65,6 @@ data class RegisterData(
     val fullName: String,
 )
 
-@ExperimentalCoroutinesApi
-@InternalCoroutinesApi
 @AndroidEntryPoint
 class LoginActivity : ComponentActivity() {
 

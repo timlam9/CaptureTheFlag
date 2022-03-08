@@ -14,7 +14,6 @@ import com.lamti.capturetheflag.domain.game.Flag
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,7 +27,6 @@ abstract class HiltBroadcastReceiver : BroadcastReceiver() {
 }
 
 @AndroidEntryPoint
-@ExperimentalCoroutinesApi
 open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
