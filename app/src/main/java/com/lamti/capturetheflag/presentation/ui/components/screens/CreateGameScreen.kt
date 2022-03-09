@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.presentation.ui.components
+package com.lamti.capturetheflag.presentation.ui.components.screens
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.game.ProgressState
+import com.lamti.capturetheflag.presentation.ui.components.composables.InfoTextField
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
 import com.lamti.capturetheflag.utils.EMPTY
 

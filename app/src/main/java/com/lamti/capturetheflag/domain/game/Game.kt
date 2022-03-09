@@ -25,6 +25,8 @@ data class GameState(
     val safehouse: GeofenceObject,
     val greenFlag: GeofenceObject,
     val redFlag: GeofenceObject,
+    val greenFlagGrabbed: String?,
+    val redFlagGrabbed: String?,
     val state: ProgressState
 ) {
 
@@ -37,19 +39,24 @@ data class GameState(
                 isDiscovered = false,
                 id = EMPTY,
                 timestamp = Date()
-            ), greenFlag = GeofenceObject(
+            ),
+            greenFlag = GeofenceObject(
                 position = emptyPosition(),
                 isPlaced = false,
                 isDiscovered = false,
                 id = EMPTY,
                 timestamp = Date()
-            ), redFlag = GeofenceObject(
+            ),
+            redFlag = GeofenceObject(
                 position = emptyPosition(),
                 isPlaced = false,
                 isDiscovered = false,
                 id = EMPTY,
                 timestamp = Date()
-            ), state = ProgressState.Idle
+            ),
+            greenFlagGrabbed = null,
+            redFlagGrabbed = null,
+            state = ProgressState.Idle
         )
     }
 }

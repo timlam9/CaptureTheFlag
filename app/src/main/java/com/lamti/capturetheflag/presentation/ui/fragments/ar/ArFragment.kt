@@ -45,8 +45,8 @@ import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
 import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
-import com.lamti.capturetheflag.presentation.ui.components.DefaultButton
-import com.lamti.capturetheflag.presentation.ui.components.map.InstructionsCard
+import com.lamti.capturetheflag.presentation.ui.components.screens.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.screens.InstructionsCard
 import com.lamti.capturetheflag.utils.get
 import com.lamti.capturetheflag.utils.myAppPreferences
 import dagger.hilt.android.AndroidEntryPoint
@@ -81,12 +81,11 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
 
         arMode = when (mode) {
             ArMode.Placer.name -> {
-                viewModel.setInstructions(getString(R.string.tap_to_place_flag))
+                viewModel.setInstructions(getString(R.string.tap_to_place_flag), false)
                 ArMode.Placer
             }
             else -> {
-                viewModel.setInstructions(getString(R.string.search_flag))
-                viewModel.onResolveObjects()
+                viewModel.setInstructions(getString(R.string.search_flag), true)
                 ArMode.Scanner
             }
         }
@@ -96,6 +95,8 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
         topView.setContent {
             val instructions by viewModel.instructions.collectAsState()
             val message by viewModel.message.collectAsState()
+            val showPlacerButtons by viewModel.showPlacerButtons.collectAsState()
+            val showGrabButton by viewModel.showGrabButton.collectAsState()
             val arModeState by remember { mutableStateOf(arMode) }
 
             Box(modifier = Modifier.fillMaxSize()) {
@@ -121,15 +122,29 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         if (arModeState == ArMode.Placer) {
-                            DefaultButton(text = getString(R.string.cancel)) {
-                                viewModel.onCancelButtonPressed()
+                            if (showPlacerButtons) {
+                                DefaultButton(text = getString(R.string.cancel)) {
+                                    viewModel.onCancelButtonPressed()
+                                }
+                                DefaultButton(
+                                    text = getString(R.string.ok),
+                                    color = MaterialTheme.colors.secondary
+                                ) {
+                                    viewModel.onOkButtonPressed {
+                                        if (it) (requireActivity() as MainActivity).onBackPressed()
+                                    }
+                                }
                             }
-                            DefaultButton(
-                                text = getString(R.string.ok),
-                                color = MaterialTheme.colors.secondary
-                            ) {
-                                viewModel.onOkButtonPressed()
-                                (requireActivity() as MainActivity).onBackPressed()
+                        } else {
+                            if (showGrabButton) {
+                                DefaultButton(
+                                    text = getString(R.string.grab),
+                                    color = MaterialTheme.colors.secondary
+                                ) {
+                                    viewModel.onGrabPressed {
+                                        if (it) (requireActivity() as MainActivity).onBackPressed()
+                                    }
+                                }
                             }
                         }
                     }

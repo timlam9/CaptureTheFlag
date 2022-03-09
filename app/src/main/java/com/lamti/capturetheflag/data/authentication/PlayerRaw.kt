@@ -68,9 +68,9 @@ data class GameDetailsRaw(
 }
 
 private fun String.toStatus() = when (this) {
-    Player.Status.Online.name -> Player.Status.Online
+    Player.Status.Connecting.name -> Player.Status.Connecting
     Player.Status.Playing.name -> Player.Status.Playing
-    else -> Player.Status.Connected
+    else -> Player.Status.Online
 }
 
 private fun String.toTeam() = when (this) {

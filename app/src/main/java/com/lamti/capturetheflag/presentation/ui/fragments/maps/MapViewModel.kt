@@ -16,16 +16,20 @@ import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.ProgressState
+import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Player
+import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_BOUNDARIES_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
-import com.lamti.capturetheflag.presentation.ui.components.Screen
+import com.lamti.capturetheflag.presentation.ui.components.navigation.Screen
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
 import com.lamti.capturetheflag.presentation.ui.getRandomString
 import com.lamti.capturetheflag.presentation.ui.toLatLng
+import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.emptyPosition
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +37,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -62,6 +67,10 @@ class MapViewModel @Inject constructor(
 
     private val _arMode = MutableStateFlow(ArMode.Placer)
     val arMode: StateFlow<ArMode> = _arMode.asStateFlow()
+
+    suspend fun getGame(id: String) = withContext(Dispatchers.IO) {
+        firestoreRepository.getGame(id)
+    }
 
     fun getLastLocation() {
         viewModelScope.launch {
@@ -97,10 +106,11 @@ class MapViewModel @Inject constructor(
     }
 
     private fun GameState.handleGameStateEvents() = when (state) {
-        ProgressState.Created -> _isSafehouseDraggable.value = true
+        ProgressState.Created -> _isSafehouseDraggable.value = _player.value.gameDetails?.rank == GameDetails.Rank.Captain
         ProgressState.SettingFlags -> {
             _isSafehouseDraggable.value = false
             _arMode.value = ArMode.Placer
+            onConnect { }
         }
         ProgressState.Started -> {
             _isSafehouseDraggable.value = false
@@ -165,6 +175,33 @@ class MapViewModel @Inject constructor(
         val gameID = _player.value.gameDetails?.gameID ?: return
         viewModelScope.launch {
             firestoreRepository.updateGameStatus(gameID, ProgressState.SettingFlags)
+        }
+    }
+
+    fun onJoinButtonClicked(gameID: String) {
+        viewModelScope.launch {
+            firestoreRepository.joinPlayer(gameID)
+        }
+    }
+
+    fun onTeamButtonClicked(team: Team) {
+        viewModelScope.launch {
+            firestoreRepository.setPlayerTeam(team)
+            observeGameState(_player.value.gameDetails?.gameID ?: EMPTY)
+        }
+    }
+
+    private fun onConnect(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val result = firestoreRepository.connectPlayer()
+            onResult(result)
+        }
+    }
+
+    fun onQuitButtonClicked(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val result = firestoreRepository.quitGame()
+            onResult(result)
         }
     }
 

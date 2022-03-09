@@ -6,6 +6,7 @@ import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Player
+import com.lamti.capturetheflag.domain.player.Team
 import kotlinx.coroutines.flow.Flow
 
 interface FirestoreRepository {
@@ -18,7 +19,7 @@ interface FirestoreRepository {
 
     suspend fun getPlayer(): Player?
 
-    suspend fun getGame(id: String): Game
+    suspend fun getGame(id: String): Game?
 
     suspend fun loginUser(email: String, password: String): Boolean
 
@@ -33,4 +34,16 @@ interface FirestoreRepository {
     suspend fun updateSafehousePosition(gameID: String, position: LatLng)
 
     suspend fun updateGameStatus(gameID: String, state: ProgressState)
+
+    suspend fun joinPlayer(gameID: String)
+
+    suspend fun setPlayerTeam(team: Team)
+
+    suspend fun grabTheFlag(): Boolean
+
+    suspend fun endGame(team: Team)
+
+    suspend fun quitGame(): Boolean
+
+    suspend fun connectPlayer() : Boolean
 }

@@ -25,6 +25,8 @@ data class GameRaw(
             safehouse = gameState.safehouse.toGeofenceObject(),
             greenFlag = gameState.greenFlag.toGeofenceObject(),
             redFlag = gameState.redFlag.toGeofenceObject(),
+            greenFlagGrabbed = gameState.greenFlagGrabbed,
+            redFlagGrabbed = gameState.redFlagGrabbed,
             state = gameState.state.toState()
         )
     )
@@ -43,6 +45,8 @@ data class GameStateRaw(
     val safehouse: GeofenceObjectRaw = GeofenceObjectRaw(),
     val greenFlag: GeofenceObjectRaw = GeofenceObjectRaw(),
     val redFlag: GeofenceObjectRaw = GeofenceObjectRaw(),
+    val redFlagGrabbed: String? = null,
+    val greenFlagGrabbed: String? = null,
     val state: String = "Idle"
 ) {
 
@@ -52,7 +56,9 @@ data class GameStateRaw(
             safehouse = safehouse.toRaw(),
             greenFlag = greenFlag.toRaw(),
             redFlag = redFlag.toRaw(),
-            state = state.name
+            state = state.name,
+            redFlagGrabbed = redFlagGrabbed,
+            greenFlagGrabbed = greenFlagGrabbed
         )
     }
 }

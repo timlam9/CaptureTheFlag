@@ -50,6 +50,8 @@ import java.util.Date
 import javax.inject.Inject
 
 val TAG: String = ArFragment::class.java.simpleName
+private val GREEN_COLOR = floatArrayOf(139.0f, 195.0f, 74.0f, 255.0f)
+private val RED_COLOR = floatArrayOf(255.0f, 0.0f, 0.0f, 255.0f)
 
 @HiltViewModel
 class ArViewModel @Inject constructor(
@@ -73,6 +75,14 @@ class ArViewModel @Inject constructor(
     private val _game = MutableStateFlow(initialGame())
     val game: StateFlow<Game> = _game.asStateFlow()
 
+    private val _showGrabButton = MutableStateFlow(false)
+    val showGrabButton: StateFlow<Boolean> = _showGrabButton.asStateFlow()
+
+    private val _showPlacerButtons = MutableStateFlow(false)
+    val showPlacerButtons: StateFlow<Boolean> = _showPlacerButtons.asStateFlow()
+
+    private val _scannerMode = MutableStateFlow(false)
+
     private val cloudAnchorManager = CloudAnchorManager()
     private val backgroundRenderer: BackgroundRenderer = BackgroundRenderer()
     private val virtualObject: ObjectRenderer = ObjectRenderer()
@@ -82,19 +92,23 @@ class ArViewModel @Inject constructor(
 
     // Temporary matrix allocated here to reduce number of allocations for each frame.
     private val anchorMatrix = FloatArray(16)
-    private var flagColor = floatArrayOf(139.0f, 195.0f, 74.0f, 255.0f)
+    private var flagColor = GREEN_COLOR
     private var currentAnchor: Anchor? = null
 
     init {
         viewModelScope.launch {
             _player.value = firestoreRepository.getPlayer() ?: emptyPlayer()
-            if(_player.value.gameDetails?.team == Team.Red) {
-                flagColor = floatArrayOf(255.0f, 0.0f, 0.0f, 255.0f)
-            }
+            flagColor = getFlagColor(_player.value.gameDetails?.team)
         }
         firestoreRepository.observeGame().onEach {
             _game.value = it
+            if (_scannerMode.value) onResolveObjects()
         }.launchIn(viewModelScope)
+    }
+
+    private fun getFlagColor(team: Team?) = when (_scannerMode.value) {
+        true -> if (team == Team.Red) GREEN_COLOR else RED_COLOR
+        false -> if (team == Team.Red) RED_COLOR else GREEN_COLOR
     }
 
     fun createSession(session: Session?) {
@@ -241,9 +255,8 @@ class ArViewModel @Inject constructor(
     }
 
     @Synchronized
-    fun onResolveObjects() {
+    private fun onResolveObjects() {
         viewModelScope.launch {
-
             val redFlagID = _game.value.gameState.redFlag.id
             val greenFlagID = _game.value.gameState.greenFlag.id
 
@@ -252,12 +265,15 @@ class ArViewModel @Inject constructor(
                 return@launch
             }
 
-            cloudAnchorManager.resolveCloudAnchor(_session.value, redFlagID) { anchor ->
-                onResolvedAnchorAvailable(anchor)
-            }
-
-            cloudAnchorManager.resolveCloudAnchor(_session.value, greenFlagID) { anchor ->
-                onResolvedAnchorAvailable(anchor)
+            if (_player.value.gameDetails?.team == Team.Red) {
+                cloudAnchorManager.resolveCloudAnchor(_session.value, greenFlagID) { anchor ->
+                    onResolvedAnchorAvailable(anchor)
+                }
+            } else if (_player.value.gameDetails?.team == Team.Green) {
+                Log.d("TAGARA", "Red flag: $redFlagID")
+                cloudAnchorManager.resolveCloudAnchor(_session.value, redFlagID) { anchor ->
+                    onResolvedAnchorAvailable(anchor)
+                }
             }
         }
     }
@@ -320,9 +336,12 @@ class ArViewModel @Inject constructor(
                 cloudAnchorRepository.uploadGeofenceObject(newGame)
             }
             _message.update { "Cloud Anchor Hosted. ID: $cloudAnchorId" }
+            _showPlacerButtons.update { true }
             currentAnchor = anchor
         } else {
             _message.update { "Error while hosting: $cloudState" }
+            _showPlacerButtons.update { false }
+            onCancelButtonPressed()
         }
     }
 
@@ -330,7 +349,8 @@ class ArViewModel @Inject constructor(
     private fun onResolvedAnchorAvailable(anchor: Anchor) {
         val cloudState = anchor.cloudAnchorState
         if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
-            _message.update { "Cloud Anchor Resolved. ID: ${anchor.cloudAnchorId}" }
+            _showGrabButton.update { true }
+            _instructions.update { "You discovered your opponent's flag. \'Grab\' it and go to safehouse to win the game" }
             currentAnchor = anchor
         } else {
             _message.update { "Error while resolving anchor with id: ${anchor.cloudAnchorId}. Error: $cloudState" }
@@ -345,11 +365,12 @@ class ArViewModel @Inject constructor(
         }
     }
 
-    fun setInstructions(text: String) {
+    fun setInstructions(text: String, scanner: Boolean) {
         _instructions.update { text }
+        _scannerMode.update { scanner }
     }
 
-    fun onOkButtonPressed() {
+    fun onOkButtonPressed(onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             val newGame = when (_player.value.gameDetails?.team) {
                 Team.Red -> {
@@ -359,7 +380,7 @@ class ArViewModel @Inject constructor(
                 }
                 Team.Green -> {
                     val greenFlag = _game.value.gameState.greenFlag.copy(isPlaced = true)
-                    val newGameState: GameState = _game.value.gameState.copy(redFlag = greenFlag)
+                    val newGameState: GameState = _game.value.gameState.copy(greenFlag = greenFlag)
                     _game.value.copy(gameState = newGameState)
                 }
                 Team.Unknown -> return@launch
@@ -373,7 +394,15 @@ class ArViewModel @Inject constructor(
             }
             val latestGame = newGame.copy(gameState = latestGameState)
 
-            cloudAnchorRepository.uploadGeofenceObject(latestGame)
+            val result = cloudAnchorRepository.uploadGeofenceObject(latestGame)
+            onResult(result)
+        }
+    }
+
+    fun onGrabPressed(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val result = firestoreRepository.grabTheFlag()
+            onResult(result)
         }
     }
 

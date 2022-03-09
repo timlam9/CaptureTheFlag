@@ -21,10 +21,12 @@ import com.lamti.capturetheflag.domain.player.PlayerDetails
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.emptyPosition
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.util.Date
 import javax.inject.Inject
 
@@ -52,6 +54,119 @@ class FirestoreRepositoryImpl @Inject constructor(
             .document(userID)
             .set(updatedPlayer)
             .await()
+    }
+
+    override suspend fun joinPlayer(gameID: String) {
+        val currentPlayer = getPlayer()
+        val updatedPlayer = currentPlayer!!.copy(
+            gameDetails = GameDetails(
+                gameID = gameID,
+                team = Team.Unknown,
+                rank = GameDetails.Rank.Soldier
+            ),
+            status = Player.Status.Connecting
+        ).toRaw()
+
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(userID)
+            .set(updatedPlayer)
+            .await()
+    }
+
+    override suspend fun setPlayerTeam(team: Team) {
+        val currentPlayer = getPlayer()
+        val gameDetails = getPlayer()?.gameDetails
+        val updatedPlayer = currentPlayer!!.copy(
+            gameDetails = gameDetails?.copy(
+                gameID = gameDetails.gameID,
+                team = team,
+                rank = GameDetails.Rank.Leader
+            )
+        )
+
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(userID)
+            .set(updatedPlayer)
+            .await()
+    }
+
+    override suspend fun grabTheFlag(): Boolean {
+        val currentPlayer = getPlayer() ?: return false
+        val playerID = currentPlayer.userID
+        val gameDetails = currentPlayer.gameDetails ?: return false
+        val playerTeam = gameDetails.team
+        val gameID = gameDetails.gameID
+        val currentGame = getGame(gameID) ?: return false
+        val updatedGame: GameRaw = when (playerTeam) {
+            Team.Red -> currentGame.copy(gameState = currentGame.gameState.copy(greenFlagGrabbed = playerID))
+            Team.Green -> currentGame.copy(gameState = currentGame.gameState.copy(redFlagGrabbed = playerID))
+            Team.Unknown -> currentGame.copy(gameState = currentGame.gameState.copy())
+        }.toRaw()
+
+        firestore
+            .collection(COLLECTION_GAMES)
+            .document(gameID)
+            .set(updatedGame)
+            .await()
+
+        return true
+    }
+
+    override suspend fun endGame(team: Team) {
+        val currentPlayer = getPlayer() ?: return
+        val gameDetails = currentPlayer.gameDetails ?: return
+        val gameID = gameDetails.gameID
+        val currentGame = getGame(gameID) ?: return
+        val updatedGame: GameRaw =
+            currentGame.copy(
+                gameState = currentGame.gameState.copy(
+                    safehouse = currentGame.gameState.safehouse,
+                    greenFlag = currentGame.gameState.greenFlag,
+                    redFlag = currentGame.gameState.redFlag,
+                    greenFlagGrabbed = currentGame.gameState.greenFlagGrabbed,
+                    redFlagGrabbed = currentGame.gameState.redFlagGrabbed,
+                    state = ProgressState.Ended
+                )
+            ).toRaw()
+
+        firestore
+            .collection(COLLECTION_GAMES)
+            .document(gameID)
+            .set(updatedGame)
+            .await()
+    }
+
+    override suspend fun quitGame(): Boolean {
+        val player = getPlayer() ?: return false
+        val playerID = player.userID
+
+        val updatedPlayer = player.copy(
+            status = Player.Status.Online,
+            gameDetails = null
+        )
+
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(playerID)
+            .set(updatedPlayer)
+            .await()
+
+        return true
+    }
+
+    override suspend fun connectPlayer(): Boolean {
+        val currentPlayer = getPlayer()
+        val updatedPlayer = currentPlayer!!.copy(status = Player.Status.Playing)
+
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(userID)
+            .set(updatedPlayer)
+            .await()
+
+        return true
     }
 
     override suspend fun registerUser(
@@ -123,6 +238,8 @@ class FirestoreRepositoryImpl @Inject constructor(
                     id = EMPTY,
                     timestamp = Date()
                 ),
+                greenFlagGrabbed = null,
+                redFlagGrabbed = null,
                 state = ProgressState.Created
             )
         )
@@ -140,7 +257,7 @@ class FirestoreRepositoryImpl @Inject constructor(
                 team = Team.Red,
                 rank = GameDetails.Rank.Captain
             ),
-            status = Player.Status.Connected
+            status = Player.Status.Connecting
         ).toRaw()
 
         firestore
@@ -152,16 +269,23 @@ class FirestoreRepositoryImpl @Inject constructor(
         return game
     }
 
-    override suspend fun getGame(id: String): Game = firestore
-        .collection(COLLECTION_GAMES)
-        .document(id)
-        .get()
-        .await()
-        .toObject(GameRaw::class.java)
-        ?.toGame() ?: GameRaw().toGame()
+    override suspend fun getGame(id: String): Game? = withContext(Dispatchers.IO) {
+        try {
+            firestore
+                .collection(COLLECTION_GAMES)
+                .document(id)
+                .get()
+                .await()
+                .toObject(GameRaw::class.java)
+                ?.toGame()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 
     override suspend fun updateGameStatus(gameID: String, state: ProgressState) {
-        val currentGame = getGame(gameID)
+        val currentGame = getGame(gameID) ?: return
         val updatedGame = currentGame.copy(
             gameState = currentGame.gameState.copy(state = state)
         ).toRaw()
@@ -174,7 +298,7 @@ class FirestoreRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateSafehousePosition(gameID: String, position: LatLng) {
-        val currentGame = getGame(gameID)
+        val currentGame = getGame(gameID) ?: return
         val updatedGame = currentGame.copy(
             gameState = currentGame.gameState.copy(
                 safehouse = currentGame.gameState.safehouse.copy(
@@ -235,9 +359,9 @@ class FirestoreRepositoryImpl @Inject constructor(
         val player = getPlayer()
         val gameID = player?.gameDetails?.gameID ?: return false
         val team = player.gameDetails.team
-        val game = getGame(gameID)
+        val game = getGame(gameID) ?: return false
 
-        val updatedGame = when {
+        val updatedGame: Game = when {
             team == Team.Red && flagFound == Flag.Green -> game.copy(
                 gameState = game.gameState.copy(
                     greenFlag = game.gameState.greenFlag.copy(isDiscovered = true)

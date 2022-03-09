@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.presentation.ui.components
+package com.lamti.capturetheflag.presentation.ui.components.composables
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

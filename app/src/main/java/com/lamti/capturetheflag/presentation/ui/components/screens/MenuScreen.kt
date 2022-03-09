@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.presentation.ui.components
+package com.lamti.capturetheflag.presentation.ui.components.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -21,10 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lamti.capturetheflag.R
-import com.lamti.capturetheflag.utils.EMPTY
 
 @Composable
-fun MenuScreen(onNewGameClicked: () -> Unit, onAvailableGamesClicked: () -> Unit) {
+fun MenuScreen(onNewGameClicked: () -> Unit, onJoinGameClicked: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -43,8 +41,8 @@ fun MenuScreen(onNewGameClicked: () -> Unit, onAvailableGamesClicked: () -> Unit
             style = MaterialTheme.typography.h5.copy(color = MaterialTheme.colors.onBackground)
         )
         Spacer(modifier = Modifier.weight(2f))
-        AvailableGamesButton(modifier = Modifier.padding(20.dp)) {
-            onAvailableGamesClicked()
+        JoinGameButton(modifier = Modifier.padding(20.dp)) {
+            onJoinGameClicked()
         }
         NewGameButton(modifier = Modifier.padding(20.dp)) {
             onNewGameClicked()
@@ -64,10 +62,10 @@ fun NewGameButton(modifier: Modifier = Modifier, onNewGameClicked: () -> Unit) {
 }
 
 @Composable
-fun AvailableGamesButton(modifier: Modifier = Modifier, onAvailableGamesClicked: () -> Unit) {
+fun JoinGameButton(modifier: Modifier = Modifier, onAvailableGamesClicked: () -> Unit) {
     DefaultButton(
         modifier = modifier.fillMaxWidth(),
-        text = stringResource(R.string.available_games),
+        text = stringResource(R.string.join_game),
         color = MaterialTheme.colors.secondary
     ) {
         onAvailableGamesClicked()

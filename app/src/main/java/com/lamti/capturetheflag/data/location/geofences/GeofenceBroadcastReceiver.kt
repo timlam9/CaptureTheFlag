@@ -11,6 +11,8 @@ import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Flag
+import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.utils.EMPTY
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,8 +24,10 @@ const val GEOFENCE_BROADCAST_RECEIVER_FILTER = "geofence_broadcast_receiver_filt
 const val ENTER_GEOFENCE_KEY = "enter_geofence_key"
 
 abstract class HiltBroadcastReceiver : BroadcastReceiver() {
+
     @CallSuper
-    override fun onReceive(context: Context?, intent: Intent?) {}
+    override fun onReceive(context: Context?, intent: Intent?) {
+    }
 }
 
 @AndroidEntryPoint
@@ -50,9 +54,34 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
         if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
             val geofenceID = geofencingEvent.triggeringGeofences[0].requestId
 
+            Log.d("TAGARA", "Geofence: $geofenceID")
+
             when {
                 geofenceID.contains(GREEN) -> discoverFlag(Flag.Green)
                 geofenceID.contains(RED) -> discoverFlag(Flag.Red)
+                geofenceID.contains(SAFEHOUSE) -> {
+                    applicationScope.launch {
+                        Log.d("TAGARA", "Safehouse")
+                        val player = firestoreRepository.getPlayer() ?: return@launch
+                        Log.d("TAGARA", "Player: $player")
+                        val game = firestoreRepository.getGame(player.gameDetails?.gameID ?: EMPTY) ?: return@launch
+
+                        Log.d("TAGARA", "Game: $game")
+
+                        if (player.userID == game.gameState.greenFlagGrabbed) {
+                            if (player.gameDetails?.team == Team.Red) {
+                                firestoreRepository.endGame(Team.Red)
+                            }
+                        }
+                        if (player.userID == game.gameState.redFlagGrabbed) {
+                            Log.d("TAGARA", "Red flag grabbed")
+                            if (player.gameDetails?.team == Team.Green) {
+                                Log.d("TAGARA", "from green team")
+                                firestoreRepository.endGame(Team.Green)
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -74,7 +103,7 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
             )
 
             // if enter a geofence
-            if(geofenceTransition == 1) {
+            if (geofenceTransition == 1) {
                 val geofenceID = triggeringGeofences[0].requestId
                 val intent = Intent(GEOFENCE_BROADCAST_RECEIVER_FILTER)
                 intent.putExtra(ENTER_GEOFENCE_KEY, geofenceID)
@@ -111,6 +140,7 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
         const val TAG = "TAGARA_GEOFENCE"
         private const val GREEN = "Green"
         private const val RED = "Red"
+        private const val SAFEHOUSE = "Safehouse"
     }
 
 }

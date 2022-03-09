@@ -16,7 +16,7 @@ import com.google.android.gms.maps.MapsInitializer
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.FragmentMapBinding
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
-import com.lamti.capturetheflag.presentation.ui.components.GameNavigation
+import com.lamti.capturetheflag.presentation.ui.components.navigation.GameNavigation
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.AR_MODE_KEY
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
 import com.lamti.capturetheflag.utils.EMPTY

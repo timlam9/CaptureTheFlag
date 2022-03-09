@@ -6,6 +6,7 @@ import android.location.Location
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
+import androidx.navigation.NavHostController
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
@@ -51,3 +52,11 @@ fun Location.toLatLng() = LatLng(latitude, longitude)
 const val DEFAULT_GAME_BOUNDARIES_RADIUS = 750f
 const val DEFAULT_SAFEHOUSE_RADIUS = 100f
 const val DEFAULT_FLAG_RADIUS = 40f
+
+fun NavHostController.popNavigate(to: String) {
+    navigate(to) {
+        popUpTo(0) {
+            inclusive = true
+        }
+    }
+}

@@ -1,7 +1,8 @@
-package com.lamti.capturetheflag.presentation.ui.components.map
+package com.lamti.capturetheflag.presentation.ui.components.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -43,35 +45,89 @@ import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_BOUNDARIES_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
+import com.lamti.capturetheflag.presentation.ui.MapStyle
 import com.lamti.capturetheflag.presentation.ui.bitmapDescriptorFromVector
-import com.lamti.capturetheflag.presentation.ui.components.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.MapMarker
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
 import com.lamti.capturetheflag.presentation.ui.style.DarkBlueOpacity
 import com.lamti.capturetheflag.presentation.ui.style.GreenOpacity
 import com.lamti.capturetheflag.presentation.ui.style.RedOpacity
 import com.lamti.capturetheflag.utils.EMPTY
-import kotlinx.coroutines.flow.collect
 
 @Composable
-fun GameStartedUI(
+fun MapScreen(
+    viewModel: MapViewModel,
+    enteredGeofenceId: String,
+    onSettingFlagsButtonClicked: () -> Unit,
+    onArScannerButtonClicked: () -> Unit,
+    onQuitButtonClicked: () -> Unit
+) {
+    val (mapProperties, uiSettings) = setupMap()
+
+    MapScreen(
+        mapProperties = mapProperties,
+        uiSettings = uiSettings,
+        viewModel = viewModel,
+        enteredGeofenceId = enteredGeofenceId,
+        onArScannerButtonClicked = onArScannerButtonClicked,
+        onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
+        onQuitButtonClicked = onQuitButtonClicked,
+    )
+}
+
+@Composable
+private fun setupMap(darkTheme: Boolean = isSystemInDarkTheme()): Pair<MapProperties, MapUiSettings> {
+    val mapProperties by remember {
+        mutableStateOf(
+            MapProperties(
+                isMyLocationEnabled = true,
+                mapStyleOptions = if (darkTheme) MapStyleOptions(MapStyle.sinCity) else MapStyleOptions(MapStyle.cleanGrey)
+            )
+        )
+    }
+    val uiSettings by remember {
+        mutableStateOf(
+            MapUiSettings(
+                myLocationButtonEnabled = false,
+                zoomControlsEnabled = false,
+                mapToolbarEnabled = false
+            )
+        )
+    }
+
+    return Pair(mapProperties, uiSettings)
+}
+
+@Composable
+fun MapScreen(
     mapProperties: MapProperties,
     uiSettings: MapUiSettings,
     viewModel: MapViewModel,
     enteredGeofenceId: String,
     onArScannerButtonClicked: () -> Unit,
-    onSettingFlagsButtonClicked: () -> Unit
+    onSettingFlagsButtonClicked: () -> Unit,
+    onQuitButtonClicked: () -> Unit
 ) {
-    val instructions: String = when (viewModel.gameState.value.state) {
-        ProgressState.Created -> stringResource(R.string.instructions_set_safehouse)
+    val gameState = viewModel.gameState.value.state
+    val playerGameDetails = viewModel.player.value.gameDetails
+
+    val instructions: String = when (gameState) {
+        ProgressState.Created -> {
+            if (playerGameDetails?.rank == GameDetails.Rank.Captain) {
+                stringResource(R.string.instructions_set_safehouse)
+            } else {
+                stringResource(R.string.wait_the_captain)
+            }
+        }
         ProgressState.SettingFlags -> {
             if (
-                viewModel.player.value.gameDetails?.team == Team.Red &&
+                playerGameDetails?.team == Team.Red &&
                 viewModel.gameState.value.redFlag.isPlaced &&
                 !viewModel.gameState.value.greenFlag.isPlaced
             )
                 stringResource(R.string.wait_for_green_flag)
             else if (
-                viewModel.player.value.gameDetails?.team == Team.Green &&
+                playerGameDetails?.team == Team.Green &&
                 viewModel.gameState.value.greenFlag.isPlaced &&
                 !viewModel.gameState.value.redFlag.isPlaced
             )
@@ -79,6 +135,7 @@ fun GameStartedUI(
             else
                 stringResource(R.string.instructions_set_flags)
         }
+        ProgressState.Ended -> stringResource(id = R.string.game_over)
         else -> EMPTY
     }
 
@@ -90,15 +147,14 @@ fun GameStartedUI(
             uiSettings = uiSettings,
             viewModel = viewModel
         )
-        if (viewModel.gameState.value.state == ProgressState.SettingFlags) {
-            if (viewModel.player.value.gameDetails?.rank == GameDetails.Rank.Captain ||
-                viewModel.player.value.gameDetails?.rank == GameDetails.Rank.Leader
+        if (gameState == ProgressState.SettingFlags) {
+            if (playerGameDetails?.rank == GameDetails.Rank.Captain ||
+                playerGameDetails?.rank == GameDetails.Rank.Leader
             ) {
-                val showArButton = when (viewModel.player.value.gameDetails?.team) {
+                val showArButton = when (playerGameDetails.team) {
                     Team.Red -> !viewModel.gameState.value.redFlag.isPlaced
                     Team.Green -> !viewModel.gameState.value.greenFlag.isPlaced
                     Team.Unknown -> false
-                    null -> false
                 }
                 if (showArButton) {
                     FloatingActionButton(
@@ -121,9 +177,9 @@ fun GameStartedUI(
                 }
             }
         }
-        if (viewModel.gameState.value.state != ProgressState.Started)
+        if (gameState != ProgressState.Started)
             InstructionsCard(instructions)
-        if (viewModel.gameState.value.state == ProgressState.Created) {
+        if (gameState == ProgressState.Created && playerGameDetails?.rank == GameDetails.Rank.Captain) {
             DefaultButton(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -134,8 +190,8 @@ fun GameStartedUI(
             }
         }
 
-        if (viewModel.player.value.gameDetails?.team == Team.Red && enteredGeofenceId.contains("Green") ||
-            viewModel.player.value.gameDetails?.team == Team.Green && enteredGeofenceId.contains("Red")
+        if (playerGameDetails?.team == Team.Red && enteredGeofenceId.contains("Green") ||
+            playerGameDetails?.team == Team.Green && enteredGeofenceId.contains("Red")
         ) {
             FloatingActionButton(
                 modifier = Modifier
@@ -146,6 +202,13 @@ fun GameStartedUI(
                 contentColor = Color.White
             ) {
                 Icon(painterResource(id = R.drawable.ic_flag), EMPTY)
+            }
+        }
+        if(gameState == ProgressState.Ended) {
+            DefaultButton(text = stringResource(id = R.string.quit_game)) {
+                viewModel.onQuitButtonClicked {
+                    if (it) onQuitButtonClicked()
+                }
             }
         }
     }

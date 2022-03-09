@@ -34,7 +34,7 @@ class CloudAnchorRepositoryImpl @Inject constructor(
     override suspend fun getUploadedGeofenceObject(): GeofenceObject = withContext(Dispatchers.IO) {
         val player = firestoreRepository.getPlayer()
         val game = firestoreRepository.getGame(player?.gameDetails?.gameID ?: EMPTY)
-        val gameId = game.gameID
+        val gameId = game?.gameID ?: EMPTY
 
         firestoreDatabase
             .collection(COLLECTION_GAMES)
