@@ -8,7 +8,10 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.lamti.capturetheflag.R
+import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
 
 @Composable
 fun ConnectingToGameScreen(
@@ -16,7 +19,7 @@ fun ConnectingToGameScreen(
     onRedButtonClicked: () -> Unit,
     onGreenButtonClicked: () -> Unit
 ) {
-    val text = if (hasChosenTeam) "Wait for the captain to start the game" else "Select your team"
+    val text = if (hasChosenTeam) stringResource(R.string.wait_captain) else stringResource(R.string.select_team)
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -29,7 +32,7 @@ fun ConnectingToGameScreen(
             modifier = Modifier
                 .padding(20.dp)
                 .fillMaxWidth(),
-            text = "Red Team",
+            text = stringResource(R.string.red_team),
             color = Color.Red
         ) {
             onRedButtonClicked()
@@ -38,7 +41,7 @@ fun ConnectingToGameScreen(
             modifier = Modifier
                 .padding(20.dp)
                 .fillMaxWidth(),
-            text = "Green Team",
+            text = stringResource(R.string.green_team),
             color = Color.Green
         ) {
             onGreenButtonClicked()

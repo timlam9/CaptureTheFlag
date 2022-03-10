@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,8 +46,12 @@ import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
 import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
-import com.lamti.capturetheflag.presentation.ui.components.screens.DefaultButton
-import com.lamti.capturetheflag.presentation.ui.components.screens.InstructionsCard
+import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.InstructionsCard
+import com.lamti.capturetheflag.presentation.ui.components.composables.ar.ArComponents
+import com.lamti.capturetheflag.presentation.ui.components.composables.ar.ArFlagGrabButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.ar.ArPlacerButtons
+import com.lamti.capturetheflag.presentation.ui.components.composables.ar.TransparentBackgroundCircle
 import com.lamti.capturetheflag.utils.get
 import com.lamti.capturetheflag.utils.myAppPreferences
 import dagger.hilt.android.AndroidEntryPoint
@@ -76,108 +81,6 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
         setupSurfaceView()
     }
 
-    private fun setArMode() {
-        val mode = requireActivity().myAppPreferences.get(AR_MODE_KEY, ArMode.Scanner.name)
-
-        arMode = when (mode) {
-            ArMode.Placer.name -> {
-                viewModel.setInstructions(getString(R.string.tap_to_place_flag), false)
-                ArMode.Placer
-            }
-            else -> {
-                viewModel.setInstructions(getString(R.string.search_flag), true)
-                ArMode.Scanner
-            }
-        }
-    }
-
-    private fun setupUI() = binding?.run {
-        topView.setContent {
-            val instructions by viewModel.instructions.collectAsState()
-            val message by viewModel.message.collectAsState()
-            val showPlacerButtons by viewModel.showPlacerButtons.collectAsState()
-            val showGrabButton by viewModel.showGrabButton.collectAsState()
-            val arModeState by remember { mutableStateOf(arMode) }
-
-            Box(modifier = Modifier.fillMaxSize()) {
-                Canvas(
-                    modifier = Modifier.fillMaxSize(),
-                    onDraw = {
-                        val circlePath = Path().apply {
-                            addOval(Rect(center, size.minDimension / 2))
-                        }
-                        clipPath(circlePath, clipOp = ClipOp.Difference) {
-                            drawRect(SolidColor(Color.Black.copy(alpha = 0.8f)))
-                        }
-                    }
-                )
-                Column {
-                    InstructionsCard(instructions = instructions)
-                    InstructionsCard(instructions = message)
-                    Spacer(modifier = Modifier.weight(3.5f))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        if (arModeState == ArMode.Placer) {
-                            if (showPlacerButtons) {
-                                DefaultButton(text = getString(R.string.cancel)) {
-                                    viewModel.onCancelButtonPressed()
-                                }
-                                DefaultButton(
-                                    text = getString(R.string.ok),
-                                    color = MaterialTheme.colors.secondary
-                                ) {
-                                    viewModel.onOkButtonPressed {
-                                        if (it) (requireActivity() as MainActivity).onBackPressed()
-                                    }
-                                }
-                            }
-                        } else {
-                            if (showGrabButton) {
-                                DefaultButton(
-                                    text = getString(R.string.grab),
-                                    color = MaterialTheme.colors.secondary
-                                ) {
-                                    viewModel.onGrabPressed {
-                                        if (it) (requireActivity() as MainActivity).onBackPressed()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    override fun onDestroyView() {
-        Log.d("TAGARA", "on destroy ")
-        binding = null
-        super.onDestroyView()
-    }
-
-    private fun setupHelpers() {
-        tapHelper = TapHelper(requireContext())
-        trackingStateHelper = TrackingStateHelper(requireActivity())
-        displayRotationHelper = DisplayRotationHelper(requireContext())
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private fun setupSurfaceView() = binding?.apply {
-        surfaceView.setOnTouchListener(tapHelper)
-
-        surfaceView.preserveEGLContextOnPause = true
-        surfaceView.setEGLContextClientVersion(2)
-        surfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0) // Alpha used for plane blending.
-
-        surfaceView.setRenderer(this@ArFragment)
-        surfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
-        surfaceView.setWillNotDraw(false)
-    }
-
     override fun onResume() {
         Log.d("TAGARA", "on resume")
         super.onResume()
@@ -205,6 +108,12 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
         binding?.surfaceView?.onResume()
     }
 
+    override fun onDestroyView() {
+        Log.d("TAGARA", "on destroy ")
+        binding = null
+        super.onDestroyView()
+    }
+
     override fun onPause() {
         Log.d("TAGARA", "on pause")
         super.onPause()
@@ -214,26 +123,10 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
         displayRotationHelper!!.onPause()
     }
 
-
     @SuppressLint("MissingSuperCall")
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String?>, results: IntArray) {
         requestCameraPermission()
     }
-
-    private fun requestCameraPermission() {
-        if (!CameraPermissionHelper.hasCameraPermission(requireActivity())) {
-            Toast.makeText(
-                requireContext(), "Camera permission is needed to run this application",
-                Toast.LENGTH_LONG
-            ).show()
-            if (!CameraPermissionHelper.shouldShowRequestPermissionRationale(requireActivity())) {
-                // Permission denied with checking "Do not ask again".
-                CameraPermissionHelper.launchPermissionSettings(requireActivity())
-            }
-            requireActivity().finish()
-        }
-    }
-
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         Log.d("TAGARA", "on surface created")
@@ -304,6 +197,86 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
                     break
                 }
             }
+        }
+    }
+
+    private fun setArMode() {
+        val mode = requireActivity().myAppPreferences.get(AR_MODE_KEY, ArMode.Scanner.name)
+
+        arMode = when (mode) {
+            ArMode.Placer.name -> {
+                viewModel.setInstructions(getString(R.string.tap_to_place_flag), false)
+                ArMode.Placer
+            }
+            else -> {
+                viewModel.setInstructions(getString(R.string.search_flag), true)
+                ArMode.Scanner
+            }
+        }
+    }
+
+    private fun setupUI() = binding?.run {
+        topView.setContent {
+            val instructions by viewModel.instructions.collectAsState()
+            val message by viewModel.message.collectAsState()
+            val showPlacerButtons by viewModel.showPlacerButtons.collectAsState()
+            val showGrabButton by viewModel.showGrabButton.collectAsState()
+            val arModeState by remember { mutableStateOf(arMode) }
+
+            ArComponents(
+                instructions = instructions,
+                message = message,
+                arModeState = arModeState,
+                showPlacerButtons = showPlacerButtons,
+                showGrabButton = showGrabButton,
+                okText = getString(R.string.ok),
+                cancelText = getString(R.string.cancel),
+                grabText = getString(R.string.grab),
+                onCancelClicked = { viewModel.onCancelButtonPressed() },
+                onOkClicked = {
+                    viewModel.onOkButtonPressed {
+                        if (it) (requireActivity() as MainActivity).onBackPressed()
+                    }
+                },
+                onGrabClicked = {
+                    viewModel.onGrabPressed {
+                        if (it) (requireActivity() as MainActivity).onBackPressed()
+                    }
+                }
+            )
+        }
+    }
+
+    private fun setupHelpers() {
+        tapHelper = TapHelper(requireContext())
+        trackingStateHelper = TrackingStateHelper(requireActivity())
+        displayRotationHelper = DisplayRotationHelper(requireContext())
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupSurfaceView() = binding?.apply {
+        surfaceView.setOnTouchListener(tapHelper)
+
+        surfaceView.preserveEGLContextOnPause = true
+        surfaceView.setEGLContextClientVersion(2)
+        surfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0) // Alpha used for plane blending.
+
+        surfaceView.setRenderer(this@ArFragment)
+        surfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+        surfaceView.setWillNotDraw(false)
+    }
+
+    private fun requestCameraPermission() {
+        if (!CameraPermissionHelper.hasCameraPermission(requireActivity())) {
+            Toast.makeText(
+                requireContext(), "Camera permission is needed to run this application",
+                Toast.LENGTH_LONG
+            ).show()
+            if (!CameraPermissionHelper.shouldShowRequestPermissionRationale(requireActivity())) {
+                // Permission denied with checking "Do not ask again".
+                CameraPermissionHelper.launchPermissionSettings(requireActivity())
+            }
+            requireActivity().finish()
         }
     }
 

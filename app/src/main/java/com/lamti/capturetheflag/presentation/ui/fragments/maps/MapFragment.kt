@@ -42,15 +42,15 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         setupMapView()
     }
 
+    override fun onDestroyView() {
+        binding = null
+        super.onDestroyView()
+    }
+
     private fun observeArMode() {
         lifecycleScope.launchWhenStarted {
             viewModel.arMode.onEach { requireActivity().myAppPreferences[AR_MODE_KEY] = it.name }.launchIn(lifecycleScope)
         }
-    }
-
-    override fun onDestroyView() {
-        binding = null
-        super.onDestroyView()
     }
 
     private fun initializeDataOnSplashScreen() {

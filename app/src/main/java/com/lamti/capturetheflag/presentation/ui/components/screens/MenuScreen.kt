@@ -20,9 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lamti.capturetheflag.R
+import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
 
 @Composable
-fun MenuScreen(onNewGameClicked: () -> Unit, onJoinGameClicked: () -> Unit) {
+fun MenuScreen(
+    onNewGameClicked: () -> Unit,
+    onJoinGameClicked: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -72,31 +76,7 @@ fun JoinGameButton(modifier: Modifier = Modifier, onAvailableGamesClicked: () ->
     }
 }
 
-@Composable
-fun DefaultButton(
-    modifier: Modifier = Modifier,
-    text: String,
-    textColor: Color = Color.White,
-    color: Color = MaterialTheme.colors.primaryVariant,
-    shape: Shape = MaterialTheme.shapes.small.copy(CornerSize(20)),
-    onclick: () -> Unit
-) {
-    Button(
-        onClick = onclick,
-        modifier = modifier
-            .height(60.dp),
-        shape = shape,
-        colors = ButtonDefaults.buttonColors(backgroundColor = color)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.button.copy(
-                color = textColor,
-                fontWeight = FontWeight.Bold
-            )
-        )
-    }
-}
+
 
 
 @Preview

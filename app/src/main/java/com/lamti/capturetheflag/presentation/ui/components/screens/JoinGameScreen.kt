@@ -31,11 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.presentation.QrCodeAnalyzer
 import com.lamti.capturetheflag.utils.EMPTY
 
@@ -46,9 +48,7 @@ fun JoinGameScreen(onQrCodeScanned: (String) -> Unit) {
     QrCodeScanner()
     CustomDialog(
         openDialog = openDialog.value,
-        onDismissDialog = {
-            openDialog.value = false
-        },
+        onDismissDialog = { openDialog.value = false },
         onJoinClicked = onQrCodeScanned
     )
 
@@ -56,7 +56,7 @@ fun JoinGameScreen(onQrCodeScanned: (String) -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         onClick = { openDialog.value = true }
     ) {
-        Text("Insert Game Code")
+        Text(stringResource(R.string.insert_game_code))
     }
 }
 
@@ -68,10 +68,7 @@ fun QrCodeScanner() {
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     var hasCamPermission by remember {
         mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
         )
     }
     val launcher = rememberLauncherForActivityResult(
@@ -150,7 +147,7 @@ fun CustomDialog(
         AlertDialog(
             onDismissRequest = onDismissDialog,
             title = {
-                Text(text = "Join Game")
+                Text(text = stringResource(R.string.join_game))
             },
             text = {
                 Column {
@@ -158,7 +155,7 @@ fun CustomDialog(
                         value = text,
                         onValueChange = { text = it }
                     )
-                    Text("type game's qr code")
+                    Text(stringResource(R.string.type_game_code))
                 }
             },
             buttons = {
@@ -170,7 +167,7 @@ fun CustomDialog(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = { onJoinClicked(text) }
                     ) {
-                        Text("Join")
+                        Text(stringResource(R.string.join))
                     }
                 }
             }

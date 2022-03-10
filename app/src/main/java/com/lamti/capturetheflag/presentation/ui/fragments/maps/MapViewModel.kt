@@ -65,6 +65,9 @@ class MapViewModel @Inject constructor(
     private val _isSafehouseDraggable = mutableStateOf(false)
     val isSafehouseDraggable: State<Boolean> = _isSafehouseDraggable
 
+    private val _qrCodeBitmap: MutableState<Bitmap?> = mutableStateOf(null)
+    val qrCodeBitmap: State<Bitmap?> = _qrCodeBitmap
+
     private val _arMode = MutableStateFlow(ArMode.Placer)
     val arMode: StateFlow<ArMode> = _arMode.asStateFlow()
 
@@ -88,14 +91,6 @@ class MapViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
-    fun onCreateGameClicked(title: String) {
-        viewModelScope.launch {
-            val gameID = getRandomString(5)
-            firestoreRepository.createGame(gameID, title, _currentPosition.value)
-            observeGameState(gameID)
-        }
-    }
-
     fun observeGameState(gameID: String) {
         viewModelScope.launch {
             firestoreRepository.observeGameState(gameID).onEach { gameState ->
@@ -103,6 +98,92 @@ class MapViewModel @Inject constructor(
                 gameState.handleGameStateEvents()
             }.launchIn(viewModelScope)
         }
+    }
+
+    fun updateSafeHousePosition(position: LatLng) {
+        val gameID = _player.value.gameDetails?.gameID ?: return
+        viewModelScope.launch {
+            firestoreRepository.updateSafehousePosition(gameID, position)
+        }
+    }
+
+    fun onCreateGameClicked(title: String) {
+        viewModelScope.launch {
+            val gameID = getRandomString(5)
+            generateQrCode(gameID)
+            firestoreRepository.createGame(gameID, title, _currentPosition.value)
+            observeGameState(gameID)
+        }
+    }
+
+    fun onSetGameClicked() {
+        viewModelScope.launch {
+            firestoreRepository.updatePlayerStatus(Player.Status.Playing)
+        }
+    }
+
+    fun onSetFlagsClicked() {
+        val gameID = _player.value.gameDetails?.gameID ?: return
+        viewModelScope.launch {
+            firestoreRepository.updateGameStatus(gameID, ProgressState.SettingFlags)
+        }
+    }
+
+    fun onJoinButtonClicked(gameID: String) {
+        viewModelScope.launch {
+            firestoreRepository.joinPlayer(gameID)
+        }
+    }
+
+    fun onTeamButtonClicked(team: Team) {
+        viewModelScope.launch {
+            firestoreRepository.setPlayerTeam(team)
+            observeGameState(_player.value.gameDetails?.gameID ?: EMPTY)
+        }
+    }
+
+    fun onQuitButtonClicked(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val result = firestoreRepository.quitGame()
+            onResult(result)
+        }
+    }
+
+    private fun onConnect(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val result = firestoreRepository.connectPlayer()
+            onResult(result)
+        }
+    }
+
+    private fun generateQrCode(text: String): Bitmap? {
+        try {
+            val qrCodeWriter = QRCodeWriter()
+            val bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 200, 200)
+            val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.RGB_565)
+            for (x in 0..199) {
+                for (y in 0..199) {
+                    bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.DKGRAY else Color.WHITE)
+                }
+            }
+            _qrCodeBitmap.value = bitmap
+            return bitmap
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
+    private fun startGeofencesListener(gameState: GameState) = with(gameState) {
+        geofencingHelper.addGeofence(safehouse.position, GAME_BOUNDARIES_GEOFENCE_ID, DEFAULT_GAME_BOUNDARIES_RADIUS)
+        geofencingHelper.addGeofence(safehouse.position, SAFEHOUSE_GEOFENCE_ID, DEFAULT_SAFEHOUSE_RADIUS)
+        geofencingHelper.addGeofence(greenFlag.position, GREEN_FLAG_GEOFENCE_ID, DEFAULT_FLAG_RADIUS)
+        geofencingHelper.addGeofence(redFlag.position, RED_FLAG_GEOFENCE_ID, DEFAULT_FLAG_RADIUS)
+        geofencingHelper.addGeofences()
+    }
+
+    private fun removeGeofencesListener() {
+        geofencingHelper.removeGeofences()
     }
 
     private fun GameState.handleGameStateEvents() = when (state) {
@@ -127,82 +208,6 @@ class MapViewModel @Inject constructor(
     private fun GameState.onGameStarted() {
         if (safehouse.isPlaced && redFlag.isPlaced && greenFlag.isPlaced)
             startGeofencesListener(this)
-    }
-
-    private fun startGeofencesListener(gameState: GameState) = with(gameState) {
-        geofencingHelper.addGeofence(safehouse.position, GAME_BOUNDARIES_GEOFENCE_ID, DEFAULT_GAME_BOUNDARIES_RADIUS)
-        geofencingHelper.addGeofence(safehouse.position, SAFEHOUSE_GEOFENCE_ID, DEFAULT_SAFEHOUSE_RADIUS)
-        geofencingHelper.addGeofence(greenFlag.position, GREEN_FLAG_GEOFENCE_ID, DEFAULT_FLAG_RADIUS)
-        geofencingHelper.addGeofence(redFlag.position, RED_FLAG_GEOFENCE_ID, DEFAULT_FLAG_RADIUS)
-        geofencingHelper.addGeofences()
-    }
-
-    private fun removeGeofencesListener() {
-        geofencingHelper.removeGeofences()
-    }
-
-    fun onSetGameClicked() {
-        viewModelScope.launch {
-            firestoreRepository.updatePlayerStatus(Player.Status.Playing)
-        }
-    }
-
-    fun generateQrCode(text: String): Bitmap? {
-        try {
-            val qrCodeWriter = QRCodeWriter()
-            val bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 200, 200)
-            val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.RGB_565)
-            for (x in 0..199) {
-                for (y in 0..199) {
-                    bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.DKGRAY else Color.WHITE)
-                }
-            }
-            return bitmap
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return null
-    }
-
-    fun updateSafeHousePosition(position: LatLng) {
-        val gameID = _player.value.gameDetails?.gameID ?: return
-        viewModelScope.launch {
-            firestoreRepository.updateSafehousePosition(gameID, position)
-        }
-    }
-
-    fun onSetFlagsClicked() {
-        val gameID = _player.value.gameDetails?.gameID ?: return
-        viewModelScope.launch {
-            firestoreRepository.updateGameStatus(gameID, ProgressState.SettingFlags)
-        }
-    }
-
-    fun onJoinButtonClicked(gameID: String) {
-        viewModelScope.launch {
-            firestoreRepository.joinPlayer(gameID)
-        }
-    }
-
-    fun onTeamButtonClicked(team: Team) {
-        viewModelScope.launch {
-            firestoreRepository.setPlayerTeam(team)
-            observeGameState(_player.value.gameDetails?.gameID ?: EMPTY)
-        }
-    }
-
-    private fun onConnect(onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            val result = firestoreRepository.connectPlayer()
-            onResult(result)
-        }
-    }
-
-    fun onQuitButtonClicked(onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            val result = firestoreRepository.quitGame()
-            onResult(result)
-        }
     }
 
     companion object {

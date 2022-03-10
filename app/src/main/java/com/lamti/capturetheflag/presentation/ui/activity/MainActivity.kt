@@ -37,12 +37,20 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
+
+    var geofenceIdFLow = MutableStateFlow(EMPTY)
+    private var broadcastReceiver: GeofenceBroadcastReceiver = object : GeofenceBroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            super.onReceive(context, intent)
+
+            geofenceIdFLow.value = intent?.getStringExtra(ENTER_GEOFENCE_KEY) ?: return
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,15 +88,6 @@ class MainActivity : AppCompatActivity() {
     fun onArScannerButtonClicked() {
         myAppPreferences[AR_MODE_KEY] = ArMode.Scanner
         viewModel.onArScannerButtonClicked()
-    }
-
-    var geofenceIdFLow = MutableStateFlow(EMPTY)
-    private var broadcastReceiver: GeofenceBroadcastReceiver = object : GeofenceBroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            super.onReceive(context, intent)
-
-            geofenceIdFLow.value = intent?.getStringExtra(ENTER_GEOFENCE_KEY) ?: return
-        }
     }
 
     private fun navigateToLoginIfNeededDuringSplashScreen() {
