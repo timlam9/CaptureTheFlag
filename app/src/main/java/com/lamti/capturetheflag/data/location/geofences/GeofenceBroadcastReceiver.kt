@@ -12,7 +12,6 @@ import com.google.android.gms.location.GeofencingEvent
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.player.Team
-import com.lamti.capturetheflag.utils.EMPTY
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,69 +50,69 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
 
         val geofenceTransition = geofencingEvent.geofenceTransition
 
-        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
+        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
+            geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT
+        ) {
             val geofenceID = geofencingEvent.triggeringGeofences[0].requestId
-
-            Log.d("TAGARA", "Geofence: $geofenceID")
+            val triggeringGeofences = geofencingEvent.triggeringGeofences
+            val geofenceTransitionDetails = getGeofenceTransitionDetails(geofenceTransition, triggeringGeofences)
 
             when {
                 geofenceID.contains(GREEN) -> discoverFlag(Flag.Green)
                 geofenceID.contains(RED) -> discoverFlag(Flag.Red)
-                geofenceID.contains(SAFEHOUSE) -> {
-                    applicationScope.launch {
-                        Log.d("TAGARA", "Safehouse")
-                        val player = firestoreRepository.getPlayer() ?: return@launch
-                        Log.d("TAGARA", "Player: $player")
-                        val game = firestoreRepository.getGame(player.gameDetails?.gameID ?: EMPTY) ?: return@launch
+                geofenceID.contains(SAFEHOUSE) -> checkGameOver()
+            }
 
-                        Log.d("TAGARA", "Game: $game")
+            notifyUserForGeofencesEvents(
+                geofenceTransition = geofenceTransition,
+                geofenceID = geofenceID,
+                geofenceTransitionDetails = geofenceTransitionDetails,
+                context = context
+            )
+        }
+    }
 
-                        if (player.userID == game.gameState.greenFlagGrabbed) {
-                            if (player.gameDetails?.team == Team.Red) {
-                                firestoreRepository.endGame(Team.Red)
-                            }
-                        }
-                        if (player.userID == game.gameState.redFlagGrabbed) {
-                            Log.d("TAGARA", "Red flag grabbed")
-                            if (player.gameDetails?.team == Team.Green) {
-                                Log.d("TAGARA", "from green team")
-                                firestoreRepository.endGame(Team.Green)
-                            }
-                        }
-                    }
+    private fun checkGameOver() {
+        applicationScope.launch {
+            val player = firestoreRepository.getPlayer() ?: return@launch
+            val gameDetails = player.gameDetails ?: return@launch
+            val playerTeam = gameDetails.team
+            val gameID = gameDetails.gameID
+            val game = firestoreRepository.getGame(gameID) ?: return@launch
+
+            if (player.userID == game.gameState.greenFlagGrabbed) {
+                if (playerTeam == Team.Red) {
+                    firestoreRepository.endGame(Team.Red)
+                }
+            }
+            if (player.userID == game.gameState.redFlagGrabbed) {
+                if (playerTeam == Team.Green) {
+                    firestoreRepository.endGame(Team.Green)
                 }
             }
         }
-
-        notifyUserForGeofencesEvents(geofenceTransition, geofencingEvent, context)
     }
 
     private fun notifyUserForGeofencesEvents(
         geofenceTransition: Int,
-        geofencingEvent: GeofencingEvent,
+        geofenceID: String,
+        geofenceTransitionDetails: String,
         context: Context
     ) {
-        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
-            geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT
-        ) {
-            val triggeringGeofences = geofencingEvent.triggeringGeofences
-            val geofenceTransitionDetails = getGeofenceTransitionDetails(
-                geofenceTransition,
-                triggeringGeofences
-            )
-
-            // if enter a geofence
-            if (geofenceTransition == 1) {
-                val geofenceID = triggeringGeofences[0].requestId
-                val intent = Intent(GEOFENCE_BROADCAST_RECEIVER_FILTER)
-                intent.putExtra(ENTER_GEOFENCE_KEY, geofenceID)
-                context.sendBroadcast(intent)
+        when (geofenceTransition) {
+            Geofence.GEOFENCE_TRANSITION_ENTER -> {
+                sendEnterGeofenceIntent(geofenceID, context)
+                Toast.makeText(context, geofenceTransitionDetails, Toast.LENGTH_SHORT).show()
             }
+            Geofence.GEOFENCE_TRANSITION_DWELL -> Log.d(TAG, geofenceTransitionDetails)
+            else -> Log.e(TAG, "invalid type: $geofenceTransition")
+        }
+    }
 
-            Toast.makeText(context, geofenceTransitionDetails, Toast.LENGTH_SHORT).show()
-            Log.i(TAG, geofenceTransitionDetails)
-        } else {
-            Log.e(TAG, "invalid type: $geofenceTransition")
+    private fun sendEnterGeofenceIntent(geofenceID: String, context: Context) {
+        Intent(GEOFENCE_BROADCAST_RECEIVER_FILTER).run {
+            putExtra(ENTER_GEOFENCE_KEY, geofenceID)
+            context.sendBroadcast(this)
         }
     }
 
@@ -130,6 +129,7 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
         val action = when (geofenceTransition) {
             1 -> "Enter"
             2 -> "Exit"
+            4 -> "Dwell"
             else -> "other"
         }
         return "$action \"${triggeringGeofences[0].requestId}\" geofence"
@@ -144,21 +144,3 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
     }
 
 }
-
-//fun Context.registerReceiverInScope(
-//    scope: CoroutineScope,
-//    vararg intentFilterActions: String,
-//    callback: (Intent) -> Unit,
-//) {
-//    val receiver = object : BroadcastReceiver() {
-//        override fun onReceive(context: Context, intent: Intent) {
-//            callback(intent)
-//        }
-//    }
-//    val intentFilter = IntentFilter()
-//    intentFilterActions.forEach { intentFilter.addAction(it) }
-//    registerReceiver(receiver, intentFilter)
-//    scope.coroutineContext.job.invokeOnCompletion {
-//        unregisterReceiver(receiver)
-//    }
-//}

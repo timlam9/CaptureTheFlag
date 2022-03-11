@@ -26,6 +26,7 @@ import com.lamti.capturetheflag.utils.EMPTY
     playerGameDetails: GameDetails?,
     redFlagIsPlaced: Boolean,
     greenFlagIsPlaced: Boolean,
+    isInsideSafehouse: Boolean,
     onSettingFlagsButtonClicked: () -> Unit
 ) {
     if (gameState == ProgressState.SettingFlags) {
@@ -38,13 +39,15 @@ import com.lamti.capturetheflag.utils.EMPTY
                 Team.Unknown -> false
             }
             if (showArButton) {
-                FloatingActionButton(
-                    modifier = modifier.padding(bottom = 64.dp),
-                    onClick = onSettingFlagsButtonClicked,
-                    backgroundColor = MaterialTheme.colors.secondary,
-                    contentColor = Color.White
-                ) {
-                    Icon(painterResource(id = R.drawable.ic_flag), EMPTY)
+                if (!isInsideSafehouse) {
+                    FloatingActionButton(
+                        modifier = modifier.padding(bottom = 64.dp),
+                        onClick = onSettingFlagsButtonClicked,
+                        backgroundColor = MaterialTheme.colors.secondary,
+                        contentColor = Color.White
+                    ) {
+                        Icon(painterResource(id = R.drawable.ic_flag), EMPTY)
+                    }
                 }
             } else {
                 Box(

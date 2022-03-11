@@ -11,39 +11,39 @@ import kotlinx.coroutines.flow.Flow
 
 interface FirestoreRepository {
 
-    fun observeGameState(id: String): Flow<GameState>
+    fun observePlayer(): Flow<Player>
 
     fun observeGame(): Flow<Game>
 
-    fun observePlayer(): Flow<Player>
-
-    suspend fun getPlayer(): Player?
-
-    suspend fun getGame(id: String): Game?
-
-    suspend fun loginUser(email: String, password: String): Boolean
+    fun observeGameState(id: String): Flow<GameState>
 
     suspend fun registerUser(email: String, password: String, username: String, fullName: String, onSuccess: () -> Unit)
 
-    suspend fun discoverFlag(flagFound: Flag): Boolean
-
-    suspend fun createGame(id: String, title: String, position: LatLng): Game
-
-    suspend fun updatePlayerStatus(status: Player.Status)
-
-    suspend fun updateSafehousePosition(gameID: String, position: LatLng)
-
-    suspend fun updateGameStatus(gameID: String, state: ProgressState)
+    suspend fun loginUser(email: String, password: String): Boolean
 
     suspend fun joinPlayer(gameID: String)
 
+    suspend fun connectPlayer(): Boolean
+
+    suspend fun getPlayer(): Player?
+
+    suspend fun updatePlayerStatus(status: Player.Status)
+
     suspend fun setPlayerTeam(team: Team)
 
-    suspend fun grabTheFlag(): Boolean
+    suspend fun createGame(id: String, title: String, position: LatLng): Game
+
+    suspend fun getGame(id: String): Game?
 
     suspend fun endGame(team: Team)
 
     suspend fun quitGame(): Boolean
 
-    suspend fun connectPlayer() : Boolean
+    suspend fun updateGameStatus(gameID: String, state: ProgressState)
+
+    suspend fun updateSafehousePosition(gameID: String, position: LatLng)
+
+    suspend fun discoverFlag(flagFound: Flag): Boolean
+
+    suspend fun grabTheFlag(): Boolean
 }

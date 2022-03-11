@@ -38,10 +38,11 @@
     <string name="red_team">Red Team</string>
     <string name="green_team">Green Team</string>
     <string name="insert_game_code">Insert Game Code</string>
-    <string name="type_game_code">type game\'s qr code</string>
+    <string name="type_game_code">type game\'s code</string>
     <string name="join_game">Join Game</string>
     <string name="join">Join</string>
     <string name="green_flag">Green Flag</string>
     <string name="red_flag">Red Flag</string>
     <string name="safehouse">Safe House</string>
+    <string name="place_flag_outside_safehouse">You must place your flag outside the safehouse</string>
 </resources>

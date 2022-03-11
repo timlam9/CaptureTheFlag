@@ -25,11 +25,19 @@ fun MapScreen(
     enteredGeofenceId: String,
     onArScannerButtonClicked: () -> Unit,
     onSettingFlagsButtonClicked: () -> Unit,
-    onQuitButtonClicked: () -> Unit
+    onQuitButtonClicked: () -> Unit,
 ) {
     val playerGameDetails = viewModel.player.value.gameDetails
     val gameState = viewModel.gameState.value.state
-    val instructions = setInstructions(gameState, playerGameDetails, viewModel)
+    val isInsideSafehouse = viewModel.isInsideSafehouse.value
+    val instructions = setInstructions(
+        team = playerGameDetails?.team ?: Team.Unknown,
+        rank = playerGameDetails?.rank ?: GameDetails.Rank.Soldier,
+        gameState = gameState,
+        isInsideSafehouse = isInsideSafehouse,
+        isRedFlagPlaced = viewModel.gameState.value.redFlag.isPlaced,
+        isGreenFlagPlaced = viewModel.gameState.value.greenFlag.isPlaced
+    )
 
     BoxWithConstraints(
         modifier = Modifier.fillMaxSize()
@@ -41,6 +49,7 @@ fun MapScreen(
             playerGameDetails = playerGameDetails,
             redFlagIsPlaced = viewModel.gameState.value.redFlag.isPlaced,
             greenFlagIsPlaced = viewModel.gameState.value.greenFlag.isPlaced,
+            isInsideSafehouse = isInsideSafehouse,
             onSettingFlagsButtonClicked = onSettingFlagsButtonClicked
         )
         if (gameState != ProgressState.Started) {
@@ -73,31 +82,28 @@ fun MapScreen(
 
 @Composable
 private fun setInstructions(
+    team: Team,
+    rank: GameDetails.Rank,
     gameState: ProgressState,
-    playerGameDetails: GameDetails?,
-    viewModel: MapViewModel
-) = when (gameState) {
+    isInsideSafehouse: Boolean,
+    isRedFlagPlaced: Boolean,
+    isGreenFlagPlaced: Boolean,
+): String = when (gameState) {
     ProgressState.Created -> {
-        if (playerGameDetails?.rank == GameDetails.Rank.Captain)
+        if (rank == GameDetails.Rank.Captain)
             stringResource(R.string.instructions_set_safehouse)
         else
             stringResource(R.string.wait_the_captain)
     }
     ProgressState.SettingFlags -> {
-        if (
-            playerGameDetails?.team == Team.Red &&
-            viewModel.gameState.value.redFlag.isPlaced &&
-            !viewModel.gameState.value.greenFlag.isPlaced
-        )
-            stringResource(R.string.wait_for_green_flag)
-        else if (
-            playerGameDetails?.team == Team.Green &&
-            viewModel.gameState.value.greenFlag.isPlaced &&
-            !viewModel.gameState.value.redFlag.isPlaced
-        )
-            stringResource(R.string.wait_for_red_flag)
-        else
-            stringResource(R.string.instructions_set_flags)
+        when {
+            team == Team.Red && isRedFlagPlaced && !isGreenFlagPlaced -> stringResource(R.string.wait_for_green_flag)
+            team == Team.Green && isGreenFlagPlaced && !isRedFlagPlaced -> stringResource(R.string.wait_for_red_flag)
+            else -> {
+                if (isInsideSafehouse) stringResource(R.string.place_flag_outside_safehouse)
+                else stringResource(R.string.instructions_set_flags)
+            }
+        }
     }
     ProgressState.Ended -> stringResource(id = R.string.game_over)
     else -> EMPTY

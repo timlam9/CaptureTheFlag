@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
 
     var geofenceIdFLow = MutableStateFlow(EMPTY)
+
     private var broadcastReceiver: GeofenceBroadcastReceiver = object : GeofenceBroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             super.onReceive(context, intent)

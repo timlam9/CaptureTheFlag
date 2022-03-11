@@ -20,7 +20,7 @@ fun GameNavigation(
     viewModel: MapViewModel,
     enteredGeofenceId: String,
     onSettingFlagsButtonClicked: () -> Unit,
-    onArScannerButtonClicked: () -> Unit
+    onArScannerButtonClicked: () -> Unit,
 ) {
     val navController = rememberNavController()
     val coroutine = rememberCoroutineScope()
@@ -46,12 +46,11 @@ fun GameNavigation(
             MapScreen(
                 viewModel = viewModel,
                 enteredGeofenceId = enteredGeofenceId,
-                onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
                 onArScannerButtonClicked = onArScannerButtonClicked,
-                onQuitButtonClicked = {
-                    navController.popNavigate(Screen.Menu.route)
-                }
-            )
+                onSettingFlagsButtonClicked = onSettingFlagsButtonClicked
+            ) {
+                navController.popNavigate(Screen.Menu.route)
+            }
         }
         composable(route = Screen.JoinGame.route) {
             JoinGameScreen { qrCode ->

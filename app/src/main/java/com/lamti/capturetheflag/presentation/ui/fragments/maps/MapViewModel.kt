@@ -27,7 +27,9 @@ import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
 import com.lamti.capturetheflag.presentation.ui.getRandomString
 import com.lamti.capturetheflag.presentation.ui.toLatLng
 import com.lamti.capturetheflag.utils.EMPTY
+import com.lamti.capturetheflag.utils.distanceToKm
 import com.lamti.capturetheflag.utils.emptyPosition
+import com.lamti.capturetheflag.utils.isInRangeOf
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,6 +58,9 @@ class MapViewModel @Inject constructor(
     private val _currentPosition: MutableState<LatLng> = mutableStateOf(emptyPosition())
     val currentPosition: State<LatLng> = _currentPosition
 
+    private val _isInsideSafehouse: MutableState<Boolean> = mutableStateOf(false)
+    val isInsideSafehouse: State<Boolean> = _isInsideSafehouse
+
     private val _gameState: MutableState<GameState> = mutableStateOf(GameState.initialGameState(_currentPosition.value))
     val gameState: State<GameState> = _gameState
 
@@ -70,6 +75,15 @@ class MapViewModel @Inject constructor(
 
     private val _arMode = MutableStateFlow(ArMode.Placer)
     val arMode: StateFlow<ArMode> = _arMode.asStateFlow()
+
+    init {
+        locationRepository.locationFlow().onEach { newLocation ->
+            val safehousePosition = _gameState.value.safehouse.position
+            _isInsideSafehouse.value = newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_SAFEHOUSE_RADIUS)
+            val distance = newLocation.toLatLng().distanceToKm(safehousePosition)
+            Log.d("TAGARA", "is inside safehouse: ${_isInsideSafehouse.value}, distance: $distance")
+        }.launchIn(viewModelScope)
+    }
 
     suspend fun getGame(id: String) = withContext(Dispatchers.IO) {
         firestoreRepository.getGame(id)

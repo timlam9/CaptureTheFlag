@@ -3,12 +3,27 @@ package com.lamti.capturetheflag.utils
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
+import android.location.Location
 import com.google.android.gms.maps.model.LatLng
 import com.google.gson.Gson
 
 const val EMPTY = ""
 
 fun emptyPosition() = LatLng(0.0, 0.0)
+
+fun LatLng.isInRangeOf(position: LatLng, range: Float): Boolean = distanceToKm(position) <= range
+
+fun LatLng.distanceToKm(position: LatLng): Float {
+    val result = floatArrayOf(0f)
+    Location.distanceBetween(
+        latitude,
+        longitude,
+        position.latitude,
+        position.longitude,
+        result
+    )
+    return result[0]
+}
 
 
 // Shared Prefs extensions

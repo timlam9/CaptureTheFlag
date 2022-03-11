@@ -37,136 +37,64 @@ class FirestoreRepositoryImpl @Inject constructor(
 
     private val userID = authenticationRepository.currentUser?.uid ?: EMPTY
 
-    override suspend fun getPlayer(): Player? = firestore
-        .collection(COLLECTION_PLAYERS)
-        .document(userID)
-        .get()
-        .await()
-        .toObject(PlayerRaw::class.java)
-        ?.toPlayer()
+    override fun observePlayer(): Flow<Player> = callbackFlow {
+        var snapshotListener: ListenerRegistration? = null
+        try {
+            snapshotListener = firestore
+                .collection(COLLECTION_PLAYERS)
+                .document(userID)
+                .addSnapshotListener { snapshot, e ->
+                    val state = snapshot?.toObject(PlayerRaw::class.java)?.toPlayer() ?: return@addSnapshotListener
+                    trySend(state).isSuccess
+                }
+        } catch (e: Exception) {
+            Log.d("TAGARA", "error: ${e.message}")
+        }
 
-    override suspend fun updatePlayerStatus(status: Player.Status) {
-        val currentPlayer = getPlayer()
-        val updatedPlayer = currentPlayer!!.copy(status = status).toRaw()
-
-        firestore
-            .collection(COLLECTION_PLAYERS)
-            .document(userID)
-            .set(updatedPlayer)
-            .await()
+        awaitClose {
+            snapshotListener?.remove()
+        }
     }
 
-    override suspend fun joinPlayer(gameID: String) {
-        val currentPlayer = getPlayer()
-        val updatedPlayer = currentPlayer!!.copy(
-            gameDetails = GameDetails(
-                gameID = gameID,
-                team = Team.Unknown,
-                rank = GameDetails.Rank.Soldier
-            ),
-            status = Player.Status.Connecting
-        ).toRaw()
+    override fun observeGame(): Flow<Game> = callbackFlow {
+        var snapshotListener: ListenerRegistration? = null
+        try {
+            val player = getPlayer()
+            val gameID = player?.gameDetails?.gameID ?: EMPTY
 
-        firestore
-            .collection(COLLECTION_PLAYERS)
-            .document(userID)
-            .set(updatedPlayer)
-            .await()
+            snapshotListener = firestore
+                .collection(COLLECTION_GAMES)
+                .document(gameID)
+                .addSnapshotListener { snapshot, e ->
+                    val state = snapshot?.toObject(GameRaw::class.java)?.toGame() ?: return@addSnapshotListener
+                    trySend(state).isSuccess
+                }
+        } catch (e: Exception) {
+            Log.d("TAGARA", "Game error: ${e.message}")
+        }
+
+        awaitClose {
+            snapshotListener?.remove()
+        }
     }
 
-    override suspend fun setPlayerTeam(team: Team) {
-        val currentPlayer = getPlayer()
-        val gameDetails = getPlayer()?.gameDetails
-        val updatedPlayer = currentPlayer!!.copy(
-            gameDetails = gameDetails?.copy(
-                gameID = gameDetails.gameID,
-                team = team,
-                rank = GameDetails.Rank.Leader
-            )
-        )
+    override fun observeGameState(id: String): Flow<GameState> = callbackFlow {
+        var snapshotListener: ListenerRegistration? = null
+        try {
+            snapshotListener = firestore
+                .collection(COLLECTION_GAMES)
+                .document(id)
+                .addSnapshotListener { snapshot, e ->
+                    val state = snapshot?.toObject(GameRaw::class.java)?.toGame()?.gameState ?: return@addSnapshotListener
+                    trySend(state).isSuccess
+                }
+        } catch (e: Exception) {
+            Log.d("TAGARA", "error: ${e.message}")
+        }
 
-        firestore
-            .collection(COLLECTION_PLAYERS)
-            .document(userID)
-            .set(updatedPlayer)
-            .await()
-    }
-
-    override suspend fun grabTheFlag(): Boolean {
-        val currentPlayer = getPlayer() ?: return false
-        val playerID = currentPlayer.userID
-        val gameDetails = currentPlayer.gameDetails ?: return false
-        val playerTeam = gameDetails.team
-        val gameID = gameDetails.gameID
-        val currentGame = getGame(gameID) ?: return false
-        val updatedGame: GameRaw = when (playerTeam) {
-            Team.Red -> currentGame.copy(gameState = currentGame.gameState.copy(greenFlagGrabbed = playerID))
-            Team.Green -> currentGame.copy(gameState = currentGame.gameState.copy(redFlagGrabbed = playerID))
-            Team.Unknown -> currentGame.copy(gameState = currentGame.gameState.copy())
-        }.toRaw()
-
-        firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .set(updatedGame)
-            .await()
-
-        return true
-    }
-
-    override suspend fun endGame(team: Team) {
-        val currentPlayer = getPlayer() ?: return
-        val gameDetails = currentPlayer.gameDetails ?: return
-        val gameID = gameDetails.gameID
-        val currentGame = getGame(gameID) ?: return
-        val updatedGame: GameRaw =
-            currentGame.copy(
-                gameState = currentGame.gameState.copy(
-                    safehouse = currentGame.gameState.safehouse,
-                    greenFlag = currentGame.gameState.greenFlag,
-                    redFlag = currentGame.gameState.redFlag,
-                    greenFlagGrabbed = currentGame.gameState.greenFlagGrabbed,
-                    redFlagGrabbed = currentGame.gameState.redFlagGrabbed,
-                    state = ProgressState.Ended
-                )
-            ).toRaw()
-
-        firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .set(updatedGame)
-            .await()
-    }
-
-    override suspend fun quitGame(): Boolean {
-        val player = getPlayer() ?: return false
-        val playerID = player.userID
-
-        val updatedPlayer = player.copy(
-            status = Player.Status.Online,
-            gameDetails = null
-        )
-
-        firestore
-            .collection(COLLECTION_PLAYERS)
-            .document(playerID)
-            .set(updatedPlayer)
-            .await()
-
-        return true
-    }
-
-    override suspend fun connectPlayer(): Boolean {
-        val currentPlayer = getPlayer()
-        val updatedPlayer = currentPlayer!!.copy(status = Player.Status.Playing)
-
-        firestore
-            .collection(COLLECTION_PLAYERS)
-            .document(userID)
-            .set(updatedPlayer)
-            .await()
-
-        return true
+        awaitClose {
+            snapshotListener?.remove()
+        }
     }
 
     override suspend fun registerUser(
@@ -193,23 +121,72 @@ class FirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun loginUser(email: String, password: String) = authenticationRepository.loginUser(email, password)
 
-    override fun observePlayer(): Flow<Player> = callbackFlow {
-        var snapshotListener: ListenerRegistration? = null
-        try {
-            snapshotListener = firestore
-                .collection(COLLECTION_PLAYERS)
-                .document(userID)
-                .addSnapshotListener { snapshot, e ->
-                    val state = snapshot?.toObject(PlayerRaw::class.java)?.toPlayer() ?: return@addSnapshotListener
-                    trySend(state).isSuccess
-                }
-        } catch (e: Exception) {
-            Log.d("TAGARA", "error: ${e.message}")
-        }
+    override suspend fun joinPlayer(gameID: String) {
+        val currentPlayer = getPlayer()
+        val updatedPlayer = currentPlayer!!.copy(
+            gameDetails = GameDetails(
+                gameID = gameID,
+                team = Team.Unknown,
+                rank = GameDetails.Rank.Soldier
+            ),
+            status = Player.Status.Connecting
+        ).toRaw()
 
-        awaitClose {
-            snapshotListener?.remove()
-        }
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(userID)
+            .set(updatedPlayer)
+            .await()
+    }
+
+    override suspend fun connectPlayer(): Boolean {
+        val currentPlayer = getPlayer()
+        val updatedPlayer = currentPlayer!!.copy(status = Player.Status.Playing)
+
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(userID)
+            .set(updatedPlayer)
+            .await()
+
+        return true
+    }
+
+    override suspend fun getPlayer(): Player? = firestore
+        .collection(COLLECTION_PLAYERS)
+        .document(userID)
+        .get()
+        .await()
+        .toObject(PlayerRaw::class.java)
+        ?.toPlayer()
+
+    override suspend fun updatePlayerStatus(status: Player.Status) {
+        val currentPlayer = getPlayer()
+        val updatedPlayer = currentPlayer!!.copy(status = status).toRaw()
+
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(userID)
+            .set(updatedPlayer)
+            .await()
+    }
+
+    override suspend fun setPlayerTeam(team: Team) {
+        val currentPlayer = getPlayer()
+        val gameDetails = getPlayer()?.gameDetails
+        val updatedPlayer = currentPlayer!!.copy(
+            gameDetails = gameDetails?.copy(
+                gameID = gameDetails.gameID,
+                team = team,
+                rank = GameDetails.Rank.Leader
+            )
+        )
+
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(userID)
+            .set(updatedPlayer)
+            .await()
     }
 
     override suspend fun createGame(id: String, title: String, position: LatLng): Game {
@@ -269,6 +246,48 @@ class FirestoreRepositoryImpl @Inject constructor(
         return game
     }
 
+    override suspend fun endGame(team: Team) {
+        val currentPlayer = getPlayer() ?: return
+        val gameDetails = currentPlayer.gameDetails ?: return
+        val gameID = gameDetails.gameID
+        val currentGame = getGame(gameID) ?: return
+        val updatedGame: GameRaw =
+            currentGame.copy(
+                gameState = currentGame.gameState.copy(
+                    safehouse = currentGame.gameState.safehouse,
+                    greenFlag = currentGame.gameState.greenFlag,
+                    redFlag = currentGame.gameState.redFlag,
+                    greenFlagGrabbed = currentGame.gameState.greenFlagGrabbed,
+                    redFlagGrabbed = currentGame.gameState.redFlagGrabbed,
+                    state = ProgressState.Ended
+                )
+            ).toRaw()
+
+        firestore
+            .collection(COLLECTION_GAMES)
+            .document(gameID)
+            .set(updatedGame)
+            .await()
+    }
+
+    override suspend fun quitGame(): Boolean {
+        val player = getPlayer() ?: return false
+        val playerID = player.userID
+
+        val updatedPlayer = player.copy(
+            status = Player.Status.Online,
+            gameDetails = null
+        )
+
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(playerID)
+            .set(updatedPlayer)
+            .await()
+
+        return true
+    }
+
     override suspend fun getGame(id: String): Game? = withContext(Dispatchers.IO) {
         try {
             firestore
@@ -314,47 +333,6 @@ class FirestoreRepositoryImpl @Inject constructor(
             .await()
     }
 
-    override fun observeGameState(id: String): Flow<GameState> = callbackFlow {
-        var snapshotListener: ListenerRegistration? = null
-        try {
-            snapshotListener = firestore
-                .collection(COLLECTION_GAMES)
-                .document(id)
-                .addSnapshotListener { snapshot, e ->
-                    val state = snapshot?.toObject(GameRaw::class.java)?.toGame()?.gameState ?: return@addSnapshotListener
-                    trySend(state).isSuccess
-                }
-        } catch (e: Exception) {
-            Log.d("TAGARA", "error: ${e.message}")
-        }
-
-        awaitClose {
-            snapshotListener?.remove()
-        }
-    }
-
-    override fun observeGame(): Flow<Game> = callbackFlow {
-        var snapshotListener: ListenerRegistration? = null
-        try {
-            val player = getPlayer()
-            val gameID = player?.gameDetails?.gameID ?: EMPTY
-
-            snapshotListener = firestore
-                .collection(COLLECTION_GAMES)
-                .document(gameID)
-                .addSnapshotListener { snapshot, e ->
-                    val state = snapshot?.toObject(GameRaw::class.java)?.toGame() ?: return@addSnapshotListener
-                    trySend(state).isSuccess
-                }
-        } catch (e: Exception) {
-            Log.d("TAGARA", "Game error: ${e.message}")
-        }
-
-        awaitClose {
-            snapshotListener?.remove()
-        }
-    }
-
     override suspend fun discoverFlag(flagFound: Flag): Boolean {
         val player = getPlayer()
         val gameID = player?.gameDetails?.gameID ?: return false
@@ -385,6 +363,28 @@ class FirestoreRepositoryImpl @Inject constructor(
         return true
     }
 
+    override suspend fun grabTheFlag(): Boolean {
+        val currentPlayer = getPlayer() ?: return false
+        val playerID = currentPlayer.userID
+        val gameDetails = currentPlayer.gameDetails ?: return false
+        val playerTeam = gameDetails.team
+        val gameID = gameDetails.gameID
+        val currentGame = getGame(gameID) ?: return false
+        val updatedGame: GameRaw = when (playerTeam) {
+            Team.Red -> currentGame.copy(gameState = currentGame.gameState.copy(greenFlagGrabbed = playerID))
+            Team.Green -> currentGame.copy(gameState = currentGame.gameState.copy(redFlagGrabbed = playerID))
+            Team.Unknown -> currentGame.copy(gameState = currentGame.gameState.copy())
+        }.toRaw()
+
+        firestore
+            .collection(COLLECTION_GAMES)
+            .document(gameID)
+            .set(updatedGame)
+            .await()
+
+        return true
+    }
+
     private suspend fun addPlayer(newUser: Player) {
         firestore
             .collection(COLLECTION_PLAYERS)
@@ -398,5 +398,4 @@ class FirestoreRepositoryImpl @Inject constructor(
         private const val COLLECTION_PLAYERS = "players"
         const val COLLECTION_GAMES = "games"
     }
-
 }
