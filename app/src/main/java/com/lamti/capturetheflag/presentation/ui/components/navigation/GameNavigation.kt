@@ -2,6 +2,7 @@ package com.lamti.capturetheflag.presentation.ui.components.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -13,6 +14,7 @@ import com.lamti.capturetheflag.presentation.ui.components.screens.MapScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.MenuScreen
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
 import com.lamti.capturetheflag.presentation.ui.popNavigate
+import com.lamti.capturetheflag.utils.EMPTY
 import kotlinx.coroutines.launch
 
 @Composable
@@ -37,10 +39,17 @@ fun GameNavigation(
         }
         composable(route = Screen.CreateGame.route) {
             CreateGameScreen(
-                viewModel = viewModel
-            ) {
-                navController.popNavigate(Screen.Map.route)
-            }
+                gameID = viewModel.player.value.gameDetails?.gameID ?: EMPTY,
+                qrCodeImage = viewModel.qrCodeBitmap.value?.asImageBitmap(),
+                gameState = viewModel.game.value.gameState.state,
+                redPlayers =  viewModel.game.value.redPlayers.size,
+                greenPlayers = viewModel.game.value.greenPlayers.size,
+                onSetGameClicked = {
+                    viewModel.onSetGameClicked()
+                    navController.popNavigate(Screen.Map.route)
+                },
+                onCreateGameClicked = { viewModel.onCreateGameClicked(it) }
+            )
         }
         composable(route = Screen.Map.route) {
             MapScreen(

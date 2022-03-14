@@ -14,6 +14,7 @@ import com.google.zxing.qrcode.QRCodeWriter
 import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
+import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.GameDetails
@@ -26,7 +27,6 @@ import com.lamti.capturetheflag.presentation.ui.components.navigation.Screen
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
 import com.lamti.capturetheflag.presentation.ui.getRandomString
 import com.lamti.capturetheflag.presentation.ui.toLatLng
-import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.distanceToKm
 import com.lamti.capturetheflag.utils.emptyPosition
 import com.lamti.capturetheflag.utils.isInRangeOf
@@ -61,8 +61,8 @@ class MapViewModel @Inject constructor(
     private val _isInsideSafehouse: MutableState<Boolean> = mutableStateOf(false)
     val isInsideSafehouse: State<Boolean> = _isInsideSafehouse
 
-    private val _gameState: MutableState<GameState> = mutableStateOf(GameState.initialGameState(_currentPosition.value))
-    val gameState: State<GameState> = _gameState
+    private val _game: MutableState<Game> = mutableStateOf(Game.initialGame(_currentPosition.value))
+    val game: State<Game> = _game
 
     private val _player = mutableStateOf(Player.emptyPlayer())
     val player: State<Player> = _player
@@ -78,7 +78,7 @@ class MapViewModel @Inject constructor(
 
     init {
         locationRepository.locationFlow().onEach { newLocation ->
-            val safehousePosition = _gameState.value.safehouse.position
+            val safehousePosition = _game.value.gameState.safehouse.position
             _isInsideSafehouse.value = newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_SAFEHOUSE_RADIUS)
             val distance = newLocation.toLatLng().distanceToKm(safehousePosition)
             Log.d("TAGARA", "is inside safehouse: ${_isInsideSafehouse.value}, distance: $distance")
@@ -105,11 +105,11 @@ class MapViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
-    fun observeGameState(gameID: String) {
+    fun observeGame() {
         viewModelScope.launch {
-            firestoreRepository.observeGameState(gameID).onEach { gameState ->
-                _gameState.value = gameState
-                gameState.handleGameStateEvents()
+            firestoreRepository.observeGame().onEach { game ->
+                _game.value = game
+                game.gameState.handleGameStateEvents()
             }.launchIn(viewModelScope)
         }
     }
@@ -126,7 +126,7 @@ class MapViewModel @Inject constructor(
             val gameID = getRandomString(5)
             generateQrCode(gameID)
             firestoreRepository.createGame(gameID, title, _currentPosition.value)
-            observeGameState(gameID)
+            observeGame()
         }
     }
 
@@ -152,7 +152,7 @@ class MapViewModel @Inject constructor(
     fun onTeamButtonClicked(team: Team) {
         viewModelScope.launch {
             firestoreRepository.setPlayerTeam(team)
-            observeGameState(_player.value.gameDetails?.gameID ?: EMPTY)
+            observeGame()
         }
     }
 

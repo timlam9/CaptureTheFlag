@@ -45,12 +45,12 @@ fun GoogleMapsView(viewModel: MapViewModel) {
         mapProperties = mapProperties,
         uiSettings = uiSettings,
         cameraPositionState = cameraPositionState,
-        safehousePosition = viewModel.gameState.value.safehouse.position,
+        safehousePosition = viewModel.game.value.gameState.safehouse.position,
         isSafeHouseDraggable = viewModel.isSafehouseDraggable.value,
         onSafehouseMarkerClicked = { viewModel.updateSafeHousePosition(it) },
         team = viewModel.player.value.gameDetails?.team ?: Team.Unknown,
-        redFlag = viewModel.gameState.value.redFlag,
-        greenFlag = viewModel.gameState.value.greenFlag
+        redFlag = viewModel.game.value.gameState.redFlag,
+        greenFlag = viewModel.game.value.gameState.greenFlag
     )
 }
 

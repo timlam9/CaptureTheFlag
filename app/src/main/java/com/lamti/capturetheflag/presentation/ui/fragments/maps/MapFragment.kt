@@ -59,7 +59,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                 viewModel.getLastLocation()
                 viewModel.observePlayer()
                 if (viewModel.player.value.gameDetails != null && viewModel.player.value.gameDetails?.gameID != EMPTY)
-                    viewModel.observeGameState(viewModel.player.value.gameDetails!!.gameID)
+                    viewModel.observeGame()
                 return@setKeepOnScreenCondition viewModel.stayInSplashScreen.value
             }
         }

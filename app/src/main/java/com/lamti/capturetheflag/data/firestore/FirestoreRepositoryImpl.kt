@@ -173,19 +173,58 @@ class FirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun setPlayerTeam(team: Team) {
         val currentPlayer = getPlayer()
+        val playerID = currentPlayer?.userID ?: EMPTY
+
         val gameDetails = getPlayer()?.gameDetails
+        val gameID = gameDetails?.gameID ?: EMPTY
+        val game = getGame(gameID)
+
+        val rank = if (team == Team.Green) {
+            if (game == null || game.greenPlayers.isEmpty())
+                GameDetails.Rank.Leader
+            else
+                GameDetails.Rank.Soldier
+        } else
+            GameDetails.Rank.Soldier
+
         val updatedPlayer = currentPlayer!!.copy(
             gameDetails = gameDetails?.copy(
-                gameID = gameDetails.gameID,
+                gameID = gameID,
                 team = team,
-                rank = GameDetails.Rank.Leader
+                rank = rank
             )
-        )
+        ).toRaw()
 
         firestore
             .collection(COLLECTION_PLAYERS)
             .document(userID)
             .set(updatedPlayer)
+            .await()
+
+        addPlayerToGame(gameID, team, playerID)
+    }
+
+    private suspend fun addPlayerToGame(gameID: String, playerTeam: Team, playerID: String) {
+        val game = getGame(gameID) ?: return
+
+        val updatedGame: Game = when (playerTeam) {
+            Team.Red -> {
+                val newList = game.redPlayers.toMutableList()
+                newList.add(playerID)
+                game.copy(redPlayers = newList)
+            }
+            Team.Green -> {
+                val newList = game.greenPlayers.toMutableList()
+                newList.add(playerID)
+                game.copy(greenPlayers = newList)
+            }
+            Team.Unknown -> game
+        }
+
+        firestore
+            .collection(COLLECTION_GAMES)
+            .document(gameID)
+            .set(updatedGame.toRaw())
             .await()
     }
 
@@ -218,7 +257,9 @@ class FirestoreRepositoryImpl @Inject constructor(
                 greenFlagGrabbed = null,
                 redFlagGrabbed = null,
                 state = ProgressState.Created
-            )
+            ),
+            redPlayers = listOf(userID),
+            greenPlayers = emptyList()
         )
 
         firestore
@@ -389,7 +430,7 @@ class FirestoreRepositoryImpl @Inject constructor(
         firestore
             .collection(COLLECTION_PLAYERS)
             .document(newUser.userID)
-            .set(newUser)
+            .set(newUser.toRaw())
             .await()
     }
 

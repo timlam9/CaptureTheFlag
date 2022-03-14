@@ -18,8 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -30,23 +30,24 @@ import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
 import com.lamti.capturetheflag.presentation.ui.components.composables.InfoTextField
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
 import com.lamti.capturetheflag.utils.EMPTY
 
 @Composable
 fun CreateGameScreen(
-    viewModel: MapViewModel,
-    onSetGameClicked: () -> Unit
+    gameID: String,
+    qrCodeImage: ImageBitmap?,
+    gameState: ProgressState,
+    redPlayers: Int,
+    greenPlayers: Int,
+    onSetGameClicked: () -> Unit,
+    onCreateGameClicked: (String) -> Unit
 ) {
     var isGameCreated by remember { mutableStateOf(false) }
     var buttonName by remember { mutableStateOf(EMPTY) }
     var gameName by remember { mutableStateOf(EMPTY) }
     var title by remember { mutableStateOf(EMPTY) }
 
-    val gameID = viewModel.player.value.gameDetails?.gameID ?: EMPTY
-    val qrCodeImage = viewModel.qrCodeBitmap.value?.asImageBitmap()
-
-    when (viewModel.gameState.value.state) {
+    when (gameState) {
         ProgressState.Created -> {
             isGameCreated = true
             title = stringResource(R.string.game_created)
@@ -75,6 +76,14 @@ fun CreateGameScreen(
             text = title,
             style = MaterialTheme.typography.h5.copy(color = MaterialTheme.colors.onBackground)
         )
+        Text(
+            text = "Green Players: $greenPlayers",
+            style = MaterialTheme.typography.h5.copy(color = Color.Green)
+        )
+        Text(
+            text = "Red Players: $redPlayers",
+            style = MaterialTheme.typography.h5.copy(color = Color.Red)
+        )
         Spacer(modifier = Modifier.weight(0.1f))
         if (isGameCreated) {
             GameCreated(
@@ -98,11 +107,8 @@ fun CreateGameScreen(
             color = MaterialTheme.colors.primaryVariant
         ) {
             when {
-                isGameCreated -> {
-                    viewModel.onSetGameClicked()
-                    onSetGameClicked()
-                }
-                else -> viewModel.onCreateGameClicked(gameName)
+                isGameCreated -> onSetGameClicked()
+                else -> onCreateGameClicked(gameName)
             }
         }
     }

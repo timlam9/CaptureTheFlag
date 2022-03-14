@@ -28,15 +28,15 @@ fun MapScreen(
     onQuitButtonClicked: () -> Unit,
 ) {
     val playerGameDetails = viewModel.player.value.gameDetails
-    val gameState = viewModel.gameState.value.state
+    val gameState = viewModel.game.value.gameState.state
     val isInsideSafehouse = viewModel.isInsideSafehouse.value
     val instructions = setInstructions(
         team = playerGameDetails?.team ?: Team.Unknown,
         rank = playerGameDetails?.rank ?: GameDetails.Rank.Soldier,
         gameState = gameState,
         isInsideSafehouse = isInsideSafehouse,
-        isRedFlagPlaced = viewModel.gameState.value.redFlag.isPlaced,
-        isGreenFlagPlaced = viewModel.gameState.value.greenFlag.isPlaced
+        isRedFlagPlaced = viewModel.game.value.gameState.redFlag.isPlaced,
+        isGreenFlagPlaced = viewModel.game.value.gameState.greenFlag.isPlaced
     )
 
     BoxWithConstraints(
@@ -47,8 +47,8 @@ fun MapScreen(
             modifier = Modifier.align(Alignment.BottomCenter),
             gameState = gameState,
             playerGameDetails = playerGameDetails,
-            redFlagIsPlaced = viewModel.gameState.value.redFlag.isPlaced,
-            greenFlagIsPlaced = viewModel.gameState.value.greenFlag.isPlaced,
+            redFlagIsPlaced = viewModel.game.value.gameState.redFlag.isPlaced,
+            greenFlagIsPlaced = viewModel.game.value.gameState.greenFlag.isPlaced,
             isInsideSafehouse = isInsideSafehouse,
             onSettingFlagsButtonClicked = onSettingFlagsButtonClicked
         )

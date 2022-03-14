@@ -15,7 +15,9 @@ import java.util.Date
 data class GameRaw(
     val gameID: String = EMPTY,
     val title: String = EMPTY,
-    val gameState: GameStateRaw = GameStateRaw()
+    val gameState: GameStateRaw = GameStateRaw(),
+    val redPlayers: List<String> = emptyList(),
+    val greenPlayers: List<String> = emptyList()
 ) {
 
     fun toGame() = Game(
@@ -28,7 +30,9 @@ data class GameRaw(
             greenFlagGrabbed = gameState.greenFlagGrabbed,
             redFlagGrabbed = gameState.redFlagGrabbed,
             state = gameState.state.toState()
-        )
+        ),
+        redPlayers = redPlayers,
+        greenPlayers = greenPlayers
     )
 
     companion object {
@@ -36,7 +40,9 @@ data class GameRaw(
         fun Game.toRaw() = GameRaw(
             gameID = gameID,
             title = title,
-            gameState = gameState.toRaw()
+            gameState = gameState.toRaw(),
+            redPlayers = redPlayers,
+            greenPlayers = greenPlayers
         )
     }
 }
@@ -62,7 +68,6 @@ data class GameStateRaw(
         )
     }
 }
-
 
 data class GeofenceObjectRaw(
     val position: GeoPoint = emptyGeoPoint,

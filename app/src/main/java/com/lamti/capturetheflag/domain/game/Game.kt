@@ -8,7 +8,9 @@ import java.util.Date
 data class Game(
     val gameID: String,
     val title: String,
-    val gameState: GameState
+    val gameState: GameState,
+    val redPlayers: List<String>,
+    val greenPlayers: List<String>,
 ) {
 
     companion object {
@@ -16,7 +18,9 @@ data class Game(
         fun initialGame(position: LatLng = emptyPosition(), gameID: String = EMPTY, title: String = EMPTY) = Game(
             gameID = gameID,
             title = title,
-            gameState = GameState.initialGameState(position = position)
+            gameState = GameState.initialGameState(position = position),
+            redPlayers = emptyList(),
+            greenPlayers = emptyList()
         )
     }
 }
