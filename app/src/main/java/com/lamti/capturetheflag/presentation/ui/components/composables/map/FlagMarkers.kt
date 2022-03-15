@@ -9,7 +9,7 @@ import com.lamti.capturetheflag.presentation.ui.style.GreenOpacity
 import com.lamti.capturetheflag.presentation.ui.style.RedOpacity
 
 @Composable
- fun FlagMarkers(
+fun FlagMarkers(
     team: Team,
     redFlag: GeofenceObject,
     greenFlag: GeofenceObject,

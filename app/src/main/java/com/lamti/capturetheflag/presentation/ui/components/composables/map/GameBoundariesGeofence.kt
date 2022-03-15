@@ -22,10 +22,9 @@ import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
     onMarkerClicked: (LatLng) -> Unit = {}
 ) {
     val dragState = rememberMarkerDragState()
-    var finalPosition by remember { mutableStateOf(safehousePosition) }
 
     MapMarker(
-        position = finalPosition,
+        position = safehousePosition,
         icon = safeHouseIcon,
         title = safeHouseTitle,
         hasGeofence = true,
@@ -33,11 +32,10 @@ import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
         draggable = isSafeHouseDraggable,
         dragState = dragState,
     ) {
-        finalPosition = it.position
-        onMarkerClicked(finalPosition)
+        onMarkerClicked(it.position)
     }
     Circle(
-        center = finalPosition,
+        center = safehousePosition,
         radius = DEFAULT_GAME_BOUNDARIES_RADIUS.toDouble(),
         strokeColor = Color.Blue,
         strokeWidth = 10f,

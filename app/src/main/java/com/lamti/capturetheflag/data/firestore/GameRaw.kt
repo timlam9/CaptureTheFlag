@@ -3,12 +3,15 @@ package com.lamti.capturetheflag.data.firestore
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.ServerTimestamp
+import com.lamti.capturetheflag.data.authentication.toTeam
 import com.lamti.capturetheflag.data.firestore.GameStateRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.GeofenceObjectRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.game.Game
+import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.GeofenceObject
 import com.lamti.capturetheflag.domain.game.ProgressState
+import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.utils.EMPTY
 import java.util.Date
 
@@ -97,6 +100,35 @@ data class GeofenceObjectRaw(
         )
     }
 }
+
+data class GamePlayerRaw(
+    val id: String = EMPTY,
+    val team: String = Team.Unknown.name,
+    val position: GeoPoint = emptyGeoPoint,
+    val carryingFlag: Boolean = false,
+    val username: String = EMPTY
+) {
+
+     fun toGamePlayer() = GamePlayer(
+         id = id,
+         team = team.toTeam(),
+         position = position.toLatLng(),
+         carryingFlag = carryingFlag,
+         username = username
+     )
+
+    companion object {
+
+        fun GamePlayer.toRaw() = GamePlayerRaw(
+            id = id,
+            team = team.name,
+            position = position.toGeoPoint(),
+            carryingFlag = carryingFlag,
+            username = username
+        )
+    }
+}
+
 
 val emptyGeoPoint: GeoPoint = GeoPoint(0.0, 0.0)
 

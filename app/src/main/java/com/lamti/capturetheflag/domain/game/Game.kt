@@ -1,6 +1,7 @@
 package com.lamti.capturetheflag.domain.game
 
 import com.google.android.gms.maps.model.LatLng
+import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.emptyPosition
 import java.util.Date
@@ -82,3 +83,11 @@ enum class ProgressState {
     Started,
     Ended
 }
+
+data class GamePlayer(
+    val id: String,
+    val team: Team,
+    val position: LatLng,
+    val carryingFlag: Boolean,
+    val username: String
+)

@@ -73,7 +73,7 @@ private fun String.toStatus() = when (this) {
     else -> Player.Status.Online
 }
 
-private fun String.toTeam() = when (this) {
+fun String.toTeam() = when (this) {
     Team.Red.name -> Team.Red
     Team.Green.name -> Team.Green
     else -> Team.Unknown

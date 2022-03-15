@@ -3,6 +3,7 @@ package com.lamti.capturetheflag.domain
 import com.google.android.gms.maps.model.LatLng
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.game.Game
+import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Player
@@ -10,6 +11,10 @@ import com.lamti.capturetheflag.domain.player.Team
 import kotlinx.coroutines.flow.Flow
 
 interface FirestoreRepository {
+
+    suspend fun uploadPlayerPosition(position: LatLng)
+
+    fun observePlayersPosition(gameID: String): Flow<List<GamePlayer>>
 
     fun observePlayer(): Flow<Player>
 

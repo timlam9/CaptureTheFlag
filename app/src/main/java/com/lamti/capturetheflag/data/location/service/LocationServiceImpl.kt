@@ -6,6 +6,8 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
+import com.lamti.capturetheflag.domain.FirestoreRepository
+import com.lamti.capturetheflag.presentation.ui.toLatLng
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,6 +22,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
     @Inject lateinit var locationRepository: LocationRepository
     @Inject lateinit var notificationHelper: NotificationHelper
     @Inject lateinit var geofencingRepository: GeofencingRepository
+    @Inject lateinit var firestoreRepository: FirestoreRepository
 
     private var isServiceRunning = false
     private var locationUpdates: Job? = null
@@ -56,7 +59,10 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
 
     private fun startLocationUpdates() {
         locationUpdates = locationRepository.locationFlow()
-            .onEach { notificationHelper.updateNotification("Position: ${it.latitude}, ${it.longitude}") }
+            .onEach {
+                notificationHelper.updateNotification("Position: ${it.toLatLng()}")
+                firestoreRepository.uploadPlayerPosition(it.toLatLng())
+            }
             .flowOn(Dispatchers.IO)
             .launchIn(lifecycleScope)
     }

@@ -15,6 +15,7 @@ import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Game
+import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.GameDetails
@@ -73,6 +74,9 @@ class MapViewModel @Inject constructor(
     private val _qrCodeBitmap: MutableState<Bitmap?> = mutableStateOf(null)
     val qrCodeBitmap: State<Bitmap?> = _qrCodeBitmap
 
+    private val _otherPlayers: MutableState<List<GamePlayer>> = mutableStateOf(emptyList())
+    val otherPlayers: State<List<GamePlayer>> = _otherPlayers
+
     private val _arMode = MutableStateFlow(ArMode.Placer)
     val arMode: StateFlow<ArMode> = _arMode.asStateFlow()
 
@@ -93,6 +97,14 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             _currentPosition.value = locationRepository.awaitLastLocation().toLatLng()
         }
+    }
+
+    private fun observeOtherPlayers() {
+        firestoreRepository.observePlayersPosition(_game.value.gameID).onEach { players ->
+            _otherPlayers.value = players
+        }.catch {
+            Log.d("TAGARA", "Catch error")
+        }.launchIn(viewModelScope)
     }
 
     fun observePlayer() {
@@ -222,6 +234,7 @@ class MapViewModel @Inject constructor(
     private fun GameState.onGameStarted() {
         if (safehouse.isPlaced && redFlag.isPlaced && greenFlag.isPlaced)
             startGeofencesListener(this)
+        observeOtherPlayers()
     }
 
     companion object {

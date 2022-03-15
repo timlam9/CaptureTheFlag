@@ -8,10 +8,12 @@ import com.google.firebase.firestore.SetOptions
 import com.lamti.capturetheflag.data.authentication.AuthenticationRepository
 import com.lamti.capturetheflag.data.authentication.PlayerRaw
 import com.lamti.capturetheflag.data.authentication.PlayerRaw.Companion.toRaw
+import com.lamti.capturetheflag.data.firestore.GamePlayerRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.GameRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.game.Game
+import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.GeofenceObject
 import com.lamti.capturetheflag.domain.game.ProgressState
@@ -36,6 +38,45 @@ class FirestoreRepositoryImpl @Inject constructor(
 ) : FirestoreRepository {
 
     private val userID = authenticationRepository.currentUser?.uid ?: EMPTY
+
+    override suspend fun uploadPlayerPosition(position: LatLng) {
+        val currentPlayer = getPlayer() ?: return
+        val gameDetails = currentPlayer.gameDetails ?: return
+        val gameID = gameDetails.gameID
+
+        val gamePlayer = GamePlayer(
+            id = userID,
+            team = gameDetails.team,
+            position = position,
+            carryingFlag = false,
+            username = currentPlayer.details.username
+        ).toRaw()
+
+        firestore
+            .collection(COLLECTION_GAMES)
+            .document(gameID)
+            .collection(COLLECTION_PLAYERS)
+            .document(userID)
+            .set(gamePlayer)
+    }
+
+    override fun observePlayersPosition(gameID: String): Flow<List<GamePlayer>> = callbackFlow {
+        val subscription = firestore
+            .collection(COLLECTION_GAMES)
+            .document(gameID)
+            .collection(COLLECTION_PLAYERS)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot == null) return@addSnapshotListener
+                try {
+                    val players: List<GamePlayer> = snapshot.toObjects(GamePlayerRaw::class.java).map { it.toGamePlayer() }
+                    trySend(players)
+                } catch (e: Throwable) {
+                    // Event couldn't be sent to the flow
+                }
+            }
+
+        awaitClose { subscription.remove() }
+    }
 
     override fun observePlayer(): Flow<Player> = callbackFlow {
         var snapshotListener: ListenerRegistration? = null

@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.components.screens.ConnectingToGameScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.CreateGameScreen
@@ -42,7 +43,7 @@ fun GameNavigation(
                 gameID = viewModel.player.value.gameDetails?.gameID ?: EMPTY,
                 qrCodeImage = viewModel.qrCodeBitmap.value?.asImageBitmap(),
                 gameState = viewModel.game.value.gameState.state,
-                redPlayers =  viewModel.game.value.redPlayers.size,
+                redPlayers = viewModel.game.value.redPlayers.size,
                 greenPlayers = viewModel.game.value.greenPlayers.size,
                 onSetGameClicked = {
                     viewModel.onSetGameClicked()
@@ -53,12 +54,22 @@ fun GameNavigation(
         }
         composable(route = Screen.Map.route) {
             MapScreen(
-                viewModel = viewModel,
+                userID = viewModel.player.value.userID,
+                gameDetails = viewModel.player.value.gameDetails ?: GameDetails.initialGameDetails(),
+                gameState = viewModel.game.value.gameState,
+                isInsideSafehouse = viewModel.isInsideSafehouse.value,
                 enteredGeofenceId = enteredGeofenceId,
+                currentPosition = viewModel.currentPosition.value,
+                isSafehouseDraggable = viewModel.isSafehouseDraggable.value,
+                otherPlayers = viewModel.otherPlayers.value,
+                onSafehouseMarkerClicked = { viewModel.updateSafeHousePosition(it) },
                 onArScannerButtonClicked = onArScannerButtonClicked,
-                onSettingFlagsButtonClicked = onSettingFlagsButtonClicked
+                onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
+                onSetFlagsClicked = { viewModel.onSetFlagsClicked() },
             ) {
-                navController.popNavigate(Screen.Menu.route)
+                viewModel.onQuitButtonClicked {
+                    if (it) navController.popNavigate(Screen.Menu.route)
+                }
             }
         }
         composable(route = Screen.JoinGame.route) {

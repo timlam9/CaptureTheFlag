@@ -11,6 +11,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -20,22 +21,31 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.lamti.capturetheflag.R
+import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.game.GeofenceObject
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.MapStyle
 import com.lamti.capturetheflag.presentation.ui.bitmapDescriptorFromVector
-import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
 
 @Composable
-fun GoogleMapsView(viewModel: MapViewModel) {
-    val currentPosition by remember { viewModel.currentPosition }
+fun GoogleMapsView(
+    currentPosition: LatLng,
+    safehousePosition: LatLng,
+    isSafeHouseDraggable: Boolean,
+    team: Team,
+    userID: String,
+    redFlag: GeofenceObject,
+    greenFlag: GeofenceObject,
+    otherPlayers: List<GamePlayer>,
+    onSafehouseMarkerClicked: (LatLng) -> Unit,
+) {
     val (mapProperties, uiSettings) = setupMap()
 
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(currentPosition, 15f)
     }
 
-    LaunchedEffect(viewModel) {
+    LaunchedEffect(currentPosition) {
         snapshotFlow { currentPosition }.collect {
             cameraPositionState.position = CameraPosition.fromLatLngZoom(currentPosition, 15f)
         }
@@ -45,12 +55,14 @@ fun GoogleMapsView(viewModel: MapViewModel) {
         mapProperties = mapProperties,
         uiSettings = uiSettings,
         cameraPositionState = cameraPositionState,
-        safehousePosition = viewModel.game.value.gameState.safehouse.position,
-        isSafeHouseDraggable = viewModel.isSafehouseDraggable.value,
-        onSafehouseMarkerClicked = { viewModel.updateSafeHousePosition(it) },
-        team = viewModel.player.value.gameDetails?.team ?: Team.Unknown,
-        redFlag = viewModel.game.value.gameState.redFlag,
-        greenFlag = viewModel.game.value.gameState.greenFlag
+        safehousePosition = safehousePosition,
+        isSafeHouseDraggable = isSafeHouseDraggable,
+        onSafehouseMarkerClicked = onSafehouseMarkerClicked,
+        team = team,
+        userID = userID,
+        redFlag = redFlag,
+        greenFlag = greenFlag,
+        otherPlayers = otherPlayers
     )
 }
 
@@ -67,13 +79,17 @@ fun GoogleMapsView(
     isSafeHouseDraggable: Boolean,
     onSafehouseMarkerClicked: (LatLng) -> Unit,
     team: Team,
+    userID: String,
     redFlag: GeofenceObject,
-    greenFlag: GeofenceObject
+    greenFlag: GeofenceObject,
+    otherPlayers: List<GamePlayer>
 ) {
     val context = LocalContext.current
-    val greenFlagIcon = context.bitmapDescriptorFromVector(R.drawable.ic_flag, R.color.green)
-    val redFlagIcon = context.bitmapDescriptorFromVector(R.drawable.ic_flag, R.color.red)
-    val safeHouseIcon = context.bitmapDescriptorFromVector(R.drawable.ic_safety, R.color.blue)
+    val greenPersonPin = remember { context.bitmapDescriptorFromVector(R.drawable.ic_person_pin, R.color.green) }
+    val redPersonPin = remember { context.bitmapDescriptorFromVector(R.drawable.ic_person_pin, R.color.red) }
+    val greenFlagIcon = remember { context.bitmapDescriptorFromVector(R.drawable.ic_flag, R.color.green) }
+    val redFlagIcon = remember { context.bitmapDescriptorFromVector(R.drawable.ic_flag, R.color.red) }
+    val safeHouseIcon = remember { context.bitmapDescriptorFromVector(R.drawable.ic_safety, R.color.blue) }
 
     GoogleMap(
         modifier = modifier.fillMaxSize(),
@@ -100,6 +116,32 @@ fun GoogleMapsView(
             greenFlagIcon = greenFlagIcon,
             greenFlagMarkerTitle = greenFlagMarkerTitle
         )
+        PlayerMarkers(
+            otherPlayers = otherPlayers,
+            greenPersonPin = greenPersonPin,
+            redPersonPin = redPersonPin,
+            userID = userID
+        )
+    }
+}
+
+@Composable
+fun PlayerMarkers(
+    otherPlayers: List<GamePlayer>,
+    greenPersonPin: BitmapDescriptor?,
+    redPersonPin: BitmapDescriptor?,
+    userID: String
+) {
+    otherPlayers.onEach {
+        if (it.id != userID) {
+            val icon = if (it.team == Team.Green) greenPersonPin else redPersonPin
+
+            MapMarker(
+                position = it.position,
+                icon = icon,
+                title = it.username
+            )
+        }
     }
 }
 

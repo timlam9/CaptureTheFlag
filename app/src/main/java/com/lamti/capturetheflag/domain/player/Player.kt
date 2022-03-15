@@ -37,4 +37,14 @@ data class GameDetails(
         Leader,
         Captain
     }
+
+    companion object {
+
+        fun initialGameDetails() = GameDetails(
+            gameID = EMPTY,
+            team = Team.Unknown,
+            rank = Rank.Soldier
+
+        )
+    }
 }
