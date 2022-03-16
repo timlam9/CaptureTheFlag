@@ -61,7 +61,6 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
         locationUpdates = locationRepository.locationFlow()
             .onEach {
                 notificationHelper.updateNotification("Position: ${it.toLatLng()}")
-                firestoreRepository.uploadPlayerPosition(it.toLatLng())
             }
             .flowOn(Dispatchers.IO)
             .launchIn(lifecycleScope)
