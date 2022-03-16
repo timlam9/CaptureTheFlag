@@ -31,13 +31,13 @@ fun isLocationEnabledOrNot(context: Context): Boolean {
     )
 }
 
-fun showAlertLocation(context: Context, title: String, message: String, btnText: String) {
-    val alertDialog = AlertDialog.Builder(context).create()
+fun Activity.showAlertLocation(title: String, message: String, btnText: String) {
+    val alertDialog = AlertDialog.Builder(this).create()
     alertDialog.setTitle(title)
     alertDialog.setMessage(message)
     alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, btnText) { dialog, _ ->
         dialog.dismiss()
-        context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+        startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
     }
     alertDialog.show()
 }

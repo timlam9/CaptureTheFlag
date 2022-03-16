@@ -29,6 +29,7 @@ import com.lamti.capturetheflag.data.location.service.isLocationEnabledOrNot
 import com.lamti.capturetheflag.data.location.service.isMyServiceRunning
 import com.lamti.capturetheflag.data.location.service.showAlertLocation
 import com.lamti.capturetheflag.databinding.ActivityMainBinding
+import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.presentation.arcore.helpers.FullScreenHelper
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.AR_MODE_KEY
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
@@ -70,7 +71,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        if (isMyServiceRunning(LocationServiceImpl::class.java)) {
+        if (isMyServiceRunning(LocationServiceImpl::class.java) && viewModel.player.value.status != Player.Status.Playing) {
             sendCommandToForegroundService(LocationServiceCommand.Stop)
         }
     }
@@ -131,6 +132,7 @@ class MainActivity : AppCompatActivity() {
                         finish()
                     } else {
                         Log.d("TAGARA", "Start location updates")
+                        viewModel.observePlayer()
                         startLocationUpdates()
                     }
                 }
@@ -151,12 +153,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startLocationUpdates() {
         if (!isLocationEnabledOrNot(this)) {
-            showAlertLocation(
-                this,
-                getString(R.string.gps_enable),
-                getString(R.string.please_turn_on_gps),
-                getString(R.string.ok)
-            )
+            showAlertLocation(getString(R.string.gps_enable), getString(R.string.please_turn_on_gps), getString(R.string.ok))
         }
         requestPermissions(arrayOf(ACCESS_FINE_LOCATION), PERMISSION_REQUEST_CODE)
     }
