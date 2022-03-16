@@ -28,7 +28,6 @@ import com.lamti.capturetheflag.presentation.ui.components.navigation.Screen
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
 import com.lamti.capturetheflag.presentation.ui.getRandomString
 import com.lamti.capturetheflag.presentation.ui.toLatLng
-import com.lamti.capturetheflag.utils.distanceToKm
 import com.lamti.capturetheflag.utils.emptyPosition
 import com.lamti.capturetheflag.utils.isInRangeOf
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -84,8 +83,6 @@ class MapViewModel @Inject constructor(
         locationRepository.locationFlow().onEach { newLocation ->
             val safehousePosition = _game.value.gameState.safehouse.position
             _isInsideSafehouse.value = newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_SAFEHOUSE_RADIUS)
-            val distance = newLocation.toLatLng().distanceToKm(safehousePosition)
-            Log.d("TAGARA", "is inside safehouse: ${_isInsideSafehouse.value}, distance: $distance")
         }.launchIn(viewModelScope)
     }
 

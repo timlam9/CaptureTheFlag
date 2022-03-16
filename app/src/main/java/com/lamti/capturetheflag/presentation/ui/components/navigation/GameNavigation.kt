@@ -52,26 +52,6 @@ fun GameNavigation(
                 onCreateGameClicked = { viewModel.onCreateGameClicked(it) }
             )
         }
-        composable(route = Screen.Map.route) {
-            MapScreen(
-                userID = viewModel.player.value.userID,
-                gameDetails = viewModel.player.value.gameDetails ?: GameDetails.initialGameDetails(),
-                gameState = viewModel.game.value.gameState,
-                isInsideSafehouse = viewModel.isInsideSafehouse.value,
-                enteredGeofenceId = enteredGeofenceId,
-                currentPosition = viewModel.currentPosition.value,
-                isSafehouseDraggable = viewModel.isSafehouseDraggable.value,
-                otherPlayers = viewModel.otherPlayers.value,
-                onSafehouseMarkerClicked = { viewModel.updateSafeHousePosition(it) },
-                onArScannerButtonClicked = onArScannerButtonClicked,
-                onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
-                onSetFlagsClicked = { viewModel.onSetFlagsClicked() },
-            ) {
-                viewModel.onQuitButtonClicked {
-                    if (it) navController.popNavigate(Screen.Menu.route)
-                }
-            }
-        }
         composable(route = Screen.JoinGame.route) {
             JoinGameScreen { qrCode ->
                 coroutine.launch {
@@ -91,6 +71,26 @@ fun GameNavigation(
                 }
             ) {
                 viewModel.onTeamButtonClicked(Team.Green)
+            }
+        }
+        composable(route = Screen.Map.route) {
+            MapScreen(
+                userID = viewModel.player.value.userID,
+                gameDetails = viewModel.player.value.gameDetails ?: GameDetails.initialGameDetails(),
+                gameState = viewModel.game.value.gameState,
+                isInsideSafehouse = viewModel.isInsideSafehouse.value,
+                enteredGeofenceId = enteredGeofenceId,
+                currentPosition = viewModel.currentPosition.value,
+                isSafehouseDraggable = viewModel.isSafehouseDraggable.value,
+                otherPlayers = viewModel.otherPlayers.value,
+                onSafehouseMarkerClicked = { viewModel.updateSafeHousePosition(it) },
+                onArScannerButtonClicked = onArScannerButtonClicked,
+                onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
+                onSetFlagsClicked = { viewModel.onSetFlagsClicked() },
+            ) {
+                viewModel.onQuitButtonClicked {
+                    if (it) navController.popNavigate(Screen.Menu.route)
+                }
             }
         }
     }

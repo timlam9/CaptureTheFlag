@@ -193,13 +193,19 @@ class FirestoreRepositoryImpl @Inject constructor(
         return true
     }
 
-    override suspend fun getPlayer(): Player? = firestore
-        .collection(COLLECTION_PLAYERS)
-        .document(userID)
-        .get()
-        .await()
-        .toObject(PlayerRaw::class.java)
-        ?.toPlayer()
+    override suspend fun getPlayer(): Player? = try {
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(userID)
+            .get()
+            .await()
+            .toObject(PlayerRaw::class.java)
+            ?.toPlayer()
+    } catch (e: Exception) {
+        Log.d("TAGARA", e.message.toString())
+        null
+    }
+
 
     override suspend fun updatePlayerStatus(status: Player.Status) {
         val currentPlayer = getPlayer()
@@ -269,45 +275,19 @@ class FirestoreRepositoryImpl @Inject constructor(
             .await()
     }
 
-    override suspend fun createGame(id: String, title: String, position: LatLng): Game {
-        val game = Game(
-            gameID = id,
-            title = title,
-            gameState = GameState(
-                safehouse = GeofenceObject(
-                    position = position,
-                    isPlaced = true,
-                    isDiscovered = true,
-                    id = EMPTY,
-                    timestamp = Date()
-                ),
-                greenFlag = GeofenceObject(
-                    position = emptyPosition(),
-                    isPlaced = false,
-                    isDiscovered = false,
-                    id = EMPTY,
-                    timestamp = Date()
-                ),
-                redFlag = GeofenceObject(
-                    position = emptyPosition(),
-                    isPlaced = false,
-                    isDiscovered = false,
-                    id = EMPTY,
-                    timestamp = Date()
-                ),
-                greenFlagGrabbed = null,
-                redFlagGrabbed = null,
-                state = ProgressState.Created
-            ),
-            redPlayers = listOf(userID),
-            greenPlayers = emptyList()
-        )
+    override suspend fun createGame(id: String, title: String, position: LatLng): Boolean {
+        val game = initialGame(id, title, position)
 
-        firestore
-            .collection(COLLECTION_GAMES)
-            .document(id)
-            .set(game.toRaw())
-            .await()
+        try {
+            firestore
+                .collection(COLLECTION_GAMES)
+                .document(id)
+                .set(game.toRaw())
+                .await()
+        } catch (e: Exception) {
+            Log.d("TAGARA", e.message.toString())
+            return false
+        }
 
         val currentPlayer = getPlayer()
         val updatedPlayer = currentPlayer!!.copy(
@@ -319,14 +299,56 @@ class FirestoreRepositoryImpl @Inject constructor(
             status = Player.Status.Connecting
         ).toRaw()
 
-        firestore
-            .collection(COLLECTION_PLAYERS)
-            .document(userID)
-            .set(updatedPlayer)
-            .await()
+        try {
+            firestore
+                .collection(COLLECTION_PLAYERS)
+                .document(userID)
+                .set(updatedPlayer)
+                .await()
+        } catch (e: Exception) {
+            Log.d("TAGARA", e.message.toString())
+            return false
+        }
 
-        return game
+        return true
     }
+
+    private fun initialGame(
+        id: String,
+        title: String,
+        position: LatLng
+    ) = Game(
+        gameID = id,
+        title = title,
+        gameState = GameState(
+            safehouse = GeofenceObject(
+                position = position,
+                isPlaced = true,
+                isDiscovered = true,
+                id = EMPTY,
+                timestamp = Date()
+            ),
+            greenFlag = GeofenceObject(
+                position = emptyPosition(),
+                isPlaced = false,
+                isDiscovered = false,
+                id = EMPTY,
+                timestamp = Date()
+            ),
+            redFlag = GeofenceObject(
+                position = emptyPosition(),
+                isPlaced = false,
+                isDiscovered = false,
+                id = EMPTY,
+                timestamp = Date()
+            ),
+            greenFlagGrabbed = null,
+            redFlagGrabbed = null,
+            state = ProgressState.Created
+        ),
+        redPlayers = listOf(userID),
+        greenPlayers = emptyList()
+    )
 
     override suspend fun endGame(team: Team) {
         val currentPlayer = getPlayer() ?: return

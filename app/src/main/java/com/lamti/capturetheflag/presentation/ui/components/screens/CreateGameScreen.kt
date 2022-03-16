@@ -76,14 +76,16 @@ fun CreateGameScreen(
             text = title,
             style = MaterialTheme.typography.h5.copy(color = MaterialTheme.colors.onBackground)
         )
-        Text(
-            text = "Green Players: $greenPlayers",
-            style = MaterialTheme.typography.h5.copy(color = Color.Green)
-        )
-        Text(
-            text = "Red Players: $redPlayers",
-            style = MaterialTheme.typography.h5.copy(color = Color.Red)
-        )
+        if(gameState == ProgressState.Created) {
+            Text(
+                text = "Green Players: $greenPlayers",
+                style = MaterialTheme.typography.h5.copy(color = Color.Green)
+            )
+            Text(
+                text = "Red Players: $redPlayers",
+                style = MaterialTheme.typography.h5.copy(color = Color.Red)
+            )
+        }
         Spacer(modifier = Modifier.weight(0.1f))
         if (isGameCreated) {
             GameCreated(

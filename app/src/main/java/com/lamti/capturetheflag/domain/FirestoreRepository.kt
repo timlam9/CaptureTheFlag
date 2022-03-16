@@ -36,7 +36,7 @@ interface FirestoreRepository {
 
     suspend fun setPlayerTeam(team: Team)
 
-    suspend fun createGame(id: String, title: String, position: LatLng): Game
+    suspend fun createGame(id: String, title: String, position: LatLng): Boolean
 
     suspend fun getGame(id: String): Game?
 
