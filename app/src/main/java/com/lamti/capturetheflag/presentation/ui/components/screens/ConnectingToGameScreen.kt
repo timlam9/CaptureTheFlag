@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -25,26 +27,30 @@ fun ConnectingToGameScreen(
         modifier = Modifier.fillMaxSize()
     ) {
         Text(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.padding(32.dp),
             text = text
         )
-        DefaultButton(
-            modifier = Modifier
-                .padding(20.dp)
-                .fillMaxWidth(),
-            text = stringResource(R.string.red_team),
-            color = Color.Red
-        ) {
-            onRedButtonClicked()
-        }
-        DefaultButton(
-            modifier = Modifier
-                .padding(20.dp)
-                .fillMaxWidth(),
-            text = stringResource(R.string.green_team),
-            color = Color.Green
-        ) {
-            onGreenButtonClicked()
+        if (!hasChosenTeam) {
+            DefaultButton(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .wrapContentHeight(align = Alignment.Bottom)
+                    .fillMaxWidth(),
+                text = stringResource(R.string.red_team),
+                color = Color.Red
+            ) {
+                onRedButtonClicked()
+            }
+            DefaultButton(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .wrapContentHeight(align = Alignment.Bottom)
+                    .fillMaxWidth(),
+                text = stringResource(R.string.green_team),
+                color = Color.Green
+            ) {
+                onGreenButtonClicked()
+            }
         }
     }
 }

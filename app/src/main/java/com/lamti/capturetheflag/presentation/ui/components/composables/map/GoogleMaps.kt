@@ -11,7 +11,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -122,26 +121,6 @@ fun GoogleMapsView(
             redPersonPin = redPersonPin,
             userID = userID
         )
-    }
-}
-
-@Composable
-fun PlayerMarkers(
-    otherPlayers: List<GamePlayer>,
-    greenPersonPin: BitmapDescriptor?,
-    redPersonPin: BitmapDescriptor?,
-    userID: String
-) {
-    otherPlayers.onEach {
-        if (it.id != userID) {
-            val icon = if (it.team == Team.Green) greenPersonPin else redPersonPin
-
-            MapMarker(
-                position = it.position,
-                icon = icon,
-                title = it.username
-            )
-        }
     }
 }
 
