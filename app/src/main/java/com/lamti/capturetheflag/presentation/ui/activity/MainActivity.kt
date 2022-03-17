@@ -10,21 +10,24 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.lamti.capturetheflag.R
-import com.lamti.capturetheflag.data.location.geofences.ENTER_GEOFENCE_KEY
+import com.lamti.capturetheflag.data.location.geofences.GEOFENCE_KEY
 import com.lamti.capturetheflag.data.location.geofences.GEOFENCE_BROADCAST_RECEIVER_FILTER
 import com.lamti.capturetheflag.data.location.geofences.GeofenceBroadcastReceiver
 import com.lamti.capturetheflag.data.location.service.LocationServiceCommand
 import com.lamti.capturetheflag.data.location.service.LocationServiceImpl
 import com.lamti.capturetheflag.data.location.service.LocationServiceImpl.Companion.SERVICE_COMMAND
+import com.lamti.capturetheflag.data.location.service.NotificationHelper
 import com.lamti.capturetheflag.data.location.service.checkBackgroundLocationPermissionAPI30
 import com.lamti.capturetheflag.data.location.service.checkLocationPermissionAPI29
 import com.lamti.capturetheflag.data.location.service.checkSinglePermission
+import com.lamti.capturetheflag.data.location.service.isAppInForegrounded
 import com.lamti.capturetheflag.data.location.service.isLocationEnabledOrNot
 import com.lamti.capturetheflag.data.location.service.isMyServiceRunning
 import com.lamti.capturetheflag.data.location.service.showAlertLocation
@@ -43,6 +46,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -50,13 +54,20 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
 
+    @Inject
+    lateinit var notificationHelper: NotificationHelper
+
     var geofenceIdFLow = MutableStateFlow(EMPTY)
 
     private var broadcastReceiver: GeofenceBroadcastReceiver = object : GeofenceBroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            showWhenLockedAndTurnScreenOn()
             super.onReceive(context, intent)
 
-            geofenceIdFLow.value = intent?.getStringExtra(ENTER_GEOFENCE_KEY) ?: return
+            geofenceIdFLow.value = intent?.getStringExtra(GEOFENCE_KEY) ?: return
+            if(geofenceIdFLow.value.isNotEmpty() && !isAppInForegrounded()) {
+                notificationHelper.showFlagFoundNotification()
+            }
         }
     }
 
@@ -67,6 +78,18 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+    }
+
+    private fun showWhenLockedAndTurnScreenOn() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        } else {
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                        or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            )
+        }
     }
 
     override fun onDestroy() {

@@ -14,6 +14,13 @@ import android.provider.Settings
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 
+fun isAppInForegrounded() : Boolean {
+    val appProcessInfo =  ActivityManager.RunningAppProcessInfo()
+    ActivityManager.getMyMemoryState(appProcessInfo)
+    return (appProcessInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND ||
+            appProcessInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE)
+}
+
 fun Activity.isMyServiceRunning(serviceClass: Class<*>): Boolean {
     val manager: ActivityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
     for (service in manager.getRunningServices(Int.MAX_VALUE)) {

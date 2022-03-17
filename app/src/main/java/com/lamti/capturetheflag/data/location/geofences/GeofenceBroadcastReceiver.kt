@@ -12,6 +12,7 @@ import com.google.android.gms.location.GeofencingEvent
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.utils.EMPTY
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +21,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 const val GEOFENCE_BROADCAST_RECEIVER_FILTER = "geofence_broadcast_receiver_filter"
-const val ENTER_GEOFENCE_KEY = "enter_geofence_key"
+const val GEOFENCE_KEY = "geofence_key"
 
 abstract class HiltBroadcastReceiver : BroadcastReceiver() {
 
@@ -44,7 +45,7 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
         if (geofencingEvent.hasError()) {
             val errorMessage = GeofenceStatusCodes.getStatusCodeString(geofencingEvent.errorCode)
-            Log.e(TAG, errorMessage)
+            Log.e(TAG, "Error: $errorMessage")
             return
         }
 
@@ -100,10 +101,8 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
         context: Context
     ) {
         when (geofenceTransition) {
-            Geofence.GEOFENCE_TRANSITION_ENTER -> {
-                sendEnterGeofenceIntent(geofenceID, context)
-                Toast.makeText(context, geofenceTransitionDetails, Toast.LENGTH_SHORT).show()
-            }
+            Geofence.GEOFENCE_TRANSITION_ENTER -> sendEnterGeofenceIntent(geofenceID, context)
+            Geofence.GEOFENCE_TRANSITION_EXIT -> sendExitGeofenceIntent(context)
             Geofence.GEOFENCE_TRANSITION_DWELL -> Log.d(TAG, geofenceTransitionDetails)
             else -> Log.e(TAG, "invalid type: $geofenceTransition")
         }
@@ -111,7 +110,14 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
 
     private fun sendEnterGeofenceIntent(geofenceID: String, context: Context) {
         Intent(GEOFENCE_BROADCAST_RECEIVER_FILTER).run {
-            putExtra(ENTER_GEOFENCE_KEY, geofenceID)
+            putExtra(GEOFENCE_KEY, geofenceID)
+            context.sendBroadcast(this)
+        }
+    }
+
+    private fun sendExitGeofenceIntent(context: Context) {
+        Intent(GEOFENCE_BROADCAST_RECEIVER_FILTER).run {
+            putExtra(GEOFENCE_KEY, EMPTY)
             context.sendBroadcast(this)
         }
     }

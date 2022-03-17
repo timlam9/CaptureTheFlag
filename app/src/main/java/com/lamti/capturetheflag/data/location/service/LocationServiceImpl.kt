@@ -3,17 +3,10 @@ package com.lamti.capturetheflag.data.location.service
 import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.LifecycleService
-import androidx.lifecycle.lifecycleScope
 import com.lamti.capturetheflag.data.location.LocationRepository
-import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
-import com.lamti.capturetheflag.presentation.ui.toLatLng
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -21,7 +14,6 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
 
     @Inject lateinit var locationRepository: LocationRepository
     @Inject lateinit var notificationHelper: NotificationHelper
-    @Inject lateinit var geofencingRepository: GeofencingRepository
     @Inject lateinit var firestoreRepository: FirestoreRepository
 
     private var isServiceRunning = false
@@ -36,7 +28,6 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
             when (getSerializable(SERVICE_COMMAND) as LocationServiceCommand) {
                 LocationServiceCommand.Start -> {
                     startFlagForegroundService()
-                    startLocationUpdates()
                 }
                 LocationServiceCommand.Pause -> {
                     isServiceRunning = false
@@ -57,15 +48,6 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
         isServiceRunning = true
     }
 
-    private fun startLocationUpdates() {
-        locationUpdates = locationRepository.locationFlow()
-            .onEach {
-                notificationHelper.updateNotification("Position: ${it.toLatLng()}")
-            }
-            .flowOn(Dispatchers.IO)
-            .launchIn(lifecycleScope)
-    }
-
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Service is created")
@@ -77,11 +59,6 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
 
         isServiceRunning = false
         locationUpdates?.cancel()
-        removeGeofencesListener()
-    }
-
-    private fun removeGeofencesListener() {
-        geofencingRepository.removeGeofences()
     }
 
     companion object {
