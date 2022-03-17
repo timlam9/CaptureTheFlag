@@ -24,7 +24,7 @@ fun ArComponents(
     grabText: String,
     onCancelClicked: ()-> Unit,
     onOkClicked: ()-> Unit,
-    onGrabClicked: ()-> Unit,
+    onCaptureClicked: ()-> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         TransparentBackgroundCircle()
@@ -50,7 +50,7 @@ fun ArComponents(
                     ArFlagGrabButton(
                         text = grabText,
                         showGrabButton = showGrabButton,
-                        onGrabClicked = onGrabClicked
+                        onGrabClicked = onCaptureClicked
                     )
                 }
             }

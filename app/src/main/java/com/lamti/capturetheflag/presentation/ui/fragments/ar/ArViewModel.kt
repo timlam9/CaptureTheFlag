@@ -75,8 +75,8 @@ class ArViewModel @Inject constructor(
     private val _game = MutableStateFlow(initialGame())
     val game: StateFlow<Game> = _game.asStateFlow()
 
-    private val _showGrabButton = MutableStateFlow(false)
-    val showGrabButton: StateFlow<Boolean> = _showGrabButton.asStateFlow()
+    private val _captureFlag = MutableStateFlow(false)
+    val captureFlag: StateFlow<Boolean> = _captureFlag.asStateFlow()
 
     private val _showPlacerButtons = MutableStateFlow(false)
     val showPlacerButtons: StateFlow<Boolean> = _showPlacerButtons.asStateFlow()
@@ -254,9 +254,9 @@ class ArViewModel @Inject constructor(
         _scannerMode.update { scanner }
     }
 
-    fun onGrabPressed(onResult: (Boolean) -> Unit) {
+    fun onCaptureClicked(onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val result = firestoreRepository.grabTheFlag()
+            val result = firestoreRepository.captureFlag()
             onResult(result)
         }
     }
@@ -347,8 +347,8 @@ class ArViewModel @Inject constructor(
     private fun onResolvedAnchorAvailable(anchor: Anchor) {
         val cloudState = anchor.cloudAnchorState
         if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
-            _showGrabButton.update { true }
-            _instructions.update { "You discovered your opponent's flag. \'Grab\' it and go to safehouse to win the game" }
+            _captureFlag.update { true }
+            _instructions.update { "You discovered your opponent's flag. \'Capture\' it and run to safehouse to win the game" }
             currentAnchor = anchor
         } else {
             _message.update { "Error while resolving anchor with id: ${anchor.cloudAnchorId}. Error: $cloudState" }

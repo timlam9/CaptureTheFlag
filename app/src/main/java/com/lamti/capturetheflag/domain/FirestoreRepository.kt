@@ -50,5 +50,5 @@ interface FirestoreRepository {
 
     suspend fun discoverFlag(flagFound: Flag): Boolean
 
-    suspend fun grabTheFlag(): Boolean
+    suspend fun captureFlag(): Boolean
 }

@@ -58,8 +58,8 @@ class MapViewModel @Inject constructor(
     private val _currentPosition: MutableState<LatLng> = mutableStateOf(emptyPosition())
     val currentPosition: State<LatLng> = _currentPosition
 
-    private val _isInsideSafehouse: MutableState<Boolean> = mutableStateOf(false)
-    val isInsideSafehouse: State<Boolean> = _isInsideSafehouse
+    private val _canPlaceFlag: MutableState<Boolean> = mutableStateOf(false)
+    val canPlaceFlag: State<Boolean> = _canPlaceFlag
 
     private val _game: MutableState<Game> = mutableStateOf(Game.initialGame(_currentPosition.value))
     val game: State<Game> = _game
@@ -82,7 +82,10 @@ class MapViewModel @Inject constructor(
     init {
         locationRepository.locationFlow().onEach { newLocation ->
             val safehousePosition = _game.value.gameState.safehouse.position
-            _isInsideSafehouse.value = newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_SAFEHOUSE_RADIUS)
+            val isNotInsideSafehouse = !newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_SAFEHOUSE_RADIUS)
+            val isInsideGame = newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_GAME_BOUNDARIES_RADIUS)
+
+            _canPlaceFlag.value = isNotInsideSafehouse && isInsideGame
         }.launchIn(viewModelScope)
     }
 
@@ -197,7 +200,7 @@ class MapViewModel @Inject constructor(
         return null
     }
 
-    private fun startGeofencesListener(gameState: GameState) = with(gameState) {
+    private fun GameState.startGeofencesListener() {
         geofencingHelper.addGeofence(safehouse.position, GAME_BOUNDARIES_GEOFENCE_ID, DEFAULT_GAME_BOUNDARIES_RADIUS)
         geofencingHelper.addGeofence(safehouse.position, SAFEHOUSE_GEOFENCE_ID, DEFAULT_SAFEHOUSE_RADIUS)
         geofencingHelper.addGeofence(greenFlag.position, GREEN_FLAG_GEOFENCE_ID, DEFAULT_FLAG_RADIUS)
@@ -229,8 +232,7 @@ class MapViewModel @Inject constructor(
     }
 
     private fun GameState.onGameStarted() {
-        if (safehouse.isPlaced && redFlag.isPlaced && greenFlag.isPlaced)
-            startGeofencesListener(this)
+        if (safehouse.isPlaced && redFlag.isPlaced && greenFlag.isPlaced) startGeofencesListener()
         observeOtherPlayers()
     }
 

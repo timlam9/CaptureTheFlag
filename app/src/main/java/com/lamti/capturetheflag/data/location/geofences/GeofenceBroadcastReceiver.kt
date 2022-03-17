@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.CallSuper
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofenceStatusCodes
@@ -81,12 +80,12 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
             val gameID = gameDetails.gameID
             val game = firestoreRepository.getGame(gameID) ?: return@launch
 
-            if (player.userID == game.gameState.greenFlagGrabbed) {
+            if (player.userID == game.gameState.greenFlagCaptured) {
                 if (playerTeam == Team.Red) {
                     firestoreRepository.endGame(Team.Red)
                 }
             }
-            if (player.userID == game.gameState.redFlagGrabbed) {
+            if (player.userID == game.gameState.redFlagCaptured) {
                 if (playerTeam == Team.Green) {
                     firestoreRepository.endGame(Team.Green)
                 }

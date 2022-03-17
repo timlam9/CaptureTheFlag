@@ -7,27 +7,10 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.ClipOp
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.ar.core.ArCoreApk
@@ -46,12 +29,7 @@ import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
 import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
-import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
-import com.lamti.capturetheflag.presentation.ui.components.composables.InstructionsCard
 import com.lamti.capturetheflag.presentation.ui.components.composables.ar.ArComponents
-import com.lamti.capturetheflag.presentation.ui.components.composables.ar.ArFlagGrabButton
-import com.lamti.capturetheflag.presentation.ui.components.composables.ar.ArPlacerButtons
-import com.lamti.capturetheflag.presentation.ui.components.composables.ar.TransparentBackgroundCircle
 import com.lamti.capturetheflag.utils.get
 import com.lamti.capturetheflag.utils.myAppPreferences
 import dagger.hilt.android.AndroidEntryPoint
@@ -220,7 +198,7 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
             val instructions by viewModel.instructions.collectAsState()
             val message by viewModel.message.collectAsState()
             val showPlacerButtons by viewModel.showPlacerButtons.collectAsState()
-            val showGrabButton by viewModel.showGrabButton.collectAsState()
+            val showGrabButton by viewModel.captureFlag.collectAsState()
             val arModeState by remember { mutableStateOf(arMode) }
 
             ArComponents(
@@ -238,8 +216,8 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
                         if (it) (requireActivity() as MainActivity).onBackPressed()
                     }
                 },
-                onGrabClicked = {
-                    viewModel.onGrabPressed {
+                onCaptureClicked = {
+                    viewModel.onCaptureClicked {
                         if (it) (requireActivity() as MainActivity).onBackPressed()
                     }
                 }

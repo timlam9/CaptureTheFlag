@@ -26,7 +26,7 @@ import com.lamti.capturetheflag.utils.EMPTY
     playerGameDetails: GameDetails?,
     redFlagIsPlaced: Boolean,
     greenFlagIsPlaced: Boolean,
-    isInsideSafehouse: Boolean,
+    canPlaceFlag: Boolean,
     onSettingFlagsButtonClicked: () -> Unit
 ) {
     if (gameState == ProgressState.SettingFlags) {
@@ -39,7 +39,7 @@ import com.lamti.capturetheflag.utils.EMPTY
                 Team.Unknown -> false
             }
             if (showArButton) {
-                if (!isInsideSafehouse) {
+                if (canPlaceFlag) {
                     FloatingActionButton(
                         modifier = modifier.padding(bottom = 64.dp),
                         onClick = onSettingFlagsButtonClicked,

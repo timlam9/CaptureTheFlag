@@ -342,8 +342,8 @@ class FirestoreRepositoryImpl @Inject constructor(
                 id = EMPTY,
                 timestamp = Date()
             ),
-            greenFlagGrabbed = null,
-            redFlagGrabbed = null,
+            greenFlagCaptured = null,
+            redFlagCaptured = null,
             state = ProgressState.Created
         ),
         redPlayers = listOf(userID),
@@ -361,8 +361,8 @@ class FirestoreRepositoryImpl @Inject constructor(
                     safehouse = currentGame.gameState.safehouse,
                     greenFlag = currentGame.gameState.greenFlag,
                     redFlag = currentGame.gameState.redFlag,
-                    greenFlagGrabbed = currentGame.gameState.greenFlagGrabbed,
-                    redFlagGrabbed = currentGame.gameState.redFlagGrabbed,
+                    greenFlagCaptured = currentGame.gameState.greenFlagCaptured,
+                    redFlagCaptured = currentGame.gameState.redFlagCaptured,
                     state = ProgressState.Ended
                 )
             ).toRaw()
@@ -467,7 +467,7 @@ class FirestoreRepositoryImpl @Inject constructor(
         return true
     }
 
-    override suspend fun grabTheFlag(): Boolean {
+    override suspend fun captureFlag(): Boolean {
         val currentPlayer = getPlayer() ?: return false
         val playerID = currentPlayer.userID
         val gameDetails = currentPlayer.gameDetails ?: return false
@@ -475,8 +475,8 @@ class FirestoreRepositoryImpl @Inject constructor(
         val gameID = gameDetails.gameID
         val currentGame = getGame(gameID) ?: return false
         val updatedGame: GameRaw = when (playerTeam) {
-            Team.Red -> currentGame.copy(gameState = currentGame.gameState.copy(greenFlagGrabbed = playerID))
-            Team.Green -> currentGame.copy(gameState = currentGame.gameState.copy(redFlagGrabbed = playerID))
+            Team.Red -> currentGame.copy(gameState = currentGame.gameState.copy(greenFlagCaptured = playerID))
+            Team.Green -> currentGame.copy(gameState = currentGame.gameState.copy(redFlagCaptured = playerID))
             Team.Unknown -> currentGame.copy(gameState = currentGame.gameState.copy())
         }.toRaw()
 

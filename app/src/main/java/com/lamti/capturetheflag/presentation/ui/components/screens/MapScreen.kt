@@ -26,7 +26,7 @@ fun MapScreen(
     userID: String,
     gameDetails: GameDetails,
     gameState: GameState,
-    isInsideSafehouse: Boolean,
+    canPlaceFlag: Boolean,
     enteredGeofenceId: String,
     currentPosition: LatLng,
     isSafehouseDraggable: Boolean,
@@ -42,9 +42,11 @@ fun MapScreen(
         team = gameDetails.team,
         rank = gameDetails.rank,
         gameState = gameState.state,
-        isInsideSafehouse = isInsideSafehouse,
+        isInsideSafehouse = canPlaceFlag,
         isRedFlagPlaced = gameState.redFlag.isPlaced,
-        isGreenFlagPlaced = gameState.greenFlag.isPlaced
+        isGreenFlagPlaced = gameState.greenFlag.isPlaced,
+        isRedFlagCaptured = !gameState.redFlagCaptured.isNullOrEmpty(),
+        isGreenFlagCaptured = !gameState.greenFlagCaptured.isNullOrEmpty(),
     )
 
     BoxWithConstraints(
@@ -67,10 +69,10 @@ fun MapScreen(
             playerGameDetails = gameDetails,
             redFlagIsPlaced = gameState.redFlag.isPlaced,
             greenFlagIsPlaced = gameState.greenFlag.isPlaced,
-            isInsideSafehouse = isInsideSafehouse,
+            canPlaceFlag = canPlaceFlag,
             onSettingFlagsButtonClicked = onSettingFlagsButtonClicked
         )
-        if (gameState.state != ProgressState.Started) {
+        if (instructions.isNotEmpty()) {
             InstructionsCard(instructions)
         }
         ReadyButton(
@@ -102,6 +104,8 @@ private fun setInstructions(
     isInsideSafehouse: Boolean,
     isRedFlagPlaced: Boolean,
     isGreenFlagPlaced: Boolean,
+    isRedFlagCaptured: Boolean,
+    isGreenFlagCaptured: Boolean,
 ): String = when (gameState) {
     ProgressState.Created -> {
         if (rank == GameDetails.Rank.Captain)
@@ -117,6 +121,19 @@ private fun setInstructions(
                 if (isInsideSafehouse) stringResource(R.string.place_flag_outside_safehouse)
                 else stringResource(R.string.instructions_set_flags)
             }
+        }
+    }
+    ProgressState.Started -> {
+        when {
+            isRedFlagCaptured -> when (team) {
+                Team.Green -> stringResource(id = R.string.red_flag_captured)
+                else -> stringResource(id = R.string.your_flag_captured)
+            }
+            isGreenFlagCaptured -> when (team) {
+                Team.Red -> stringResource(id = R.string.green_flag_captured)
+                else -> stringResource(id = R.string.your_flag_captured)
+            }
+            else -> EMPTY
         }
     }
     ProgressState.Ended -> stringResource(id = R.string.game_over)

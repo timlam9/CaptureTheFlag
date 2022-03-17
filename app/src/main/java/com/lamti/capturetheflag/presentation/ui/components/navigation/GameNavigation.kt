@@ -78,7 +78,7 @@ fun GameNavigation(
                 userID = viewModel.player.value.userID,
                 gameDetails = viewModel.player.value.gameDetails ?: GameDetails.initialGameDetails(),
                 gameState = viewModel.game.value.gameState,
-                isInsideSafehouse = viewModel.isInsideSafehouse.value,
+                canPlaceFlag = viewModel.canPlaceFlag.value,
                 enteredGeofenceId = enteredGeofenceId,
                 currentPosition = viewModel.currentPosition.value,
                 isSafehouseDraggable = viewModel.isSafehouseDraggable.value,
