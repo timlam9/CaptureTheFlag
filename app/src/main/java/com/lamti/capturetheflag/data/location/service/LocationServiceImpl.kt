@@ -3,10 +3,16 @@ package com.lamti.capturetheflag.data.location.service
 import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
 import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
+import com.lamti.capturetheflag.presentation.ui.toLatLng
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -28,6 +34,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
             when (getSerializable(SERVICE_COMMAND) as LocationServiceCommand) {
                 LocationServiceCommand.Start -> {
                     startFlagForegroundService()
+                    startLocationUpdates()
                 }
                 LocationServiceCommand.Pause -> {
                     isServiceRunning = false
@@ -43,11 +50,6 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
         return START_STICKY
     }
 
-    private fun startFlagForegroundService() {
-        if (!isServiceRunning) startForeground(NotificationHelper.NOTIFICATION_ID, notificationHelper.getNotification())
-        isServiceRunning = true
-    }
-
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Service is created")
@@ -59,6 +61,20 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
 
         isServiceRunning = false
         locationUpdates?.cancel()
+    }
+
+    private fun startFlagForegroundService() {
+        if (!isServiceRunning) startForeground(NotificationHelper.NOTIFICATION_ID, notificationHelper.getNotification())
+        isServiceRunning = true
+    }
+
+    private fun startLocationUpdates() {
+        locationUpdates = locationRepository.locationFlow()
+            .onEach {
+                firestoreRepository.uploadPlayerPosition(it.toLatLng())
+            }
+            .flowOn(Dispatchers.IO)
+            .launchIn(lifecycleScope)
     }
 
     companion object {

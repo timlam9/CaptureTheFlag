@@ -104,7 +104,7 @@ data class GeofenceObjectRaw(
 data class GamePlayerRaw(
     val id: String = EMPTY,
     val team: String = Team.Unknown.name,
-    val position: GeoPoint = emptyGeoPoint,
+    val position: GeoLocation = emptyGeoLocation,
     val carryingFlag: Boolean = false,
     val username: String = EMPTY
 ) {
@@ -122,19 +122,29 @@ data class GamePlayerRaw(
         fun GamePlayer.toRaw() = GamePlayerRaw(
             id = id,
             team = team.name,
-            position = position.toGeoPoint(),
+            position = position.toGeoLocation(),
             carryingFlag = carryingFlag,
             username = username
         )
     }
 }
 
+data class GeoLocation(
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0
+)
+
 
 val emptyGeoPoint: GeoPoint = GeoPoint(0.0, 0.0)
+val emptyGeoLocation: GeoLocation = GeoLocation(0.0, 0.0)
 
 fun GeoPoint.toLatLng() = LatLng(latitude, longitude)
 
 fun LatLng.toGeoPoint() = GeoPoint(latitude, longitude)
+
+fun GeoLocation.toLatLng() = LatLng(latitude, longitude)
+
+fun LatLng.toGeoLocation() = GeoLocation(latitude, longitude)
 
 private fun String.toState(): ProgressState = when (this) {
     "Created" -> ProgressState.Created

@@ -34,7 +34,8 @@ import javax.inject.Inject
 
 class FirestoreRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val authenticationRepository: AuthenticationRepository
+    private val authenticationRepository: AuthenticationRepository,
+    private val databaseRepository: FirebaseDatabaseRepository
 ) : FirestoreRepository {
 
     private val userID = authenticationRepository.currentUser?.uid ?: EMPTY
@@ -50,33 +51,12 @@ class FirestoreRepositoryImpl @Inject constructor(
             position = position,
             carryingFlag = false,
             username = currentPlayer.details.username
-        ).toRaw()
+        )
 
-        firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .collection(COLLECTION_PLAYERS)
-            .document(userID)
-            .set(gamePlayer)
+        databaseRepository.uploadPlayerPosition(gameID, gamePlayer)
     }
 
-    override fun observePlayersPosition(gameID: String): Flow<List<GamePlayer>> = callbackFlow {
-        val subscription = firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .collection(COLLECTION_PLAYERS)
-            .addSnapshotListener { snapshot, _ ->
-                if (snapshot == null) return@addSnapshotListener
-                try {
-                    val players: List<GamePlayer> = snapshot.toObjects(GamePlayerRaw::class.java).map { it.toGamePlayer() }
-                    trySend(players)
-                } catch (e: Throwable) {
-                    // Event couldn't be sent to the flow
-                }
-            }
-
-        awaitClose { subscription.remove() }
-    }
+    override fun observePlayersPosition(gameID: String) = databaseRepository.observePlayersPosition(gameID)
 
     override fun observePlayer(): Flow<Player> = callbackFlow {
         var snapshotListener: ListenerRegistration? = null

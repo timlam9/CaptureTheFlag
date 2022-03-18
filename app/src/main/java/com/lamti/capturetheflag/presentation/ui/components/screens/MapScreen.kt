@@ -42,7 +42,7 @@ fun MapScreen(
         team = gameDetails.team,
         rank = gameDetails.rank,
         gameState = gameState.state,
-        isInsideSafehouse = canPlaceFlag,
+        canPlaceFlag = canPlaceFlag,
         isRedFlagPlaced = gameState.redFlag.isPlaced,
         isGreenFlagPlaced = gameState.greenFlag.isPlaced,
         isRedFlagCaptured = !gameState.redFlagCaptured.isNullOrEmpty(),
@@ -101,7 +101,7 @@ private fun setInstructions(
     team: Team,
     rank: GameDetails.Rank,
     gameState: ProgressState,
-    isInsideSafehouse: Boolean,
+    canPlaceFlag: Boolean,
     isRedFlagPlaced: Boolean,
     isGreenFlagPlaced: Boolean,
     isRedFlagCaptured: Boolean,
@@ -118,8 +118,8 @@ private fun setInstructions(
             team == Team.Red && isRedFlagPlaced && !isGreenFlagPlaced -> stringResource(R.string.wait_for_green_flag)
             team == Team.Green && isGreenFlagPlaced && !isRedFlagPlaced -> stringResource(R.string.wait_for_red_flag)
             else -> {
-                if (isInsideSafehouse) stringResource(R.string.place_flag_outside_safehouse)
-                else stringResource(R.string.instructions_set_flags)
+                if (canPlaceFlag) stringResource(R.string.instructions_set_flags)
+                else stringResource(R.string.place_flag_outside_safehouse)
             }
         }
     }
