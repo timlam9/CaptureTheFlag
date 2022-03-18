@@ -18,10 +18,10 @@ fun ArComponents(
     message: String,
     arModeState: ArMode,
     showPlacerButtons: Boolean,
-    showGrabButton: Boolean,
+    showCaptureButton: Boolean,
     okText: String,
     cancelText: String,
-    grabText: String,
+    captureText: String,
     onCancelClicked: ()-> Unit,
     onOkClicked: ()-> Unit,
     onCaptureClicked: ()-> Unit,
@@ -47,10 +47,10 @@ fun ArComponents(
                         onOkClicked = onOkClicked,
                     )
                 } else {
-                    ArFlagGrabButton(
-                        text = grabText,
-                        showGrabButton = showGrabButton,
-                        onGrabClicked = onCaptureClicked
+                    ArCaptureFlagButton(
+                        text = captureText,
+                        showCaptureButton = showCaptureButton,
+                        onCaptureClicked = onCaptureClicked
                     )
                 }
             }

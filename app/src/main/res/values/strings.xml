@@ -30,7 +30,7 @@
     <string name="wait_for_red_flag">Wait for red team to place her flag</string>
     <string name="game_started">Game has finally been started, enjoy!</string>
     <string name="wait_the_captain">Wait for the captain to create the game</string>
-    <string name="grab">Grab</string>
+    <string name="capture">Capture</string>
     <string name="game_over">Game Over</string>
     <string name="quit_game">Quit Game</string>
     <string name="wait_captain">Wait for the captain to start the game</string>

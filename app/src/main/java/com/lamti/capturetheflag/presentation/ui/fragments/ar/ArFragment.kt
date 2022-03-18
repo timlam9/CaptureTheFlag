@@ -198,7 +198,7 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
             val instructions by viewModel.instructions.collectAsState()
             val message by viewModel.message.collectAsState()
             val showPlacerButtons by viewModel.showPlacerButtons.collectAsState()
-            val showGrabButton by viewModel.captureFlag.collectAsState()
+            val showCaptureButton by viewModel.captureFlag.collectAsState()
             val arModeState by remember { mutableStateOf(arMode) }
 
             ArComponents(
@@ -206,10 +206,10 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
                 message = message,
                 arModeState = arModeState,
                 showPlacerButtons = showPlacerButtons,
-                showGrabButton = showGrabButton,
+                showCaptureButton = showCaptureButton,
                 okText = getString(R.string.ok),
                 cancelText = getString(R.string.cancel),
-                grabText = getString(R.string.grab),
+                captureText = getString(R.string.capture),
                 onCancelClicked = { viewModel.onCancelButtonPressed() },
                 onOkClicked = {
                     viewModel.onOkButtonPressed {

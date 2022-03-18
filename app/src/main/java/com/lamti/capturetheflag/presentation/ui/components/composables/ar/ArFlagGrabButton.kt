@@ -5,17 +5,17 @@ import androidx.compose.runtime.Composable
 import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
 
 @Composable
-fun ArFlagGrabButton(
+fun ArCaptureFlagButton(
     text: String,
-    showGrabButton: Boolean,
-    onGrabClicked: () -> Unit
+    showCaptureButton: Boolean,
+    onCaptureClicked: () -> Unit
 ) {
-    if (showGrabButton) {
+    if (showCaptureButton) {
         DefaultButton(
             text = text,
             color = MaterialTheme.colors.secondary
         ) {
-            onGrabClicked()
+            onCaptureClicked()
         }
     }
 }
