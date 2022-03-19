@@ -48,4 +48,5 @@
     <string name="red_flag_captured">Red flag was captured. Bring it to safehouse to win the game</string>
     <string name="green_flag_captured">Green flag was captured. Bring it to safehouse to win the game</string>
     <string name="your_flag_captured">Your flag has been captured!</string>
+    <string name="i_lost">I lost</string>
 </resources>

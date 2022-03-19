@@ -8,9 +8,9 @@ import com.google.firebase.firestore.SetOptions
 import com.lamti.capturetheflag.data.authentication.AuthenticationRepository
 import com.lamti.capturetheflag.data.authentication.PlayerRaw
 import com.lamti.capturetheflag.data.authentication.PlayerRaw.Companion.toRaw
-import com.lamti.capturetheflag.data.firestore.GamePlayerRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.GameRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.FirestoreRepository
+import com.lamti.capturetheflag.domain.game.Battle
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GamePlayer
@@ -40,8 +40,9 @@ class FirestoreRepositoryImpl @Inject constructor(
 
     private val userID = authenticationRepository.currentUser?.uid ?: EMPTY
 
-    override suspend fun uploadPlayerPosition(position: LatLng) {
+    override suspend fun uploadGamePlayer(position: LatLng) {
         val currentPlayer = getPlayer() ?: return
+        if (currentPlayer.status != Player.Status.Playing) return
         val gameDetails = currentPlayer.gameDetails ?: return
         val gameID = gameDetails.gameID
 
@@ -49,11 +50,10 @@ class FirestoreRepositoryImpl @Inject constructor(
             id = userID,
             team = gameDetails.team,
             position = position,
-            carryingFlag = false,
             username = currentPlayer.details.username
         )
 
-        databaseRepository.uploadPlayerPosition(gameID, gamePlayer)
+        databaseRepository.updateGamePlayer(gameID, gamePlayer)
     }
 
     override fun observePlayersPosition(gameID: String) = databaseRepository.observePlayersPosition(gameID)
@@ -327,7 +327,8 @@ class FirestoreRepositoryImpl @Inject constructor(
             state = ProgressState.Created
         ),
         redPlayers = listOf(userID),
-        greenPlayers = emptyList()
+        greenPlayers = emptyList(),
+        battles = emptyList()
     )
 
     override suspend fun endGame(team: Team) {
@@ -467,6 +468,57 @@ class FirestoreRepositoryImpl @Inject constructor(
             .await()
 
         return true
+    }
+
+    override suspend fun createBattle(opponentID: String): Boolean {
+        val player = getPlayer() ?: return false
+        val gameID = player.gameDetails?.gameID ?: return false
+        val currentGame = getGame(gameID) ?: return false
+
+        val newBattle = Battle(
+            battleID = userID,
+            playersIDs = listOf(userID, opponentID)
+        )
+        val updatedGame = currentGame
+            .copy(battles = currentGame.battles + newBattle)
+            .toRaw()
+
+        firestore
+            .collection(COLLECTION_GAMES)
+            .document(gameID)
+            .set(updatedGame)
+            .await()
+
+        return true
+    }
+
+    override suspend fun lost() {
+        val player = getPlayer() ?: return
+        val gameID = player.gameDetails?.gameID ?: return
+        val currentGame = getGame(gameID) ?: return
+
+        val updatedBattles: MutableList<Battle> = currentGame.battles.toMutableList()
+        updatedBattles.removeIf { it.playersIDs.contains(player.userID) }
+
+        val updatedGame = currentGame
+            .copy(battles = updatedBattles)
+            .toRaw()
+
+        firestore
+            .collection(COLLECTION_GAMES)
+            .document(gameID)
+            .set(updatedGame)
+            .await()
+
+        val updatedPlayer = player.copy(status = Player.Status.Lost)
+
+        firestore
+            .collection(COLLECTION_PLAYERS)
+            .document(player.userID)
+            .set(updatedPlayer)
+            .await()
+
+        databaseRepository.deleteGamePlayer(gameID, player.userID)
     }
 
     private suspend fun addPlayer(newUser: Player) {

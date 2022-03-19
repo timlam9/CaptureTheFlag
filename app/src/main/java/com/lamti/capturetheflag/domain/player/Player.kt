@@ -22,7 +22,8 @@ data class Player(
     enum class Status {
         Online,
         Connecting,
-        Playing
+        Playing,
+        Lost
     }
 }
 

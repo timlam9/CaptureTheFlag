@@ -109,14 +109,12 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 if (checkSinglePermission(ACCESS_FINE_LOCATION)) {
-                    Log.d("TAGARA", "Fine location permission granted")
                     when {
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> checkBackgroundLocationPermissionAPI30(requestCode)
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> checkLocationPermissionAPI29(requestCode)
                     }
                 }
                 if (checkSinglePermission(ACCESS_BACKGROUND_LOCATION)) {
-                    Log.d("TAGARA", "Background location permission granted")
                     collectScreenFlow()
                     registerReceiver(broadcastReceiver, IntentFilter(GEOFENCE_BROADCAST_RECEIVER_FILTER))
                     sendCommandToForegroundService(LocationServiceCommand.Start)

@@ -4,8 +4,10 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.ServerTimestamp
 import com.lamti.capturetheflag.data.authentication.toTeam
+import com.lamti.capturetheflag.data.firestore.BattleRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.GameStateRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.GeofenceObjectRaw.Companion.toRaw
+import com.lamti.capturetheflag.domain.game.Battle
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.game.GameState
@@ -20,7 +22,8 @@ data class GameRaw(
     val title: String = EMPTY,
     val gameState: GameStateRaw = GameStateRaw(),
     val redPlayers: List<String> = emptyList(),
-    val greenPlayers: List<String> = emptyList()
+    val greenPlayers: List<String> = emptyList(),
+    val battles: List<BattleRaw> = emptyList()
 ) {
 
     fun toGame() = Game(
@@ -35,7 +38,8 @@ data class GameRaw(
             state = gameState.state.toState()
         ),
         redPlayers = redPlayers,
-        greenPlayers = greenPlayers
+        greenPlayers = greenPlayers,
+        battles = battles.toBattles()
     )
 
     companion object {
@@ -45,7 +49,30 @@ data class GameRaw(
             title = title,
             gameState = gameState.toRaw(),
             redPlayers = redPlayers,
-            greenPlayers = greenPlayers
+            greenPlayers = greenPlayers,
+            battles = battles.toRaw()
+        )
+    }
+}
+
+private fun List<Battle>.toRaw() = map { it.toRaw() }
+private fun List<BattleRaw>.toBattles() = map { it.toBattle() }
+
+data class BattleRaw(
+    val battleID: String = EMPTY,
+    val playersIDs: List<String> = emptyList()
+) {
+
+    fun toBattle() = Battle(
+        battleID = battleID,
+        playersIDs = playersIDs
+    )
+
+    companion object {
+
+        fun Battle.toRaw() = BattleRaw(
+            battleID = battleID,
+            playersIDs = playersIDs
         )
     }
 }
@@ -91,6 +118,7 @@ data class GeofenceObjectRaw(
 
 
     companion object {
+
         fun GeofenceObject.toRaw(): GeofenceObjectRaw = GeofenceObjectRaw(
             position = position.toGeoPoint(),
             placed = isPlaced,
@@ -105,17 +133,15 @@ data class GamePlayerRaw(
     val id: String = EMPTY,
     val team: String = Team.Unknown.name,
     val position: GeoLocation = emptyGeoLocation,
-    val carryingFlag: Boolean = false,
-    val username: String = EMPTY
+    val username: String = EMPTY,
 ) {
 
-     fun toGamePlayer() = GamePlayer(
-         id = id,
-         team = team.toTeam(),
-         position = position.toLatLng(),
-         carryingFlag = carryingFlag,
-         username = username
-     )
+    fun toGamePlayer() = GamePlayer(
+        id = id,
+        team = team.toTeam(),
+        position = position.toLatLng(),
+        username = username,
+    )
 
     companion object {
 
@@ -123,8 +149,7 @@ data class GamePlayerRaw(
             id = id,
             team = team.name,
             position = position.toGeoLocation(),
-            carryingFlag = carryingFlag,
-            username = username
+            username = username,
         )
     }
 }
@@ -133,7 +158,6 @@ data class GeoLocation(
     val latitude: Double = 0.0,
     val longitude: Double = 0.0
 )
-
 
 val emptyGeoPoint: GeoPoint = GeoPoint(0.0, 0.0)
 val emptyGeoLocation: GeoLocation = GeoLocation(0.0, 0.0)

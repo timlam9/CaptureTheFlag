@@ -1,11 +1,21 @@
 package com.lamti.capturetheflag.presentation.ui.components.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.model.LatLng
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.game.GamePlayer
@@ -31,12 +41,23 @@ fun MapScreen(
     currentPosition: LatLng,
     isSafehouseDraggable: Boolean,
     otherPlayers: List<GamePlayer>,
+    battleID: String,
+    lost: Boolean,
+    enterBattleScreen: Boolean,
+    onEnterBattleScreen: () -> Unit,
     onSafehouseMarkerClicked: (LatLng) -> Unit,
     onArScannerButtonClicked: () -> Unit,
     onSettingFlagsButtonClicked: () -> Unit,
     onSetFlagsClicked: () -> Unit,
+    onBattleButtonClicked: () -> Unit,
     onQuitButtonClicked: () -> Unit,
 ) {
+    if (enterBattleScreen) {
+        LaunchedEffect(key1 = enterBattleScreen) {
+            Log.d("TAGARA", "Enter Battle Map")
+            onEnterBattleScreen()
+        }
+    }
 
     val instructions = setInstructions(
         team = gameDetails.team,
@@ -72,26 +93,43 @@ fun MapScreen(
             canPlaceFlag = canPlaceFlag,
             onSettingFlagsButtonClicked = onSettingFlagsButtonClicked
         )
-        if (instructions.isNotEmpty()) {
-            InstructionsCard(instructions)
-        }
+        QuitButton(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            gameState = gameState.state,
+            onQuitButtonClicked = onQuitButtonClicked
+        )
         ReadyButton(
             modifier = Modifier.align(Alignment.BottomCenter),
             gameState = gameState.state,
             playerGameDetails = gameDetails,
             onReadyButtonClicked = onSetFlagsClicked
         )
-        ArFlagButton(
-            modifier = Modifier.align(Alignment.BottomCenter),
-            team = gameDetails.team,
-            enteredGeofenceId = enteredGeofenceId,
-            onArScannerButtonClicked = onArScannerButtonClicked
-        )
-        QuitButton(
-            modifier = Modifier.align(Alignment.BottomCenter),
-            gameState = gameState.state,
-            onQuitButtonClicked = onQuitButtonClicked
-        )
+
+        if (instructions.isNotEmpty()) {
+            InstructionsCard(instructions)
+        }
+        if (lost) {
+            Text(text = "You Lost!", modifier = Modifier.align(Alignment.Center))
+        } else {
+            ArFlagButton(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                team = gameDetails.team,
+                enteredGeofenceId = enteredGeofenceId,
+                onArScannerButtonClicked = onArScannerButtonClicked
+            )
+            if (battleID.isNotEmpty()) {
+                FloatingActionButton(
+                    modifier = Modifier
+                        .padding(bottom = 64.dp)
+                        .align(Alignment.BottomCenter),
+                    onClick = onBattleButtonClicked,
+                    backgroundColor = MaterialTheme.colors.primaryVariant,
+                    contentColor = Color.White
+                ) {
+                    Icon(painterResource(id = R.drawable.ic_battle), EMPTY)
+                }
+            }
+        }
     }
 }
 

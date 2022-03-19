@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface FirestoreRepository {
 
-    suspend fun uploadPlayerPosition(position: LatLng)
+    suspend fun uploadGamePlayer(position: LatLng)
 
     fun observePlayersPosition(gameID: String): Flow<List<GamePlayer>>
 
@@ -51,4 +51,8 @@ interface FirestoreRepository {
     suspend fun discoverFlag(flagFound: Flag): Boolean
 
     suspend fun captureFlag(): Boolean
+
+    suspend fun createBattle(opponentID: String): Boolean
+
+    suspend fun lost()
 }

@@ -14,4 +14,6 @@ sealed class Screen(open val route: String = EMPTY) {
 
     object ConnectingToGame : Screen("connecting_to_game")
 
+    object Battle : Screen("battle")
+
 }

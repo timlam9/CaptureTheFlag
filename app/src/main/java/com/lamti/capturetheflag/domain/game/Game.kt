@@ -12,6 +12,7 @@ data class Game(
     val gameState: GameState,
     val redPlayers: List<String>,
     val greenPlayers: List<String>,
+    val battles: List<Battle>,
 ) {
 
     companion object {
@@ -21,10 +22,16 @@ data class Game(
             title = title,
             gameState = GameState.initialGameState(position = position),
             redPlayers = emptyList(),
-            greenPlayers = emptyList()
+            greenPlayers = emptyList(),
+            battles = emptyList()
         )
     }
 }
+
+data class Battle(
+    val battleID: String,
+    val playersIDs: List<String>
+)
 
 data class GameState(
     val safehouse: GeofenceObject,
@@ -88,6 +95,5 @@ data class GamePlayer(
     val id: String,
     val team: Team,
     val position: LatLng,
-    val carryingFlag: Boolean,
-    val username: String
+    val username: String,
 )

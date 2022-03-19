@@ -10,18 +10,19 @@ import com.lamti.capturetheflag.domain.game.GamePlayer
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class FirebaseDatabaseRepository @Inject constructor(private val database: FirebaseDatabase) {
 
-    fun uploadPlayerPosition(gameID: String, player: GamePlayer): Boolean = try {
+    fun updateGamePlayer(gameID: String, player: GamePlayer): Boolean = try {
         database.getReference(DATABASE_REFERENCE)
             .child(gameID)
             .child(player.id)
             .setValue(player.toRaw())
         true
     } catch (e: Exception) {
-        Log.d(TAG, "Error uploading position: ${e.message}")
+        Log.d(TAG, "Error updating player: ${e.message}")
         false
     }
 
@@ -34,7 +35,6 @@ class FirebaseDatabaseRepository @Inject constructor(private val database: Fireb
                     val player: GamePlayerRaw? = snapshot.getValue(GamePlayerRaw::class.java)
                     if (player != null) {
                         players.add(player.toGamePlayer())
-                        Log.d(TAG, "Value is: ${player.toGamePlayer()}")
                     }
                 }
                 trySend(players)
@@ -46,6 +46,18 @@ class FirebaseDatabaseRepository @Inject constructor(private val database: Fireb
         })
 
         awaitClose { reference.removeEventListener(subscription) }
+    }
+
+    suspend fun deleteGamePlayer(gameID: String, userID: String): Boolean = try {
+        database.getReference(DATABASE_REFERENCE)
+            .child(gameID)
+            .child(userID)
+            .removeValue()
+            .await()
+        true
+    } catch (e: Exception) {
+        Log.d(TAG, "Error updating player: ${e.message}")
+        false
     }
 
     companion object {

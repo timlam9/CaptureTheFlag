@@ -71,7 +71,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
     private fun startLocationUpdates() {
         locationUpdates = locationRepository.locationFlow()
             .onEach {
-                firestoreRepository.uploadPlayerPosition(it.toLatLng())
+                firestoreRepository.uploadGamePlayer(it.toLatLng())
             }
             .flowOn(Dispatchers.IO)
             .launchIn(lifecycleScope)
