@@ -10,7 +10,11 @@ fun PlayerMarkers(
     otherPlayers: List<GamePlayer>,
     greenPersonPin: BitmapDescriptor?,
     redPersonPin: BitmapDescriptor?,
-    userID: String
+    redFlagIcon: BitmapDescriptor?,
+    greenFlagIcon: BitmapDescriptor?,
+    userID: String,
+    redFlagPlayer: String?,
+    greenFlagPlayer: String?,
 ) {
     otherPlayers.onEach {
         if (it.id != userID) {
@@ -22,5 +26,18 @@ fun PlayerMarkers(
                 title = it.username
             )
         }
+        when {
+            redFlagPlayer == it.id -> MapMarker(
+                position = it.position,
+                icon = redFlagIcon,
+                title = it.username
+            )
+            greenFlagPlayer == it.id -> MapMarker(
+                position = it.position,
+                icon = greenFlagIcon,
+                title = it.username
+            )
+        }
+
     }
 }

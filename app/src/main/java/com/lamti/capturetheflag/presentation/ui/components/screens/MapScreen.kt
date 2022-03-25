@@ -81,6 +81,8 @@ fun MapScreen(
             userID = userID,
             redFlag = gameState.redFlag,
             greenFlag = gameState.greenFlag,
+            redFlagPlayer = gameState.redFlagCaptured,
+            greenFlagPlayer = gameState.greenFlagCaptured,
             otherPlayers = otherPlayers,
             onSafehouseMarkerClicked = onSafehouseMarkerClicked
         )
@@ -115,9 +117,11 @@ fun MapScreen(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 team = gameDetails.team,
                 enteredGeofenceId = enteredGeofenceId,
+                redFlagPlayer = gameState.redFlagCaptured,
+                greenFlagPlayer = gameState.greenFlagCaptured,
                 onArScannerButtonClicked = onArScannerButtonClicked
             )
-            if (battleID.isNotEmpty()) {
+            if (battleID.isNotEmpty() && isInBattleableGameZone(enteredGeofenceId)) {
                 FloatingActionButton(
                     modifier = Modifier
                         .padding(bottom = 64.dp)
@@ -133,6 +137,10 @@ fun MapScreen(
     }
 }
 
+@Composable
+private fun isInBattleableGameZone(enteredGeofenceId: String) = !enteredGeofenceId.contains("safehouse") &&
+        !enteredGeofenceId.contains(Team.Green.name) &&
+        !enteredGeofenceId.contains(Team.Red.name)
 
 @Composable
 private fun setInstructions(

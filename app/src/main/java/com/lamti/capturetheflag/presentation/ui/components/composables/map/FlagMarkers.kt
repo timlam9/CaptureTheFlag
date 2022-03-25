@@ -16,9 +16,11 @@ fun FlagMarkers(
     redFlagIcon: BitmapDescriptor?,
     redFlagMarkerTitle: String,
     greenFlagIcon: BitmapDescriptor?,
-    greenFlagMarkerTitle: String
+    greenFlagMarkerTitle: String,
+    redFlagPlayer: String?,
+    greenFlagPlayer: String?,
 ) {
-    if (team == Team.Red || redFlag.isDiscovered) {
+    if ((team == Team.Red || redFlag.isDiscovered) && redFlagPlayer == null) {
         MapMarker(
             position = redFlag.position,
             icon = redFlagIcon,
@@ -28,7 +30,7 @@ fun FlagMarkers(
             strokeColor = Color.Red,
         )
     }
-    if (team == Team.Green || greenFlag.isDiscovered) {
+    if ((team == Team.Green || greenFlag.isDiscovered) && greenFlagPlayer == null) {
         MapMarker(
             position = greenFlag.position,
             icon = greenFlagIcon,

@@ -371,7 +371,6 @@ class ArViewModel @Inject constructor(
                     onResolvedAnchorAvailable(anchor)
                 }
             } else if (_player.value.gameDetails?.team == Team.Green) {
-                Log.d("TAGARA", "Red flag: $redFlagID")
                 cloudAnchorManager.resolveCloudAnchor(_session.value, redFlagID) { anchor ->
                     onResolvedAnchorAvailable(anchor)
                 }

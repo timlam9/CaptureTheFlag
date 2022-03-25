@@ -35,6 +35,8 @@ fun GoogleMapsView(
     userID: String,
     redFlag: GeofenceObject,
     greenFlag: GeofenceObject,
+    redFlagPlayer: String?,
+    greenFlagPlayer: String?,
     otherPlayers: List<GamePlayer>,
     onSafehouseMarkerClicked: (LatLng) -> Unit,
 ) {
@@ -61,6 +63,8 @@ fun GoogleMapsView(
         userID = userID,
         redFlag = redFlag,
         greenFlag = greenFlag,
+        redFlagPlayer = redFlagPlayer,
+        greenFlagPlayer = greenFlagPlayer,
         otherPlayers = otherPlayers
     )
 }
@@ -81,6 +85,8 @@ fun GoogleMapsView(
     userID: String,
     redFlag: GeofenceObject,
     greenFlag: GeofenceObject,
+    redFlagPlayer: String?,
+    greenFlagPlayer: String?,
     otherPlayers: List<GamePlayer>
 ) {
     val context = LocalContext.current
@@ -113,13 +119,19 @@ fun GoogleMapsView(
             redFlagIcon = redFlagIcon,
             redFlagMarkerTitle = redFlagMarkerTitle,
             greenFlagIcon = greenFlagIcon,
-            greenFlagMarkerTitle = greenFlagMarkerTitle
+            greenFlagMarkerTitle = greenFlagMarkerTitle,
+            redFlagPlayer = redFlagPlayer,
+            greenFlagPlayer = greenFlagPlayer
         )
         PlayerMarkers(
             otherPlayers = otherPlayers,
             greenPersonPin = greenPersonPin,
             redPersonPin = redPersonPin,
-            userID = userID
+            greenFlagIcon = greenFlagIcon,
+            redFlagIcon = redFlagIcon,
+            userID = userID,
+            redFlagPlayer = redFlagPlayer,
+            greenFlagPlayer = greenFlagPlayer
         )
     }
 }

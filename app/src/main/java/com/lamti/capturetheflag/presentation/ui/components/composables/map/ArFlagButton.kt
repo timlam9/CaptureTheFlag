@@ -18,10 +18,12 @@ fun ArFlagButton(
     modifier: Modifier,
     team: Team,
     enteredGeofenceId: String,
+    redFlagPlayer: String?,
+    greenFlagPlayer: String?,
     onArScannerButtonClicked: () -> Unit
 ) {
-    if (team == Team.Red && enteredGeofenceId.contains(Team.Green.name) ||
-        team == Team.Green && enteredGeofenceId.contains(Team.Red.name)
+    if ((team == Team.Red && enteredGeofenceId.contains(Team.Green.name) && greenFlagPlayer == null) ||
+        (team == Team.Green && enteredGeofenceId.contains(Team.Red.name) && redFlagPlayer == null)
     ) {
         FloatingActionButton(
             modifier = modifier.padding(bottom = 64.dp),

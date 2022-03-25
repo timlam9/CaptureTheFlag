@@ -500,8 +500,17 @@ class FirestoreRepositoryImpl @Inject constructor(
         val updatedBattles: MutableList<Battle> = currentGame.battles.toMutableList()
         updatedBattles.removeIf { it.playersIDs.contains(player.userID) }
 
+        val updatedGameState = when (player.userID) {
+            currentGame.gameState.redFlagCaptured -> currentGame.gameState.copy(redFlagCaptured = null)
+            currentGame.gameState.greenFlagCaptured -> currentGame.gameState.copy(greenFlagCaptured = null)
+            else -> currentGame.gameState
+        }
+
         val updatedGame = currentGame
-            .copy(battles = updatedBattles)
+            .copy(
+                battles = updatedBattles,
+                gameState = updatedGameState
+            )
             .toRaw()
 
         firestore
