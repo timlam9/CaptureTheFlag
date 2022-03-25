@@ -112,6 +112,11 @@ class MainActivity : AppCompatActivity() {
                     when {
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> checkBackgroundLocationPermissionAPI30(requestCode)
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> checkLocationPermissionAPI29(requestCode)
+                        else -> {
+                            collectScreenFlow()
+                            registerReceiver(broadcastReceiver, IntentFilter(GEOFENCE_BROADCAST_RECEIVER_FILTER))
+                            sendCommandToForegroundService(LocationServiceCommand.Start)
+                        }
                     }
                 }
                 if (checkSinglePermission(ACCESS_BACKGROUND_LOCATION)) {

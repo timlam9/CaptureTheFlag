@@ -126,7 +126,7 @@ class FirestoreRepositoryImpl @Inject constructor(
         onSuccess: () -> Unit
     ) {
         val uid = authenticationRepository.registerUser(email = email, password = password)
-        val newUser = Player(
+        Player(
             userID = uid,
             status = Player.Status.Online,
             details = PlayerDetails(
@@ -135,8 +135,9 @@ class FirestoreRepositoryImpl @Inject constructor(
                 email = email
             ),
             gameDetails = null
-        )
-        addPlayer(newUser)
+        ).toRaw()
+            .update()
+
         onSuccess()
     }
 
@@ -144,32 +145,21 @@ class FirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun joinPlayer(gameID: String) {
         val currentPlayer = getPlayer()
-        val updatedPlayer = currentPlayer!!.copy(
-            gameDetails = GameDetails(
-                gameID = gameID,
-                team = Team.Unknown,
-                rank = GameDetails.Rank.Soldier
-            ),
-            status = Player.Status.Connecting
-        ).toRaw()
-
-        firestore
-            .collection(COLLECTION_PLAYERS)
-            .document(userID)
-            .set(updatedPlayer)
-            .await()
+        currentPlayer!!
+            .copy(
+                gameDetails = GameDetails(
+                    gameID = gameID,
+                    team = Team.Unknown,
+                    rank = GameDetails.Rank.Soldier
+                ),
+                status = Player.Status.Connecting
+            )
+            .toRaw()
+            .update()
     }
 
     override suspend fun connectPlayer(): Boolean {
-        val currentPlayer = getPlayer()
-        val updatedPlayer = currentPlayer!!.copy(status = Player.Status.Playing)
-
-        firestore
-            .collection(COLLECTION_PLAYERS)
-            .document(userID)
-            .set(updatedPlayer)
-            .await()
-
+        getPlayer()!!.copy(status = Player.Status.Playing).toRaw().update()
         return true
     }
 
@@ -188,14 +178,7 @@ class FirestoreRepositoryImpl @Inject constructor(
 
 
     override suspend fun updatePlayerStatus(status: Player.Status) {
-        val currentPlayer = getPlayer()
-        val updatedPlayer = currentPlayer!!.copy(status = status).toRaw()
-
-        firestore
-            .collection(COLLECTION_PLAYERS)
-            .document(userID)
-            .set(updatedPlayer)
-            .await()
+        getPlayer()!!.copy(status = status).toRaw().update()
     }
 
     override suspend fun setPlayerTeam(team: Team) {
@@ -214,19 +197,16 @@ class FirestoreRepositoryImpl @Inject constructor(
         } else
             GameDetails.Rank.Soldier
 
-        val updatedPlayer = currentPlayer!!.copy(
-            gameDetails = gameDetails?.copy(
-                gameID = gameID,
-                team = team,
-                rank = rank
+        currentPlayer!!
+            .copy(
+                gameDetails = gameDetails?.copy(
+                    gameID = gameID,
+                    team = team,
+                    rank = rank
+                )
             )
-        ).toRaw()
-
-        firestore
-            .collection(COLLECTION_PLAYERS)
-            .document(userID)
-            .set(updatedPlayer)
-            .await()
+            .toRaw()
+            .update()
 
         addPlayerToGame(gameID, team, playerID)
     }
@@ -248,43 +228,30 @@ class FirestoreRepositoryImpl @Inject constructor(
             Team.Unknown -> game
         }
 
-        firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .set(updatedGame.toRaw())
-            .await()
+        updatedGame.toRaw().update()
     }
 
     override suspend fun createGame(id: String, title: String, position: LatLng): Boolean {
-        val game = initialGame(id, title, position)
-
         try {
-            firestore
-                .collection(COLLECTION_GAMES)
-                .document(id)
-                .set(game.toRaw())
-                .await()
+            initialGame(id, title, position).toRaw().update()
         } catch (e: Exception) {
             Log.d("TAGARA", e.message.toString())
             return false
         }
 
-        val currentPlayer = getPlayer()
-        val updatedPlayer = currentPlayer!!.copy(
-            gameDetails = currentPlayer.gameDetails?.copy(gameID = id) ?: GameDetails(
-                gameID = id,
-                team = Team.Red,
-                rank = GameDetails.Rank.Captain
-            ),
-            status = Player.Status.Connecting
-        ).toRaw()
-
         try {
-            firestore
-                .collection(COLLECTION_PLAYERS)
-                .document(userID)
-                .set(updatedPlayer)
-                .await()
+            val currentPlayer = getPlayer()
+            currentPlayer!!
+                .copy(
+                    gameDetails = GameDetails(
+                        gameID = id,
+                        team = Team.Red,
+                        rank = GameDetails.Rank.Captain
+                    ),
+                    status = Player.Status.Connecting
+                )
+                .toRaw()
+                .update()
         } catch (e: Exception) {
             Log.d("TAGARA", e.message.toString())
             return false
@@ -336,8 +303,9 @@ class FirestoreRepositoryImpl @Inject constructor(
         val gameDetails = currentPlayer.gameDetails ?: return
         val gameID = gameDetails.gameID
         val currentGame = getGame(gameID) ?: return
-        val updatedGame: GameRaw =
-            currentGame.copy(
+
+        currentGame
+            .copy(
                 gameState = currentGame.gameState.copy(
                     safehouse = currentGame.gameState.safehouse,
                     greenFlag = currentGame.gameState.greenFlag,
@@ -346,29 +314,21 @@ class FirestoreRepositoryImpl @Inject constructor(
                     redFlagCaptured = currentGame.gameState.redFlagCaptured,
                     state = ProgressState.Ended
                 )
-            ).toRaw()
-
-        firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .set(updatedGame)
-            .await()
+            )
+            .toRaw()
+            .update()
     }
 
     override suspend fun quitGame(): Boolean {
         val player = getPlayer() ?: return false
-        val playerID = player.userID
 
-        val updatedPlayer = player.copy(
-            status = Player.Status.Online,
-            gameDetails = null
-        )
-
-        firestore
-            .collection(COLLECTION_PLAYERS)
-            .document(playerID)
-            .set(updatedPlayer)
-            .await()
+        player
+            .copy(
+                status = Player.Status.Online,
+                gameDetails = null
+            )
+            .toRaw()
+            .update()
 
         return true
     }
@@ -390,32 +350,25 @@ class FirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun updateGameStatus(gameID: String, state: ProgressState) {
         val currentGame = getGame(gameID) ?: return
-        val updatedGame = currentGame.copy(
-            gameState = currentGame.gameState.copy(state = state)
-        ).toRaw()
+        currentGame
+            .copy(gameState = currentGame.gameState.copy(state = state))
+            .toRaw()
+            .update()
 
-        firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .set(updatedGame)
-            .await()
     }
 
     override suspend fun updateSafehousePosition(gameID: String, position: LatLng) {
         val currentGame = getGame(gameID) ?: return
-        val updatedGame = currentGame.copy(
-            gameState = currentGame.gameState.copy(
-                safehouse = currentGame.gameState.safehouse.copy(
-                    position = position
+        currentGame
+            .copy(
+                gameState = currentGame.gameState.copy(
+                    safehouse = currentGame.gameState.safehouse.copy(
+                        position = position
+                    )
                 )
             )
-        ).toRaw()
-
-        firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .set(updatedGame)
-            .await()
+            .toRaw()
+            .update()
     }
 
     override suspend fun discoverFlag(flagFound: Flag): Boolean {
@@ -438,12 +391,7 @@ class FirestoreRepositoryImpl @Inject constructor(
             else -> return false
         }
 
-        val gameRaw = updatedGame.toRaw()
-
-        firestore.collection(COLLECTION_GAMES)
-            .document(gameID)
-            .set(gameRaw, SetOptions.merge())
-            .await()
+        updatedGame.toRaw().update()
 
         return true
     }
@@ -455,17 +403,11 @@ class FirestoreRepositoryImpl @Inject constructor(
         val playerTeam = gameDetails.team
         val gameID = gameDetails.gameID
         val currentGame = getGame(gameID) ?: return false
-        val updatedGame: GameRaw = when (playerTeam) {
+        when (playerTeam) {
             Team.Red -> currentGame.copy(gameState = currentGame.gameState.copy(greenFlagCaptured = playerID))
             Team.Green -> currentGame.copy(gameState = currentGame.gameState.copy(redFlagCaptured = playerID))
             Team.Unknown -> currentGame.copy(gameState = currentGame.gameState.copy())
-        }.toRaw()
-
-        firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .set(updatedGame)
-            .await()
+        }.toRaw().update()
 
         return true
     }
@@ -479,15 +421,10 @@ class FirestoreRepositoryImpl @Inject constructor(
             battleID = userID,
             playersIDs = listOf(userID, opponentID)
         )
-        val updatedGame = currentGame
+        currentGame
             .copy(battles = currentGame.battles + newBattle)
             .toRaw()
-
-        firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .set(updatedGame)
-            .await()
+            .update()
 
         return true
     }
@@ -506,35 +443,32 @@ class FirestoreRepositoryImpl @Inject constructor(
             else -> currentGame.gameState
         }
 
-        val updatedGame = currentGame
+        currentGame
             .copy(
                 battles = updatedBattles,
                 gameState = updatedGameState
             )
             .toRaw()
+            .update()
 
-        firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .set(updatedGame)
-            .await()
-
-        val updatedPlayer = player.copy(status = Player.Status.Lost)
-
-        firestore
-            .collection(COLLECTION_PLAYERS)
-            .document(player.userID)
-            .set(updatedPlayer)
-            .await()
+        player.copy(status = Player.Status.Lost).toRaw().update()
 
         databaseRepository.deleteGamePlayer(gameID, player.userID)
     }
 
-    private suspend fun addPlayer(newUser: Player) {
+    private suspend fun PlayerRaw.update() {
         firestore
             .collection(COLLECTION_PLAYERS)
-            .document(newUser.userID)
-            .set(newUser.toRaw())
+            .document(userID)
+            .set(this, SetOptions.merge())
+            .await()
+    }
+
+    private suspend fun GameRaw.update() {
+        firestore
+            .collection(COLLECTION_GAMES)
+            .document(gameID)
+            .set(this, SetOptions.merge())
             .await()
     }
 
