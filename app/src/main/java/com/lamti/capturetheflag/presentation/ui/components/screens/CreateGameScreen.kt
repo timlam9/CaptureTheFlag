@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -76,7 +77,7 @@ fun CreateGameScreen(
             text = title,
             style = MaterialTheme.typography.h5.copy(color = MaterialTheme.colors.onBackground)
         )
-        if(gameState == ProgressState.Created) {
+        if (gameState == ProgressState.Created) {
             Text(
                 text = "Green Players: $greenPlayers",
                 style = MaterialTheme.typography.h5.copy(color = Color.Green)
@@ -101,6 +102,13 @@ fun CreateGameScreen(
                 modifier = Modifier.weight(3f)
             )
         }
+        Image(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(30.dp),
+            painter = painterResource(id = R.drawable.rocket),
+            contentDescription = "create game image"
+        )
         DefaultButton(
             modifier = Modifier
                 .padding(20.dp)

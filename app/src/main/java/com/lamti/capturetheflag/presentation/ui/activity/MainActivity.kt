@@ -17,8 +17,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.lamti.capturetheflag.R
-import com.lamti.capturetheflag.data.location.geofences.GEOFENCE_KEY
 import com.lamti.capturetheflag.data.location.geofences.GEOFENCE_BROADCAST_RECEIVER_FILTER
+import com.lamti.capturetheflag.data.location.geofences.GEOFENCE_KEY
 import com.lamti.capturetheflag.data.location.geofences.GeofenceBroadcastReceiver
 import com.lamti.capturetheflag.data.location.service.LocationServiceCommand
 import com.lamti.capturetheflag.data.location.service.LocationServiceImpl
@@ -65,7 +65,7 @@ class MainActivity : AppCompatActivity() {
             super.onReceive(context, intent)
 
             geofenceIdFLow.value = intent?.getStringExtra(GEOFENCE_KEY) ?: return
-            if(geofenceIdFLow.value.isNotEmpty() && !isAppInForegrounded()) {
+            if (geofenceIdFLow.value.isNotEmpty() && !isAppInForegrounded()) {
                 notificationHelper.showFlagFoundNotification()
             }
         }

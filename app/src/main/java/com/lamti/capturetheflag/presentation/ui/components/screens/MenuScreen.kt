@@ -1,26 +1,28 @@
 package com.lamti.capturetheflag.presentation.ui.components.screens
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.OutlinedButton
 
 @Composable
 fun MenuScreen(
@@ -30,38 +32,54 @@ fun MenuScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceAround
     ) {
-        Spacer(modifier = Modifier.weight(0.25f))
-        Text(
-            text = stringResource(R.string.capture_the_flag),
-            style = MaterialTheme.typography.h4.copy(
-                color = MaterialTheme.colors.primaryVariant,
-                fontWeight = FontWeight.Bold
+        Box(
+            modifier = Modifier
+                .weight(2f)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8))
+                .background(color = MaterialTheme.colors.primary),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(30.dp),
+                painter = painterResource(id = R.drawable.intro_logo),
+                contentDescription = "intro image"
             )
-        )
-        Text(
-            text = stringResource(R.string.are_you_ready_to_play),
-            style = MaterialTheme.typography.h5.copy(color = MaterialTheme.colors.onBackground)
-        )
-        Spacer(modifier = Modifier.weight(2f))
-        JoinGameButton(modifier = Modifier.padding(20.dp)) {
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(R.string.capture_the_flag),
+                style = MaterialTheme.typography.h4.copy(
+                    color = MaterialTheme.colors.onBackground,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Text(
+                text = stringResource(R.string.play_ultimate_game),
+                style = MaterialTheme.typography.body2
+            )
+        }
+        JoinGameButton {
             onJoinGameClicked()
         }
-        NewGameButton(modifier = Modifier.padding(20.dp)) {
+        NewGameButton(
+            modifier = Modifier
+                .padding(top = 16.dp, bottom = 16.dp)
+        ) {
             onNewGameClicked()
         }
-    }
-}
-
-@Composable
-fun NewGameButton(modifier: Modifier = Modifier, onNewGameClicked: () -> Unit) {
-    DefaultButton(
-        modifier = modifier.fillMaxWidth(),
-        text = stringResource(R.string.new_game),
-        color = MaterialTheme.colors.primaryVariant
-    ) {
-        onNewGameClicked()
     }
 }
 
@@ -70,13 +88,20 @@ fun JoinGameButton(modifier: Modifier = Modifier, onAvailableGamesClicked: () ->
     DefaultButton(
         modifier = modifier.fillMaxWidth(),
         text = stringResource(R.string.join_game),
-        color = MaterialTheme.colors.secondary
     ) {
         onAvailableGamesClicked()
     }
 }
 
-
+@Composable
+fun NewGameButton(modifier: Modifier = Modifier, onNewGameClicked: () -> Unit) {
+    OutlinedButton(
+        modifier = modifier.fillMaxWidth(),
+        text = stringResource(R.string.new_game)
+    ) {
+        onNewGameClicked()
+    }
+}
 
 
 @Preview
