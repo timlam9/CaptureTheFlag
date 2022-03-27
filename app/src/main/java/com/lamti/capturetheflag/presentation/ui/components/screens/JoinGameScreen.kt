@@ -11,58 +11,59 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.AlertDialog
-import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.presentation.QrCodeAnalyzer
+import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.InfoTextField
+import com.lamti.capturetheflag.presentation.ui.style.Black
 import com.lamti.capturetheflag.utils.EMPTY
 
 @Composable
 fun JoinGameScreen(onQrCodeScanned: (String) -> Unit) {
     val openDialog = remember { mutableStateOf(false) }
 
-    QrCodeScanner()
+    QrCodeScanner(onCodeChanged = onQrCodeScanned)
+    QrCodeContent(openDialog)
     CustomDialog(
         openDialog = openDialog.value,
         onDismissDialog = { openDialog.value = false },
         onJoinClicked = onQrCodeScanned
     )
-
-    Button(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = { openDialog.value = true }
-    ) {
-        Text(stringResource(R.string.insert_game_code))
-    }
 }
 
 @Composable
-fun QrCodeScanner() {
-    var code by remember { mutableStateOf(EMPTY) }
+fun QrCodeScanner(onCodeChanged: (String) -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
@@ -73,16 +74,12 @@ fun QrCodeScanner() {
     }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
-        onResult = { granted ->
-            hasCamPermission = granted
-        }
+        onResult = { granted -> hasCamPermission = granted }
     )
     LaunchedEffect(key1 = true) {
         launcher.launch(Manifest.permission.CAMERA)
     }
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
         if (hasCamPermission) {
             AndroidView(
                 factory = { context ->
@@ -105,7 +102,7 @@ fun QrCodeScanner() {
                         ContextCompat.getMainExecutor(context),
                         QrCodeAnalyzer { result ->
                             Log.d("TAGARA", "Scan result: $result")
-                            code = result
+                            onCodeChanged(result)
                         }
                     )
                     try {
@@ -116,22 +113,44 @@ fun QrCodeScanner() {
                             imageAnalysis
                         )
                     } catch (e: Exception) {
+                        Log.d("TAGARA", "Scan result: ${e.message}")
                         e.printStackTrace()
                     }
                     previewView
                 },
-                modifier = Modifier.weight(1f)
-            )
-            Text(
-                text = code,
-                color = Color.Red,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp)
+                modifier = Modifier.fillMaxSize()
             )
         }
+    }
+}
+
+@Composable
+fun QrCodeContent(openDialog: MutableState<Boolean>) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(id = R.string.scan_code),
+            style = MaterialTheme.typography.h4.copy(
+                color = Black,
+                fontWeight = FontWeight.Bold
+            )
+        )
+        Image(
+            modifier = Modifier.size(140.dp),
+            painter = painterResource(id = R.drawable.ic_scan),
+            contentDescription = stringResource(R.string.gr_code)
+        )
+        DefaultButton(
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(id = R.string.insert_code_manually),
+            color = Black,
+            onclick = { openDialog.value = true }
+        )
     }
 }
 
@@ -145,30 +164,55 @@ fun CustomDialog(
 
     if (openDialog) {
         AlertDialog(
+            modifier = Modifier.fillMaxWidth(),
             onDismissRequest = onDismissDialog,
             title = {
-                Text(text = stringResource(R.string.join_game))
+                Text(
+                    text = stringResource(R.string.insert_game_code),
+                    style = MaterialTheme.typography.h6.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
             },
             text = {
                 Column {
-                    TextField(
-                        value = text,
-                        onValueChange = { text = it }
-                    )
-                    Text(stringResource(R.string.type_game_code))
+                    InfoTextField(
+                        text = text,
+                        label = stringResource(id = R.string.type_code),
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            imeAction = ImeAction.Done,
+                            keyboardType = KeyboardType.Text
+                        )
+                    ) {
+                        text = it
+                    }
                 }
             },
             buttons = {
-                Row(
-                    modifier = Modifier.padding(all = 8.dp),
-                    horizontalArrangement = Arrangement.Center
+                Column(
+                    verticalArrangement = Arrangement.SpaceAround,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { onJoinClicked(text) }
-                    ) {
-                        Text(stringResource(R.string.join))
-                    }
+                    DefaultButton(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 20.dp, end = 20.dp),
+                        text = stringResource(R.string.join_game),
+                        color = Black,
+                        onclick = {
+                            if (text.isEmpty()) return@DefaultButton
+                            onJoinClicked(text)
+                        }
+                    )
+                    Text(
+                        modifier = Modifier
+                            .padding(20.dp)
+                            .clickable { onDismissDialog() },
+                        text = stringResource(id = R.string.cancel),
+                        style = MaterialTheme.typography.h6.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
                 }
             }
         )

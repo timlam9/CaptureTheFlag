@@ -58,7 +58,7 @@ fun GameNavigation(
         composable(route = Screen.CreateGame.route) {
             CreateGameScreen {
                 viewModel.onCreateGameClicked(it)
-                navController.popNavigate(Screen.StartingGame.route)
+                navController.navigate(Screen.StartingGame.route)
             }
         }
         composable(route = Screen.StartingGame.route) {

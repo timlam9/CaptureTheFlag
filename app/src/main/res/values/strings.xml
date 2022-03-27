@@ -38,8 +38,9 @@
     <string name="select_team">Select your team</string>
     <string name="red_team">Red Team</string>
     <string name="green_team">Green Team</string>
-    <string name="insert_game_code">Insert Game Code</string>
-    <string name="type_game_code">type game\'s code</string>
+    <string name="insert_game_code">Insert Game\'s code</string>
+    <string name="insert_code_manually">Insert Code Manually</string>
+    <string name="type_code">type code</string>
     <string name="join_game">Join Game</string>
     <string name="join">Join</string>
     <string name="green_flag">Green Flag</string>
@@ -50,4 +51,6 @@
     <string name="green_flag_captured">Green flag was captured. Bring it to safehouse to win the game</string>
     <string name="your_flag_captured">Your flag has been captured!</string>
     <string name="i_lost">I lost</string>
+    <string name="scan_code">Scan Game\'s Code</string>
+    <string name="or">Or</string>
 </resources>
