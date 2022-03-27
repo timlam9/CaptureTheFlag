@@ -231,12 +231,14 @@ class MapViewModel @Inject constructor(
 
     private fun generateQrCode(text: String): Bitmap? {
         try {
+            val width = 300
+            val height = 300
             val qrCodeWriter = QRCodeWriter()
-            val bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 200, 200)
-            val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.RGB_565)
-            for (x in 0..199) {
-                for (y in 0..199) {
-                    bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.DKGRAY else Color.WHITE)
+            val bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, width, height)
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+            for (x in 0 until width) {
+                for (y in 0 until height) {
+                    bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.BLACK else Color.WHITE)
                 }
             }
             _qrCodeBitmap.value = bitmap

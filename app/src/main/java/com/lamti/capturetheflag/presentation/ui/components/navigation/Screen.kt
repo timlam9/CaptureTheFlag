@@ -10,6 +10,8 @@ sealed class Screen(open val route: String = EMPTY) {
 
     object CreateGame : Screen("create_game")
 
+    object StartingGame : Screen("starting_game")
+
     object JoinGame : Screen("join_game")
 
     object ConnectingToGame : Screen("connecting_to_game")

@@ -29,6 +29,7 @@ import com.lamti.capturetheflag.presentation.ui.components.screens.CreateGameScr
 import com.lamti.capturetheflag.presentation.ui.components.screens.JoinGameScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.MapScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.MenuScreen
+import com.lamti.capturetheflag.presentation.ui.components.screens.StartingGameScreen
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
 import com.lamti.capturetheflag.presentation.ui.popNavigate
 import com.lamti.capturetheflag.utils.EMPTY
@@ -55,17 +56,22 @@ fun GameNavigation(
             )
         }
         composable(route = Screen.CreateGame.route) {
-            CreateGameScreen(
+            CreateGameScreen {
+                viewModel.onCreateGameClicked(it)
+                navController.popNavigate(Screen.StartingGame.route)
+            }
+        }
+        composable(route = Screen.StartingGame.route) {
+            StartingGameScreen(
                 gameID = viewModel.player.value.gameDetails?.gameID ?: EMPTY,
                 qrCodeImage = viewModel.qrCodeBitmap.value?.asImageBitmap(),
-                gameState = viewModel.game.value.gameState.state,
+                gameTitle = viewModel.game.value.title,
                 redPlayers = viewModel.game.value.redPlayers.size,
                 greenPlayers = viewModel.game.value.greenPlayers.size,
-                onSetGameClicked = {
+                onStartGameClicked = {
                     viewModel.onSetGameClicked()
                     navController.popNavigate(Screen.Map.route)
-                },
-                onCreateGameClicked = { viewModel.onCreateGameClicked(it) }
+                }
             )
         }
         composable(route = Screen.JoinGame.route) {
