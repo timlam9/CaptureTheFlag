@@ -38,6 +38,8 @@
     <string name="select_team">Select your team</string>
     <string name="red_team">Red Team</string>
     <string name="green_team">Green Team</string>
+    <string name="green">Green</string>
+    <string name="red">Red</string>
     <string name="insert_game_code">Insert Game\'s code</string>
     <string name="insert_code_manually">Insert Code Manually</string>
     <string name="type_code">type code</string>

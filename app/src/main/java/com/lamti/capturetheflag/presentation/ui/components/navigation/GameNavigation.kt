@@ -87,13 +87,10 @@ fun GameNavigation(
         }
         composable(route = Screen.ConnectingToGame.route) {
             ConnectingToGameScreen(
-                hasChosenTeam = viewModel.player.value.gameDetails?.team != null && viewModel.player.value.gameDetails?.team != Team.Unknown,
-                onRedButtonClicked = {
-                    viewModel.onTeamButtonClicked(Team.Red)
-                }
-            ) {
-                viewModel.onTeamButtonClicked(Team.Green)
-            }
+                onRedButtonClicked = { viewModel.onTeamButtonClicked(Team.Red) },
+                onGreenButtonClicked = { viewModel.onTeamButtonClicked(Team.Green) },
+                onOkButtonClicked = { viewModel.onTeamOkButtonClicked() }
+            )
         }
         composable(route = Screen.Map.route) {
             MapScreen(

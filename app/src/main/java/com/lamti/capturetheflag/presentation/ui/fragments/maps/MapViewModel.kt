@@ -209,8 +209,12 @@ class MapViewModel @Inject constructor(
     }
 
     fun onTeamButtonClicked(team: Team) {
+        _player.value = _player.value.copy(gameDetails = _player.value.gameDetails?.copy(team = team))
+    }
+
+    fun onTeamOkButtonClicked() {
         viewModelScope.launch {
-            firestoreRepository.setPlayerTeam(team)
+            firestoreRepository.setPlayerTeam(_player.value.gameDetails?.team ?: Team.Unknown)
             observeGame()
         }
     }
