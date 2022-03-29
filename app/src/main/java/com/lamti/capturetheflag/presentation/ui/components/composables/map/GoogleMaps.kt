@@ -3,22 +3,18 @@ package com.lamti.capturetheflag.presentation.ui.components.composables.map
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.rememberCameraPositionState
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.game.GeofenceObject
@@ -28,7 +24,7 @@ import com.lamti.capturetheflag.presentation.ui.bitmapDescriptorFromVector
 
 @Composable
 fun GoogleMapsView(
-    currentPosition: LatLng,
+    cameraPositionState: CameraPositionState,
     safehousePosition: LatLng,
     isSafeHouseDraggable: Boolean,
     team: Team,
@@ -41,16 +37,6 @@ fun GoogleMapsView(
     onSafehouseMarkerClicked: (LatLng) -> Unit,
 ) {
     val (mapProperties, uiSettings) = setupMap()
-
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(currentPosition, 15f)
-    }
-
-    LaunchedEffect(currentPosition) {
-        snapshotFlow { currentPosition }.collect {
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(currentPosition, 15f)
-        }
-    }
 
     GoogleMapsView(
         mapProperties = mapProperties,
@@ -151,7 +137,8 @@ private fun setupMap(darkTheme: Boolean = isSystemInDarkTheme()): Pair<MapProper
             MapUiSettings(
                 myLocationButtonEnabled = false,
                 zoomControlsEnabled = false,
-                mapToolbarEnabled = false
+                mapToolbarEnabled = false,
+                compassEnabled = false
             )
         )
     }

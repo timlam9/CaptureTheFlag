@@ -62,6 +62,7 @@ class MapViewModel @Inject constructor(
     val initialScreen: State<Screen> = _initialScreen
 
     private val _livePosition: MutableState<LatLng> = mutableStateOf(emptyPosition())
+    val livePosition: State<LatLng> = _livePosition
 
     private val _initialPosition: MutableState<LatLng> = mutableStateOf(emptyPosition())
     val initialPosition: State<LatLng> = _initialPosition

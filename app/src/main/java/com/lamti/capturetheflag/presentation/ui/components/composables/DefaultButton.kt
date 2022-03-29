@@ -7,14 +7,17 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
@@ -27,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -42,7 +46,8 @@ fun DefaultButton(
     fontSize: TextUnit = 20.sp,
     textColor: Color = White,
     color: Color = MaterialTheme.colors.primary,
-    shape: Shape = MaterialTheme.shapes.small.copy(CornerSize(60)),
+    cornerSize: CornerSize = CornerSize(60),
+    shape: Shape = MaterialTheme.shapes.small.copy(cornerSize),
     onclick: () -> Unit
 ) {
     Button(
@@ -87,6 +92,32 @@ fun OutlinedButton(
                 fontWeight = FontWeight.Bold,
                 fontSize = fontSize
             )
+        )
+    }
+}
+
+@Composable
+fun IconButton(
+    modifier: Modifier = Modifier,
+    size: Dp = 42.dp,
+    cornerRadius: Int = 20,
+    shape: Shape = RoundedCornerShape(cornerRadius),
+    tint: Color = MaterialTheme.colors.onBackground,
+    backgroundColor: Color = MaterialTheme.colors.background,
+    icon: Int,
+    onclick: () -> Unit
+) {
+    Button(
+        modifier = modifier.size(size),
+        onClick = onclick,
+        shape = shape,
+        contentPadding = PaddingValues(0.dp),
+        colors = ButtonDefaults.buttonColors(backgroundColor = backgroundColor)
+    ) {
+        Icon(
+            painter = painterResource(id = icon),
+            tint = tint,
+            contentDescription = "icon button"
         )
     }
 }
