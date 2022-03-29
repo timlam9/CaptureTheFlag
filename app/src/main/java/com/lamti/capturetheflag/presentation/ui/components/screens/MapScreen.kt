@@ -152,8 +152,8 @@ fun MapScreen(
             onReadyButtonClicked = onSetFlagsClicked
         )
         ActionButtons(
-            modifier = Modifier.align(Alignment.BottomCenter),
-            battleModifier = Modifier.align(Alignment.Center),
+            modifier = Modifier.align(Alignment.Center),
+            buttonModifier = Modifier.align(Alignment.BottomCenter),
             lost = lost,
             team = gameDetails.team,
             battleID = battleID,

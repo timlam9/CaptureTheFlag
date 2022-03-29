@@ -8,7 +8,7 @@ import com.lamti.capturetheflag.domain.player.Team
 @Composable
 fun ActionButtons(
     modifier: Modifier = Modifier,
-    battleModifier: Modifier = Modifier,
+    buttonModifier: Modifier = Modifier,
     lost: Boolean,
     team: Team,
     battleID: String,
@@ -19,10 +19,10 @@ fun ActionButtons(
     onBattleButtonClicked: () -> Unit
 ) {
     when (lost) {
-        true -> Text(text = "You Lost!", modifier = battleModifier)
+        true -> Text(text = "You Lost!", modifier = modifier)
         false -> {
             ArFlagButton(
-                modifier = modifier,
+                modifier = buttonModifier,
                 team = team,
                 enteredGeofenceId = enteredGeofenceId,
                 redFlagPlayer = redFlagCaptured,
@@ -30,7 +30,7 @@ fun ActionButtons(
                 onArScannerButtonClicked = onArScannerButtonClicked
             )
             BattleButton(
-                modifier = battleModifier,
+                modifier = buttonModifier,
                 battleID = battleID,
                 enteredGeofenceId = enteredGeofenceId,
                 team = team,

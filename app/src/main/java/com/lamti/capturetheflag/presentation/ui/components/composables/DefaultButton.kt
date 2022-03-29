@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
@@ -132,25 +131,23 @@ fun BallScaleIndicator(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1000)
+            animation = tween(durationMillis = 850)
         )
     )
     val scaleAnimationProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 5f,
+        targetValue = 7f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1000)
+            animation = tween(durationMillis = 850)
         )
     )
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(bottom = 100.dp),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter
     ) {
         Box(
             modifier = Modifier
-                .size(300.dp)
+                .size(180.dp)
                 .scale(scaleAnimationProgress)
                 .alpha(1 - alphaAnimationProgress)
                 .clip(CircleShape)
