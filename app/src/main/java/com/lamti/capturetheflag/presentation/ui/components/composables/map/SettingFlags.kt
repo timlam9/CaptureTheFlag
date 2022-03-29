@@ -3,25 +3,27 @@ package com.lamti.capturetheflag.presentation.ui.components.composables.map
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
 import com.lamti.capturetheflag.presentation.ui.style.DarkBlueOpacity
-import com.lamti.capturetheflag.utils.EMPTY
+import com.lamti.capturetheflag.presentation.ui.style.White
 
 @Composable
- fun SettingFlags(
-    modifier: Modifier,
+fun SettingFlags(
+    modifier: Modifier = Modifier,
     gameState: ProgressState,
     playerGameDetails: GameDetails?,
     redFlagIsPlaced: Boolean,
@@ -38,25 +40,39 @@ import com.lamti.capturetheflag.utils.EMPTY
                 Team.Green -> !greenFlagIsPlaced
                 Team.Unknown -> false
             }
-            if (showArButton) {
-                if (canPlaceFlag) {
-                    FloatingActionButton(
-                        modifier = modifier.padding(bottom = 64.dp),
-                        onClick = onSettingFlagsButtonClicked,
-                        backgroundColor = MaterialTheme.colors.secondary,
-                        contentColor = Color.White
-                    ) {
-                        Icon(painterResource(id = R.drawable.ic_flag), EMPTY)
-                    }
+            when (showArButton) {
+                true -> if (canPlaceFlag) {
+                    DefaultButton(
+                        modifier = modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        text = stringResource(id = R.string.place_flag),
+                        onclick = onSettingFlagsButtonClicked
+                    )
                 }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color = DarkBlueOpacity)
-                        .fillMaxSize()
-                )
+                false -> WaitingLeaders()
             }
+        } else WaitingLeaders(showText = true)
+    }
+}
+
+@Composable
+fun WaitingLeaders(modifier: Modifier = Modifier, showText: Boolean = false) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(color = DarkBlueOpacity)
+            .fillMaxSize()
+    ) {
+        if (showText) {
+            Text(
+                modifier = Modifier.align(Alignment.Center),
+                text = stringResource(id = R.string.wait_leaders),
+                style = MaterialTheme.typography.h4.copy(
+                    color = White,
+                    fontWeight = FontWeight.Bold
+                )
+            )
         }
     }
 }

@@ -55,4 +55,8 @@
     <string name="i_lost">I lost</string>
     <string name="scan_code">Scan Game\'s Code</string>
     <string name="or">Or</string>
+    <string name="place_flag">Place Flag</string>
+    <string name="wait_leaders">Wait for the leaders to place the flags</string>
+    <string name="battle">Battle</string>
+    <string name="capture_flag">Capture Flag</string>
 </resources>

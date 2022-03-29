@@ -11,36 +11,40 @@ import androidx.compose.ui.unit.dp
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
-import com.lamti.capturetheflag.presentation.ui.style.Blue
+import com.lamti.capturetheflag.presentation.ui.style.Black
 import com.lamti.capturetheflag.presentation.ui.style.Green
 import com.lamti.capturetheflag.presentation.ui.style.Red
 
 @Composable
-fun ArFlagButton(
+fun BattleButton(
     modifier: Modifier = Modifier,
-    team: Team,
+    battleID: String,
     enteredGeofenceId: String,
-    redFlagPlayer: String?,
-    greenFlagPlayer: String?,
-    onArScannerButtonClicked: () -> Unit
+    team: Team,
+    onBattleButtonClicked: () -> Unit
 ) {
-    if ((team == Team.Red && enteredGeofenceId.contains(Team.Green.name) && greenFlagPlayer == null) ||
-        (team == Team.Green && enteredGeofenceId.contains(Team.Red.name) && redFlagPlayer == null)
-    ) {
-        val opponentColor: Color = remember(team) {
+    if (battleID.isNotEmpty() && isInBattleableGameZone(enteredGeofenceId)) {
+        val teamColor: Color = remember(team) {
             when (team) {
-                Team.Red -> Green
-                Team.Green -> Red
-                Team.Unknown -> Blue
+                Team.Red -> Red
+                Team.Green -> Green
+                Team.Unknown -> Black
             }
         }
+
         DefaultButton(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(bottom = 64.dp),
-            text = stringResource(id = R.string.capture_flag),
-            color = opponentColor,
-            onclick = onArScannerButtonClicked
+                .padding(bottom = 60.dp),
+            text = stringResource(id = R.string.battle),
+            color = teamColor,
+            onclick = onBattleButtonClicked
         )
     }
 }
+
+@Composable
+private fun isInBattleableGameZone(enteredGeofenceId: String) =
+    !enteredGeofenceId.contains("safehouse") &&
+            !enteredGeofenceId.contains(Team.Green.name) &&
+            !enteredGeofenceId.contains(Team.Red.name)

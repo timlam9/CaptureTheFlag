@@ -29,8 +29,8 @@ fun ArComponents(
     Box(modifier = Modifier.fillMaxSize()) {
         TransparentBackgroundCircle()
         Column {
-            InstructionsCard(instructions = instructions)
-            InstructionsCard(instructions = message)
+            InstructionsCard(text = instructions)
+            InstructionsCard(text = message)
             Spacer(modifier = Modifier.weight(3.5f))
             Row(
                 modifier = Modifier
