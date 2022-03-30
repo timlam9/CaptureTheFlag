@@ -55,6 +55,9 @@ class MapViewModel @Inject constructor(
     private val _enterBattleScreen = mutableStateOf(false)
     val enterBattleScreen: State<Boolean> = _enterBattleScreen
 
+    private val _enterGameOverScreen = mutableStateOf(false)
+    val enterGameOverScreen: State<Boolean> = _enterGameOverScreen
+
     private val _stayInSplashScreen = mutableStateOf(true)
     val stayInSplashScreen: State<Boolean> = _stayInSplashScreen
 
@@ -185,6 +188,7 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             val gameID = getRandomString(5)
             generateQrCode(gameID)
+            _player.value = _player.value.copy(gameDetails = _player.value.gameDetails?.copy(gameID = gameID))
             firestoreRepository.createGame(gameID, title, _livePosition.value)
             observeGame()
         }
@@ -217,13 +221,6 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             firestoreRepository.setPlayerTeam(_player.value.gameDetails?.team ?: Team.Unknown)
             observeGame()
-        }
-    }
-
-    fun onQuitButtonClicked(onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            val result = firestoreRepository.quitGame()
-            onResult(result)
         }
     }
 
@@ -267,22 +264,31 @@ class MapViewModel @Inject constructor(
     }
 
     private fun GameState.handleGameStateEvents() = when (state) {
-        ProgressState.Created -> _isSafehouseDraggable.value = _player.value.gameDetails?.rank == GameDetails.Rank.Captain
+        ProgressState.Created -> {
+            _enterGameOverScreen.value = false
+            _isSafehouseDraggable.value = _player.value.gameDetails?.rank == GameDetails.Rank.Captain
+        }
         ProgressState.SettingFlags -> {
+            _enterGameOverScreen.value = false
             _isSafehouseDraggable.value = false
             _arMode.value = ArMode.Placer
             onConnect { }
         }
         ProgressState.Started -> {
+            _enterGameOverScreen.value = false
             _isSafehouseDraggable.value = false
             _arMode.value = ArMode.Scanner
             onGameStarted()
         }
         ProgressState.Ended -> {
+            _enterGameOverScreen.value = true
             _isSafehouseDraggable.value = false
             removeGeofencesListener()
         }
-        else -> _isSafehouseDraggable.value = false
+        else -> {
+            _enterGameOverScreen.value = false
+            _isSafehouseDraggable.value = false
+        }
     }
 
     private fun GameState.onGameStarted() {
@@ -307,6 +313,13 @@ class MapViewModel @Inject constructor(
     fun onLostBattleButtonClicked() {
         viewModelScope.launch {
             firestoreRepository.lost()
+        }
+    }
+
+    fun onGameOverOkClicked(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val result = firestoreRepository.quitGame()
+            onResult(result)
         }
     }
 

@@ -39,7 +39,8 @@ data class GameState(
     val redFlag: GeofenceObject,
     val greenFlagCaptured: String?,
     val redFlagCaptured: String?,
-    val state: ProgressState
+    val state: ProgressState,
+    val winners: Team
 ) {
 
     companion object {
@@ -68,7 +69,8 @@ data class GameState(
             ),
             greenFlagCaptured = null,
             redFlagCaptured = null,
-            state = ProgressState.Idle
+            state = ProgressState.Idle,
+            winners = Team.Unknown
         )
     }
 }

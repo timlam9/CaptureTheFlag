@@ -291,7 +291,8 @@ class FirestoreRepositoryImpl @Inject constructor(
             ),
             greenFlagCaptured = null,
             redFlagCaptured = null,
-            state = ProgressState.Created
+            state = ProgressState.Created,
+            winners = Team.Unknown
         ),
         redPlayers = listOf(userID),
         greenPlayers = emptyList(),
@@ -312,7 +313,8 @@ class FirestoreRepositoryImpl @Inject constructor(
                     redFlag = currentGame.gameState.redFlag,
                     greenFlagCaptured = currentGame.gameState.greenFlagCaptured,
                     redFlagCaptured = currentGame.gameState.redFlagCaptured,
-                    state = ProgressState.Ended
+                    state = ProgressState.Ended,
+                    winners = team
                 )
             )
             .toRaw()

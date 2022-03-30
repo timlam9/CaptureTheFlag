@@ -1,31 +1,18 @@
 package com.lamti.capturetheflag.presentation.ui.components.navigation
 
-import android.util.Log
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Team
-import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.screens.BattleScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.ConnectingToGameScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.CreateGameScreen
+import com.lamti.capturetheflag.presentation.ui.components.screens.GameOverScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.JoinGameScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.MapScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.MenuScreen
@@ -105,59 +92,36 @@ fun GameNavigation(
                 otherPlayers = viewModel.otherPlayers.value,
                 battleID = viewModel.battleID.value,
                 lost = viewModel.player.value.status == Player.Status.Lost,
-                enterBattleScreen = viewModel.enterBattleScreen.value,
                 redPlayersCount = viewModel.game.value.redPlayers.size,
                 greenPlayersCount = viewModel.game.value.greenPlayers.size,
+                enterBattleScreen = viewModel.enterBattleScreen.value,
+                enterGameOverScreen = viewModel.enterGameOverScreen.value,
                 onEnterBattleScreen = { navController.popNavigate(Screen.Battle.route) },
+                onEnterGameOverScreen = { navController.popNavigate(Screen.GameOver.route) },
                 onSafehouseMarkerClicked = { viewModel.updateSafeHousePosition(it) },
                 onArScannerButtonClicked = onArScannerButtonClicked,
                 onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
                 onSetFlagsClicked = { viewModel.onSetFlagsClicked() },
                 onBattleButtonClicked = { viewModel.onBattleButtonClicked() }
-            ) {
-                viewModel.onQuitButtonClicked {
-                    if (it) navController.popNavigate(Screen.Menu.route)
-                }
-            }
+            )
         }
         composable(route = Screen.Battle.route) {
             BattleScreen(
+                team = viewModel.player.value.gameDetails?.team ?: Team.Unknown,
                 enterBattleScreen = viewModel.enterBattleScreen.value,
                 onEnterBattleScreen = { navController.popNavigate(Screen.Map.route) },
                 onLostButtonClicked = { viewModel.onLostBattleButtonClicked() }
             )
         }
-    }
-}
-
-@Composable
-fun BattleScreen(
-    enterBattleScreen: Boolean,
-    onEnterBattleScreen: () -> Unit,
-    onLostButtonClicked: () -> Unit
-) {
-    if (!enterBattleScreen) {
-        LaunchedEffect(key1 = enterBattleScreen) {
-            Log.d("TAGARA", "Enter Battle Battle")
-            onEnterBattleScreen()
-        }
-    }
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Text(
-            modifier = Modifier.padding(32.dp),
-            text = "Battle"
-        )
-        DefaultButton(
-            modifier = Modifier
-                .padding(20.dp)
-                .wrapContentHeight(align = Alignment.Bottom)
-                .fillMaxWidth(),
-            text = stringResource(R.string.i_lost),
-            color = MaterialTheme.colors.secondary
-        ) {
-            onLostButtonClicked()
+        composable(route = Screen.GameOver.route) {
+            GameOverScreen(
+                winners = viewModel.game.value.gameState.winners,
+                onOkButtonClicked = {
+                    viewModel.onGameOverOkClicked {
+                        if (it) navController.popNavigate(Screen.Menu.route)
+                    }
+                }
+            )
         }
     }
 }

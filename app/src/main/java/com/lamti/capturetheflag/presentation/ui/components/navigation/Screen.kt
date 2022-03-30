@@ -18,4 +18,6 @@ sealed class Screen(open val route: String = EMPTY) {
 
     object Battle : Screen("battle")
 
+    object GameOver : Screen("game_over")
+
 }

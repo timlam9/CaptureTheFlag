@@ -39,7 +39,6 @@ import com.lamti.capturetheflag.presentation.ui.components.composables.IconButto
 import com.lamti.capturetheflag.presentation.ui.components.composables.InstructionsCard
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.ActionButtons
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.GoogleMapsView
-import com.lamti.capturetheflag.presentation.ui.components.composables.map.QuitButton
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.ReadyButton
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.SettingFlags
 import com.lamti.capturetheflag.presentation.ui.style.Black
@@ -60,16 +59,17 @@ fun MapScreen(
     otherPlayers: List<GamePlayer>,
     battleID: String,
     lost: Boolean,
-    enterBattleScreen: Boolean,
     greenPlayersCount: Int,
     redPlayersCount: Int,
+    enterBattleScreen: Boolean,
+    enterGameOverScreen: Boolean,
     onEnterBattleScreen: () -> Unit,
+    onEnterGameOverScreen: () -> Unit,
     onSafehouseMarkerClicked: (LatLng) -> Unit,
     onArScannerButtonClicked: () -> Unit,
     onSettingFlagsButtonClicked: () -> Unit,
     onSetFlagsClicked: () -> Unit,
     onBattleButtonClicked: () -> Unit,
-    onQuitButtonClicked: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     var zoom by remember { mutableStateOf(15f) }
@@ -83,7 +83,14 @@ fun MapScreen(
         }
     }
 
-    RedirectToBattleScreenIfNeeded(enterBattleScreen, onEnterBattleScreen)
+    RedirectToBattleScreenIfNeeded(
+        enterBattleScreen = enterBattleScreen,
+        onEnterBattleScreen = onEnterBattleScreen
+    )
+    RedirectToGameOverScreenIfNeeded(
+        enterGameOverScreen = enterGameOverScreen,
+        onEnterGameOverScreen = onEnterGameOverScreen
+    )
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         GoogleMapsView(
@@ -139,11 +146,6 @@ fun MapScreen(
             greenFlagIsPlaced = gameState.greenFlag.isPlaced,
             canPlaceFlag = canPlaceFlag,
             onSettingFlagsButtonClicked = onSettingFlagsButtonClicked
-        )
-        QuitButton(
-            modifier = Modifier.align(Alignment.BottomCenter),
-            gameState = gameState.state,
-            onQuitButtonClicked = onQuitButtonClicked
         )
         ReadyButton(
             modifier = Modifier.align(Alignment.BottomCenter),
@@ -230,6 +232,15 @@ private fun RedirectToBattleScreenIfNeeded(enterBattleScreen: Boolean, onEnterBa
     if (enterBattleScreen) {
         LaunchedEffect(key1 = enterBattleScreen) {
             onEnterBattleScreen()
+        }
+    }
+}
+
+@Composable
+private fun RedirectToGameOverScreenIfNeeded(enterGameOverScreen: Boolean, onEnterGameOverScreen: () -> Unit) {
+    if (enterGameOverScreen) {
+        LaunchedEffect(key1 = enterGameOverScreen) {
+            onEnterGameOverScreen()
         }
     }
 }

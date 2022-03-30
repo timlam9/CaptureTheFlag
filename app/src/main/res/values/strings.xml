@@ -59,4 +59,5 @@
     <string name="wait_leaders">Wait for the leaders to place the flags</string>
     <string name="battle">Battle</string>
     <string name="capture_flag">Capture Flag</string>
+    <string name="fight_for_your_team">Fight for your team</string>
 </resources>

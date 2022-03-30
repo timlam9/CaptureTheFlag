@@ -55,4 +55,5 @@ interface FirestoreRepository {
     suspend fun createBattle(opponentID: String): Boolean
 
     suspend fun lost()
+
 }

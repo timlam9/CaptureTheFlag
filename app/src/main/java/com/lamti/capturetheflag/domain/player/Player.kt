@@ -45,7 +45,6 @@ data class GameDetails(
             gameID = EMPTY,
             team = Team.Unknown,
             rank = Rank.Soldier
-
         )
     }
 }

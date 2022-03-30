@@ -29,14 +29,7 @@ data class GameRaw(
     fun toGame() = Game(
         gameID = gameID,
         title = title,
-        gameState = GameState(
-            safehouse = gameState.safehouse.toGeofenceObject(),
-            greenFlag = gameState.greenFlag.toGeofenceObject(),
-            redFlag = gameState.redFlag.toGeofenceObject(),
-            greenFlagCaptured = gameState.greenFlagCaptured,
-            redFlagCaptured = gameState.redFlagCaptured,
-            state = gameState.state.toState()
-        ),
+        gameState = gameState.toGameState(),
         redPlayers = redPlayers,
         greenPlayers = greenPlayers,
         battles = battles.toBattles()
@@ -83,8 +76,19 @@ data class GameStateRaw(
     val redFlag: GeofenceObjectRaw = GeofenceObjectRaw(),
     val redFlagCaptured: String? = null,
     val greenFlagCaptured: String? = null,
-    val state: String = "Idle"
+    val state: String = "Idle",
+    val winners: String = Team.Unknown.name
 ) {
+
+    fun toGameState() = GameState(
+        safehouse = safehouse.toGeofenceObject(),
+        greenFlag = greenFlag.toGeofenceObject(),
+        redFlag = redFlag.toGeofenceObject(),
+        greenFlagCaptured = greenFlagCaptured,
+        redFlagCaptured = redFlagCaptured,
+        state = state.toState(),
+        winners = winners.toTeam()
+    )
 
     companion object {
 
@@ -94,7 +98,8 @@ data class GameStateRaw(
             redFlag = redFlag.toRaw(),
             state = state.name,
             redFlagCaptured = redFlagCaptured,
-            greenFlagCaptured = greenFlagCaptured
+            greenFlagCaptured = greenFlagCaptured,
+            winners = winners.name
         )
     }
 }
