@@ -218,7 +218,7 @@ class ArViewModel @Inject constructor(
 
             // No tracking error at this point. If we didn't detect any plane, show searchingPlane message.
             if (!hasTrackingPlane()) {
-                _message.update { "Searching for surfaces..." }
+                _message.update { getStartingMessage() }
             }
 
             // Visualize planes.
@@ -290,10 +290,11 @@ class ArViewModel @Inject constructor(
         }
     }
 
-    fun onCancelButtonPressed() {
-        // Clear the anchor from the scene.
+    fun onCancelButtonPressed(text: String = "Tap to a discovered area to place your flag") {
         cloudAnchorManager.clearListeners()
         currentAnchor = null
+        _showPlacerButtons.value = false
+        _message.update { text }
     }
 
     @Synchronized
@@ -333,25 +334,26 @@ class ArViewModel @Inject constructor(
 
                 cloudAnchorRepository.uploadGeofenceObject(newGame)
             }
-            _message.update { "Cloud Anchor Hosted. ID: $cloudAnchorId" }
+            _message.update { "Your flag was placed successfully!" }
             _showPlacerButtons.update { true }
             currentAnchor = anchor
         } else {
-            _message.update { "Error while hosting: $cloudState" }
             _showPlacerButtons.update { false }
-            onCancelButtonPressed()
+            onCancelButtonPressed(errorMessage)
         }
     }
+
+    private val errorMessage = "An error occurred. Please relaunch the app and try again."
 
     @Synchronized
     private fun onResolvedAnchorAvailable(anchor: Anchor) {
         val cloudState = anchor.cloudAnchorState
         if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
             _captureFlag.update { true }
-            _instructions.update { "You discovered your opponent's flag. \'Capture\' it and run to safehouse to win the game" }
+            _message.update { "You discovered your opponent's flag. \'Capture\' it and run to safehouse to win the game" }
             currentAnchor = anchor
         } else {
-            _message.update { "Error while resolving anchor with id: ${anchor.cloudAnchorId}. Error: $cloudState" }
+            _message.update { errorMessage }
         }
     }
 
@@ -362,7 +364,7 @@ class ArViewModel @Inject constructor(
             val greenFlagID = _game.value.gameState.greenFlag.id
 
             if (redFlagID.isEmpty() || greenFlagID.isEmpty()) {
-                _message.update { "A Cloud Anchor ID was not found." }
+                _message.update { "Flag was not found." }
                 return@launch
             }
 
@@ -391,8 +393,7 @@ class ArViewModel @Inject constructor(
     }
 
     private fun sendAnchorToCloud() {
-        // host cloud anchor
-        _message.update { "Now hosting anchor..." }
+        _message.update { "Your flag is placing. Please wait..." }
         cloudAnchorManager.hostCloudAnchor(_session.value, currentAnchor) { anchor: Anchor? ->
             onHostedAnchorAvailable(anchor!!)
         }
@@ -401,6 +402,11 @@ class ArViewModel @Inject constructor(
     private fun getFlagColor(team: Team?) = when (_scannerMode.value) {
         true -> if (team == Team.Red) GREEN_COLOR else RED_COLOR
         false -> if (team == Team.Red) RED_COLOR else GREEN_COLOR
+    }
+
+    private fun getStartingMessage() = when (_scannerMode.value) {
+        true -> "Move your camera around to find your opponent's flag"
+        false -> "Tap to a discovered area to place your flag"
     }
 
 }

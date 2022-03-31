@@ -10,9 +10,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.clipPath
+import com.lamti.capturetheflag.presentation.ui.style.Black
 
 @Composable
-fun TransparentBackgroundCircle() {
+fun TransparentBackgroundCircle(color: Color = Black) {
     Canvas(
         modifier = Modifier.fillMaxSize(),
         onDraw = {
@@ -20,7 +21,7 @@ fun TransparentBackgroundCircle() {
                 addOval(Rect(center, size.minDimension / 2))
             }
             clipPath(circlePath, clipOp = ClipOp.Difference) {
-                drawRect(SolidColor(Color.Black.copy(alpha = 0.8f)))
+                drawRect(SolidColor(color.copy(alpha = 0.8f)))
             }
         }
     )

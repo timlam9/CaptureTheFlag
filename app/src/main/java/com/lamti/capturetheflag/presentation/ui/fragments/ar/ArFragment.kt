@@ -22,6 +22,7 @@ import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.FragmentArBinding
+import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.arcore.helpers.CameraPermissionHelper
 import com.lamti.capturetheflag.presentation.arcore.helpers.DisplayRotationHelper
 import com.lamti.capturetheflag.presentation.arcore.helpers.TapHelper
@@ -30,6 +31,9 @@ import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
 import com.lamti.capturetheflag.presentation.ui.components.composables.ar.ArComponents
+import com.lamti.capturetheflag.presentation.ui.style.Blue
+import com.lamti.capturetheflag.presentation.ui.style.Green
+import com.lamti.capturetheflag.presentation.ui.style.Red
 import com.lamti.capturetheflag.utils.get
 import com.lamti.capturetheflag.utils.myAppPreferences
 import dagger.hilt.android.AndroidEntryPoint
@@ -183,7 +187,7 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
 
         arMode = when (mode) {
             ArMode.Placer.name -> {
-                viewModel.setInstructions(getString(R.string.tap_to_place_flag), false)
+                viewModel.setInstructions(getString(R.string.place_flag), false)
                 ArMode.Placer
             }
             else -> {
@@ -194,12 +198,20 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
     }
 
     private fun setupUI() = binding?.run {
-        topView.setContent {
+        composeView.setContent {
             val instructions by viewModel.instructions.collectAsState()
             val message by viewModel.message.collectAsState()
             val showPlacerButtons by viewModel.showPlacerButtons.collectAsState()
             val showCaptureButton by viewModel.captureFlag.collectAsState()
             val arModeState by remember { mutableStateOf(arMode) }
+            val teamColor = remember(viewModel.player.value.gameDetails?.team) {
+                when(viewModel.player.value.gameDetails?.team) {
+                    Team.Red -> Red
+                    Team.Green -> Green
+                    Team.Unknown -> Blue
+                    null -> Blue
+                }
+            }
 
             ArComponents(
                 instructions = instructions,
@@ -207,21 +219,21 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
                 arModeState = arModeState,
                 showPlacerButtons = showPlacerButtons,
                 showCaptureButton = showCaptureButton,
-                okText = getString(R.string.ok),
+                okText = getString(R.string.place_flag),
                 cancelText = getString(R.string.cancel),
-                captureText = getString(R.string.capture),
+                captureText = getString(R.string.capture_the_flag),
+                teamColor = teamColor,
                 onCancelClicked = { viewModel.onCancelButtonPressed() },
                 onOkClicked = {
                     viewModel.onOkButtonPressed {
                         if (it) (requireActivity() as MainActivity).onBackPressed()
                     }
-                },
-                onCaptureClicked = {
-                    viewModel.onCaptureClicked {
-                        if (it) (requireActivity() as MainActivity).onBackPressed()
-                    }
                 }
-            )
+            ) {
+                viewModel.onCaptureClicked {
+                    if (it) (requireActivity() as MainActivity).onBackPressed()
+                }
+            }
         }
     }
 

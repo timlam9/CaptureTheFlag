@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.game.ProgressState
@@ -52,27 +53,27 @@ fun SettingFlags(
                 }
                 false -> WaitingLeaders()
             }
-        } else WaitingLeaders(showText = true)
+        } else WaitingLeaders()
     }
 }
 
 @Composable
-fun WaitingLeaders(modifier: Modifier = Modifier, showText: Boolean = false) {
+fun WaitingLeaders(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(color = DarkBlueOpacity)
-            .fillMaxSize()
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        if (showText) {
-            Text(
-                modifier = Modifier.align(Alignment.Center),
-                text = stringResource(id = R.string.wait_leaders),
-                style = MaterialTheme.typography.h4.copy(
-                    color = White,
-                    fontWeight = FontWeight.Bold
-                )
+        Text(
+            modifier = Modifier.align(Alignment.Center),
+            text = stringResource(id = R.string.wait_leaders),
+            style = MaterialTheme.typography.h4.copy(
+                color = White,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
-        }
+        )
     }
 }

@@ -76,8 +76,8 @@ private fun setInstructions(
     }
     ProgressState.SettingFlags -> {
         when {
-            team == Team.Red && isRedFlagPlaced && !isGreenFlagPlaced -> stringResource(R.string.wait_for_green_flag)
-            team == Team.Green && isGreenFlagPlaced && !isRedFlagPlaced -> stringResource(R.string.wait_for_red_flag)
+            team == Team.Red && isRedFlagPlaced && !isGreenFlagPlaced -> EMPTY
+            team == Team.Green && isGreenFlagPlaced && !isRedFlagPlaced -> EMPTY
             else -> {
                 if (canPlaceFlag) stringResource(R.string.instructions_set_flags)
                 else stringResource(R.string.place_flag_outside_safehouse)
@@ -86,6 +86,7 @@ private fun setInstructions(
     }
     ProgressState.Started -> {
         when {
+            isGreenFlagCaptured && isRedFlagCaptured -> stringResource(id = R.string.both_flags_captured)
             isRedFlagCaptured -> when (team) {
                 Team.Green -> stringResource(id = R.string.red_flag_captured)
                 else -> stringResource(id = R.string.your_flag_captured)

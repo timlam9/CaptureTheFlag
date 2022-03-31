@@ -27,8 +27,6 @@
     <string name="tap_to_place_flag">Tap to a discovered area to place your flag</string>
     <string name="search_flag">Search for opponent\'s flag</string>
     <string name="cancel">Cancel</string>
-    <string name="wait_for_green_flag">Wait for green team to place her flag</string>
-    <string name="wait_for_red_flag">Wait for red team to place her flag</string>
     <string name="game_started">Game has finally been started, enjoy!</string>
     <string name="wait_the_captain">Wait for the captain to create the game</string>
     <string name="capture">Capture</string>
@@ -55,9 +53,10 @@
     <string name="i_lost">I lost</string>
     <string name="scan_code">Scan Game\'s Code</string>
     <string name="or">Or</string>
-    <string name="place_flag">Place Flag</string>
+    <string name="place_flag">Place your flag</string>
     <string name="wait_leaders">Wait for the leaders to place the flags</string>
     <string name="battle">Battle</string>
     <string name="capture_flag">Capture Flag</string>
     <string name="fight_for_your_team">Fight for your team</string>
+    <string name="both_flags_captured">Both flags have been captured!</string>
 </resources>
