@@ -56,8 +56,9 @@ fun CreateGameScreen(onCreateGameClicked: (String) -> Unit) {
         Image(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(20.dp)
                 .weight(1f),
-            painter = painterResource(id = R.drawable.rocket),
+            painter = painterResource(id = R.drawable.create_game),
             contentDescription = "create game image"
         )
         DefaultButton(
