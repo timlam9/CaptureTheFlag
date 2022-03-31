@@ -66,8 +66,6 @@ fun CreateGameScreen(onCreateGameClicked: (String) -> Unit) {
                 .fillMaxWidth()
                 .padding(bottom = 20.dp),
             text = stringResource(id = R.string.create),
-            textColor = MaterialTheme.colors.background,
-            color = MaterialTheme.colors.onBackground
         ) {
             if (gameTitle.isEmpty()) return@DefaultButton
             onCreateGameClicked(gameTitle)

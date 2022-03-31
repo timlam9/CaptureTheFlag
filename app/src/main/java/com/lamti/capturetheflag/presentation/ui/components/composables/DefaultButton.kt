@@ -36,15 +36,14 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lamti.capturetheflag.presentation.ui.style.Green
-import com.lamti.capturetheflag.presentation.ui.style.White
 
 @Composable
 fun DefaultButton(
     modifier: Modifier = Modifier,
     text: String,
     fontSize: TextUnit = 20.sp,
-    textColor: Color = White,
-    color: Color = MaterialTheme.colors.primary,
+    textColor: Color = MaterialTheme.colors.background,
+    color: Color = MaterialTheme.colors.onBackground,
     cornerSize: CornerSize = CornerSize(60),
     shape: Shape = MaterialTheme.shapes.small.copy(cornerSize),
     onclick: () -> Unit

@@ -78,8 +78,6 @@ fun GameOverScreen(
                 .height(60.dp)
                 .fillMaxWidth(),
             text = stringResource(R.string.ok),
-            color = MaterialTheme.colors.onBackground,
-            textColor = MaterialTheme.colors.background
         ) {
             onOkButtonClicked()
         }

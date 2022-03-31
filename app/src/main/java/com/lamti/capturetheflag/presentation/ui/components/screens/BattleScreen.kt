@@ -87,8 +87,6 @@ fun BattleScreen(
                 .height(60.dp)
                 .fillMaxWidth(),
             text = stringResource(R.string.i_lost),
-            color = MaterialTheme.colors.onBackground,
-            textColor = MaterialTheme.colors.background
         ) {
             onLostButtonClicked()
         }

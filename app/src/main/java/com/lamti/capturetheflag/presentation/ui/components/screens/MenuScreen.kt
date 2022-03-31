@@ -88,6 +88,7 @@ fun JoinGameButton(modifier: Modifier = Modifier, onAvailableGamesClicked: () ->
     DefaultButton(
         modifier = modifier.fillMaxWidth(),
         text = stringResource(R.string.join_game),
+        color = MaterialTheme.colors.primary
     ) {
         onAvailableGamesClicked()
     }
