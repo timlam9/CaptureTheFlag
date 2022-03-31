@@ -52,6 +52,8 @@ import javax.inject.Inject
 val TAG: String = ArFragment::class.java.simpleName
 private val GREEN_COLOR = floatArrayOf(139.0f, 195.0f, 74.0f, 255.0f)
 private val RED_COLOR = floatArrayOf(255.0f, 0.0f, 0.0f, 255.0f)
+private const val ERROR_MESSAGE = "An error occurred. Please relaunch the app and try again."
+
 
 @HiltViewModel
 class ArViewModel @Inject constructor(
@@ -339,11 +341,9 @@ class ArViewModel @Inject constructor(
             currentAnchor = anchor
         } else {
             _showPlacerButtons.update { false }
-            onCancelButtonPressed(errorMessage)
+            onCancelButtonPressed(ERROR_MESSAGE)
         }
     }
-
-    private val errorMessage = "An error occurred. Please relaunch the app and try again."
 
     @Synchronized
     private fun onResolvedAnchorAvailable(anchor: Anchor) {
@@ -353,7 +353,7 @@ class ArViewModel @Inject constructor(
             _message.update { "You discovered your opponent's flag. \'Capture\' it and run to safehouse to win the game" }
             currentAnchor = anchor
         } else {
-            _message.update { errorMessage }
+            _message.update { ERROR_MESSAGE }
         }
     }
 

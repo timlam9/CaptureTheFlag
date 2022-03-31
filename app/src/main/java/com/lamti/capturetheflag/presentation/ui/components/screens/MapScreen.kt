@@ -3,14 +3,8 @@ package com.lamti.capturetheflag.presentation.ui.components.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,29 +15,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.player.GameDetails
-import com.lamti.capturetheflag.domain.player.Team
-import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
-import com.lamti.capturetheflag.presentation.ui.components.composables.IconButton
 import com.lamti.capturetheflag.presentation.ui.components.composables.InstructionsCard
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.ActionButtons
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.GoogleMapsView
+import com.lamti.capturetheflag.presentation.ui.components.composables.map.InfoBar
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.ReadyButton
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.SettingFlags
-import com.lamti.capturetheflag.presentation.ui.style.Black
-import com.lamti.capturetheflag.presentation.ui.style.Green
-import com.lamti.capturetheflag.presentation.ui.style.Red
 import kotlinx.coroutines.launch
 
 @Composable
@@ -164,65 +149,6 @@ fun MapScreen(
             greenFlagCaptured = gameState.greenFlagCaptured,
             onArScannerButtonClicked = onArScannerButtonClicked,
             onBattleButtonClicked = onBattleButtonClicked
-        )
-    }
-}
-
-@Composable
-fun InfoBar(
-    modifier: Modifier = Modifier,
-    team: Team,
-    redPlayersCount: Int,
-    greenPlayersCount: Int,
-    onCompassClicked: () -> Unit,
-    onGpsClicked: () -> Unit
-) {
-    val teamColor: Color = remember(team) {
-        when (team) {
-            Team.Red -> Red
-            Team.Green -> Green
-            Team.Unknown -> Black
-        }
-    }
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 20.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        DefaultButton(
-            modifier = Modifier.height(42.dp),
-            text = team.name,
-            fontSize = 16.sp,
-            color = teamColor,
-            cornerSize = CornerSize(20),
-            onclick = {}
-        )
-        DefaultButton(
-            modifier = Modifier.size(42.dp),
-            text = redPlayersCount.toString(),
-            color = MaterialTheme.colors.background,
-            textColor = Red,
-            cornerSize = CornerSize(20),
-            onclick = {}
-        )
-        DefaultButton(
-            modifier = Modifier.size(42.dp),
-            text = greenPlayersCount.toString(),
-            color = MaterialTheme.colors.background,
-            textColor = Green,
-            cornerSize = CornerSize(20),
-            onclick = {}
-        )
-        IconButton(
-            icon = R.drawable.ic_compass,
-            onclick = onCompassClicked
-        )
-        IconButton(
-            icon = R.drawable.ic_gps,
-            onclick = onGpsClicked
         )
     }
 }

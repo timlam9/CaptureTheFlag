@@ -41,47 +41,82 @@ fun ArComponents(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Text(
-                    modifier = Modifier.padding(top = 20.dp, start = 20.dp, end = 20.dp),
-                    text = instructions,
-                    style = MaterialTheme.typography.h5.copy(
-                        color = White,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                )
-                InstructionsCard(text = message)
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
-            ) {
-                if (arModeState == ArMode.Placer) {
-                    ArPlacerButtons(
-                        cancelText = cancelText,
-                        okText = okText,
-                        color = teamColor,
-                        showPlacerButtons = showPlacerButtons,
-                        onCancelClicked = onCancelClicked,
-                        onOkClicked = onOkClicked,
-                    )
-                } else {
-                    ArCaptureFlagButton(
-                        text = captureText,
-                        color = teamColor,
-                        showCaptureButton = showCaptureButton,
-                        onCaptureClicked = onCaptureClicked
-                    )
-                }
-            }
+            Instructions(
+                instructions = instructions,
+                message = message
+            )
+            ActionButtons(
+                arModeState = arModeState,
+                cancelText = cancelText,
+                okText = okText,
+                teamColor = teamColor,
+                showPlacerButtons = showPlacerButtons,
+                onCancelClicked = onCancelClicked,
+                onOkClicked = onOkClicked,
+                captureText = captureText,
+                showCaptureButton = showCaptureButton,
+                onCaptureClicked = onCaptureClicked
+            )
+        }
+    }
+}
+
+@Composable
+private fun Instructions(instructions: String, message: String) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Text(
+            modifier = Modifier.padding(top = 20.dp, start = 20.dp, end = 20.dp),
+            text = instructions,
+            style = MaterialTheme.typography.h5.copy(
+                color = White,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        )
+        InstructionsCard(text = message)
+    }
+}
+
+@Composable
+private fun ActionButtons(
+    arModeState: ArMode,
+    cancelText: String,
+    okText: String,
+    teamColor: Color,
+    showPlacerButtons: Boolean,
+    onCancelClicked: () -> Unit,
+    onOkClicked: () -> Unit,
+    captureText: String,
+    showCaptureButton: Boolean,
+    onCaptureClicked: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceEvenly
+    ) {
+        if (arModeState == ArMode.Placer) {
+            ArPlacerButtons(
+                cancelText = cancelText,
+                okText = okText,
+                color = teamColor,
+                showPlacerButtons = showPlacerButtons,
+                onCancelClicked = onCancelClicked,
+                onOkClicked = onOkClicked,
+            )
+        } else {
+            ArCaptureFlagButton(
+                text = captureText,
+                color = teamColor,
+                showCaptureButton = showCaptureButton,
+                onCaptureClicked = onCaptureClicked
+            )
         }
     }
 }

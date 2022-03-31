@@ -58,7 +58,7 @@ fun SettingFlags(
 }
 
 @Composable
-fun WaitingLeaders(modifier: Modifier = Modifier) {
+private fun WaitingLeaders(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
