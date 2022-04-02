@@ -59,4 +59,6 @@
     <string name="capture_flag">Capture Flag</string>
     <string name="fight_for_your_team">Fight for your team</string>
     <string name="both_flags_captured">Both flags have been captured!</string>
+    <string name="sign_in">Sign in</string>
+    <string name="register">Register</string>
 </resources>

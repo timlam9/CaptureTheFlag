@@ -18,7 +18,7 @@ import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Team
-import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
 import com.lamti.capturetheflag.presentation.ui.style.DarkBlueOpacity
 import com.lamti.capturetheflag.presentation.ui.style.White
 

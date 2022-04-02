@@ -23,7 +23,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.player.GameDetails
-import com.lamti.capturetheflag.presentation.ui.components.composables.InstructionsCard
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.InstructionsCard
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.ActionButtons
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.GoogleMapsView
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.InfoBar

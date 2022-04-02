@@ -4,7 +4,10 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
@@ -31,9 +35,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
@@ -46,8 +55,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.DoubleButton
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -113,16 +124,92 @@ class LoginActivity : ComponentActivity() {
 fun LoginAndRegistration(navController: NavHostController,onLoginSuccess: (LoginData) -> Unit, onRegisterSuccess: (RegisterData) -> Unit) {
     NavHost(
         navController = navController,
-        startDestination = "login_screen",
+        startDestination = "intro_screen",
         builder = {
             composable(
-                "login_screen",
+                route = "intro_screen",
+                content = {
+                    IntroScreen(
+                        onSignInClicked = {
+                            navController.navigate("login_screen") {
+                                popUpTo(navController.graph.startDestinationId)
+                                launchSingleTop = true
+                            }
+                        },
+                        onRegisterClicked = {
+                            navController.navigate("register_screen") {
+                                popUpTo(navController.graph.startDestinationId)
+                                launchSingleTop = true
+                            }
+                        }
+                    )
+                }
+            )
+            composable(
+                route = "login_screen",
                 content = { LoginScreen(navController = navController, onLoginSuccess = onLoginSuccess) })
             composable(
-                "register_screen",
+                route = "register_screen",
                 content = { RegistrationScreen(navController = navController, onRegisterSuccess = onRegisterSuccess) })
         }
     )
+}
+
+@Composable
+fun IntroScreen(
+    onSignInClicked: () -> Unit,
+    onRegisterClicked: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceAround
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(2f)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8))
+                .background(color = MaterialTheme.colors.primary),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(30.dp),
+                painter = painterResource(id = R.drawable.intro_logo),
+                contentDescription = "intro image"
+            )
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(R.string.capture_the_flag),
+                style = MaterialTheme.typography.h4.copy(
+                    color = MaterialTheme.colors.onBackground,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Text(
+                text = stringResource(R.string.play_ultimate_game),
+                style = MaterialTheme.typography.body2
+            )
+        }
+        DoubleButton(
+            modifier = Modifier.padding(bottom = 16.dp),
+            startButtonText = stringResource(id = R.string.sign_in),
+            endButtonText = stringResource(id = R.string.register),
+            onStartButtonClicked = onSignInClicked,
+            onEndButtonClicked = onRegisterClicked,
+        )
+    }
 }
 
 @Composable

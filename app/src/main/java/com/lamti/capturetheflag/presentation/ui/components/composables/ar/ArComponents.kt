@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.lamti.capturetheflag.presentation.ui.components.composables.InstructionsCard
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.InstructionsCard
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
 import com.lamti.capturetheflag.presentation.ui.style.White
 

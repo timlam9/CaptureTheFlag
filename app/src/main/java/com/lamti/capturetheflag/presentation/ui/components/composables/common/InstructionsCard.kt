@@ -1,4 +1,4 @@
-package com.lamti.capturetheflag.presentation.ui.components.composables
+package com.lamti.capturetheflag.presentation.ui.components.composables.common
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth

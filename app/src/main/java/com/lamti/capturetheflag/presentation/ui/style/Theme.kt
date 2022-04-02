@@ -11,7 +11,9 @@ private val DarkColorPalette = darkColors(
     primaryVariant = DarkBlue,
     secondary = TextColor,
     background = Black,
-    onBackground = White
+    onBackground = White,
+    surface = LightGray,
+    onSurface = TextColor
 )
 
 private val LightColorPalette = lightColors(
@@ -19,7 +21,9 @@ private val LightColorPalette = lightColors(
     primaryVariant = Blue900,
     secondary = TextColor,
     background = White,
-    onBackground = Black
+    onBackground = Black,
+    surface = LightGray,
+    onSurface = TextColor
 )
 
 @Composable

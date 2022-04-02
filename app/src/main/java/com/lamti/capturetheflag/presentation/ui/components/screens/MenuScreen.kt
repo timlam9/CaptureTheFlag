@@ -21,8 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lamti.capturetheflag.R
-import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
-import com.lamti.capturetheflag.presentation.ui.components.composables.OutlinedButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.OutlinedButton
 
 @Composable
 fun MenuScreen(
@@ -84,7 +84,7 @@ fun MenuScreen(
 }
 
 @Composable
-fun JoinGameButton(modifier: Modifier = Modifier, onAvailableGamesClicked: () -> Unit) {
+private fun JoinGameButton(modifier: Modifier = Modifier, onAvailableGamesClicked: () -> Unit) {
     DefaultButton(
         modifier = modifier.fillMaxWidth(),
         text = stringResource(R.string.join_game),
@@ -95,7 +95,7 @@ fun JoinGameButton(modifier: Modifier = Modifier, onAvailableGamesClicked: () ->
 }
 
 @Composable
-fun NewGameButton(modifier: Modifier = Modifier, onNewGameClicked: () -> Unit) {
+private fun NewGameButton(modifier: Modifier = Modifier, onNewGameClicked: () -> Unit) {
     OutlinedButton(
         modifier = modifier.fillMaxWidth(),
         text = stringResource(R.string.new_game)

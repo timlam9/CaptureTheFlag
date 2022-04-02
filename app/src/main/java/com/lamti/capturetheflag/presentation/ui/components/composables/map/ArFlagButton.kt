@@ -9,8 +9,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.player.Team
-import com.lamti.capturetheflag.presentation.ui.components.composables.BallScaleIndicator
-import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.PulseAnimation
 import com.lamti.capturetheflag.presentation.ui.style.Blue
 import com.lamti.capturetheflag.presentation.ui.style.Green
 import com.lamti.capturetheflag.presentation.ui.style.Red
@@ -34,7 +34,7 @@ fun ArFlagButton(
                 Team.Unknown -> Blue
             }
         }
-        BallScaleIndicator(color = opponentColor)
+        PulseAnimation(color = opponentColor)
         DefaultButton(
             modifier = modifier.padding(bottom = 64.dp),
             text = stringResource(id = R.string.capture_flag),

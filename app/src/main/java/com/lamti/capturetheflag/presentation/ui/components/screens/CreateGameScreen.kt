@@ -23,8 +23,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.lamti.capturetheflag.R
-import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
-import com.lamti.capturetheflag.presentation.ui.components.composables.InfoTextField
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.InfoTextField
 import com.lamti.capturetheflag.utils.EMPTY
 
 @Composable

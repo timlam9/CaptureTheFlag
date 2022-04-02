@@ -7,7 +7,7 @@ import androidx.compose.ui.res.stringResource
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.GameDetails
-import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
 
 @Composable
  fun ReadyButton(

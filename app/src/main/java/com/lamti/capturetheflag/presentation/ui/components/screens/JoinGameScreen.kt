@@ -44,8 +44,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.presentation.QrCodeAnalyzer
-import com.lamti.capturetheflag.presentation.ui.components.composables.DefaultButton
-import com.lamti.capturetheflag.presentation.ui.components.composables.InfoTextField
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.InfoTextField
 import com.lamti.capturetheflag.presentation.ui.style.Black
 import com.lamti.capturetheflag.utils.EMPTY
 
