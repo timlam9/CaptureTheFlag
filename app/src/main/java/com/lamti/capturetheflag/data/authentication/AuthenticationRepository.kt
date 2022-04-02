@@ -10,9 +10,9 @@ class AuthenticationRepository @Inject constructor(
 
     val currentUser = auth.currentUser
 
-    suspend fun registerUser(email: String, password: String): String {
+    suspend fun registerUser(email: String, password: String): String? {
         val authResult = auth.createUserWithEmailAndPassword(email, password).await()
-        return authResult.user?.uid ?: return "no_id"
+        return authResult.user?.uid ?: return null
     }
 
     suspend fun loginUser(email: String, password: String): Boolean = try {

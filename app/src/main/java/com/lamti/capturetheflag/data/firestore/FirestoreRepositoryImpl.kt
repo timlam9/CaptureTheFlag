@@ -121,25 +121,20 @@ class FirestoreRepositoryImpl @Inject constructor(
     override suspend fun registerUser(
         email: String,
         password: String,
-        username: String,
-        fullName: String,
-        onSuccess: () -> Unit
-    ) {
-        val uid = authenticationRepository.registerUser(email = email, password = password)
+        username: String
+    ): Boolean = authenticationRepository.registerUser(email = email, password = password)?.let { uid ->
         Player(
             userID = uid,
             status = Player.Status.Online,
             details = PlayerDetails(
-                fullName = fullName,
                 username = username,
                 email = email
             ),
             gameDetails = null
         ).toRaw()
             .update()
-
-        onSuccess()
-    }
+        true
+    } ?: false
 
     override suspend fun loginUser(email: String, password: String) = authenticationRepository.loginUser(email, password)
 
@@ -456,6 +451,10 @@ class FirestoreRepositoryImpl @Inject constructor(
         player.copy(status = Player.Status.Lost).toRaw().update()
 
         databaseRepository.deleteGamePlayer(gameID, player.userID)
+    }
+
+    override fun logout() {
+        authenticationRepository.logout()
     }
 
     private suspend fun PlayerRaw.update() {

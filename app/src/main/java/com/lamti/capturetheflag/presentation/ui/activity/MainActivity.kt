@@ -193,6 +193,11 @@ class MainActivity : AppCompatActivity() {
         ContextCompat.startForegroundService(this, getServiceIntent(command))
     }
 
+    fun onLogoutClicked() {
+        startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+        finish()
+    }
+
     companion object {
 
         private const val PERMISSION_REQUEST_CODE = 200

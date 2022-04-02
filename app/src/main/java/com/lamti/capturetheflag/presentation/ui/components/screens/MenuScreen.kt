@@ -8,9 +8,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,9 +28,11 @@ import androidx.compose.ui.unit.dp
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.OutlinedButton
+import com.lamti.capturetheflag.presentation.ui.style.White
 
 @Composable
 fun MenuScreen(
+    onLogoutClicked: () -> Unit,
     onNewGameClicked: () -> Unit,
     onJoinGameClicked: () -> Unit
 ) {
@@ -44,6 +51,19 @@ fun MenuScreen(
                 .background(color = MaterialTheme.colors.primary),
             contentAlignment = Alignment.Center
         ) {
+            IconButton(
+                modifier = Modifier
+                    .size(52.dp)
+                    .align(Alignment.TopEnd)
+                    .padding(12.dp),
+                onClick = onLogoutClicked
+            ) {
+                Icon(
+                    Icons.Filled.ExitToApp,
+                    contentDescription = null,
+                    tint = White
+                )
+            }
             Image(
                 modifier = Modifier
                     .fillMaxSize()
@@ -108,5 +128,5 @@ private fun NewGameButton(modifier: Modifier = Modifier, onNewGameClicked: () ->
 @Preview
 @Composable
 fun MenuScreenPreview() {
-    MenuScreen({}, {})
+    MenuScreen({}, {}, {})
 }

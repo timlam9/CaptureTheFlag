@@ -28,7 +28,6 @@ data class PlayerRaw(
             userID = userID,
             status = status.name,
             details = PlayerDetailsRaw(
-                fullName = details.fullName,
                 username = details.username,
                 email = details.email
             ),
@@ -42,13 +41,11 @@ data class PlayerRaw(
 }
 
 data class PlayerDetailsRaw(
-    val fullName: String = EMPTY,
     val username: String = EMPTY,
     val email: String = EMPTY
 ) {
 
     fun toPlayerDetails() = PlayerDetails(
-        fullName = fullName,
         username = username,
         email = email
     )

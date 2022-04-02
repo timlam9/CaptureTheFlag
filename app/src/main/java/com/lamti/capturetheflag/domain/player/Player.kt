@@ -14,7 +14,7 @@ data class Player(
         fun emptyPlayer() = Player(
             userID = EMPTY,
             status = Status.Online,
-            details = PlayerDetails(fullName = EMPTY, username = EMPTY, email = EMPTY),
+            details = PlayerDetails(username = EMPTY, email = EMPTY),
             gameDetails = null
         )
     }

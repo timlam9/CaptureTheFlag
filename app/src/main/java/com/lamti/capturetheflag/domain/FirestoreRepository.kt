@@ -22,7 +22,7 @@ interface FirestoreRepository {
 
     fun observeGameState(id: String): Flow<GameState>
 
-    suspend fun registerUser(email: String, password: String, username: String, fullName: String, onSuccess: () -> Unit)
+    suspend fun registerUser(email: String, password: String, username: String): Boolean
 
     suspend fun loginUser(email: String, password: String): Boolean
 
@@ -55,5 +55,7 @@ interface FirestoreRepository {
     suspend fun createBattle(opponentID: String): Boolean
 
     suspend fun lost()
+
+    fun logout()
 
 }

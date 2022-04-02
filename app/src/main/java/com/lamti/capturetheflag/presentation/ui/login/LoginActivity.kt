@@ -14,16 +14,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
 import com.lamti.capturetheflag.presentation.ui.login.components.LoginAndRegistration
-import com.lamti.capturetheflag.presentation.ui.login.components.RegisterData
 import com.lamti.capturetheflag.presentation.ui.login.components.navigateToScreen
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -37,7 +34,7 @@ class LoginActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val scope = rememberCoroutineScope()
-            var isLoginLoading by remember { mutableStateOf(false) }
+            var isLoading by remember { mutableStateOf(false) }
 
             CaptureTheFlagTheme {
                 Surface(
@@ -47,10 +44,10 @@ class LoginActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     LoginAndRegistration(
                         navController = navController,
-                        isLoginLoading = isLoginLoading,
+                        isLoading = isLoading,
                         onLoginSuccess = { loginData ->
                             scope.launch {
-                                isLoginLoading = true
+                                isLoading = true
                                 val loginSuccessfully = firestoreRepository.loginUser(loginData.email, loginData.password)
                                 if (loginSuccessfully) {
                                     startActivity(Intent(this@LoginActivity, MainActivity::class.java))
@@ -62,21 +59,28 @@ class LoginActivity : ComponentActivity() {
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 }
-                                isLoginLoading = false
+                                isLoading = false
                             }
                         },
-                        onRegisterSuccess = { scope.navigateToLoginScreen(it, navController) }
+                        onRegisterSuccess = { registerData ->
+                            isLoading = true
+                            with(registerData) {
+                                scope.launch {
+                                    val registerSuccessfully = firestoreRepository.registerUser(email, password, username)
+                                    if (registerSuccessfully) {
+                                        navController.navigateToScreen("login_screen")
+                                    } else {
+                                        Toast.makeText(
+                                            this@LoginActivity,
+                                            "Please fill correctly your data",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    isLoading = false
+                                }
+                            }
+                        }
                     )
-                }
-            }
-        }
-    }
-
-    private fun CoroutineScope.navigateToLoginScreen(registerData: RegisterData, navController: NavController) {
-        with(registerData) {
-            launch {
-                firestoreRepository.registerUser(email, password, username, fullName) {
-                    navController.navigateToScreen("login_screen")
                 }
             }
         }

@@ -77,6 +77,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                     GameNavigation(
                         viewModel = viewModel,
                         enteredGeofenceId = enteredGeofenceIdState.value,
+                        onLogoutClicked = { mainActivity.onLogoutClicked() },
                         onSettingFlagsButtonClicked = { mainActivity.onSettingFlagsClicked() },
                         onArScannerButtonClicked = { mainActivity.onArScannerButtonClicked() }
                     )

@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 fun GameNavigation(
     viewModel: MapViewModel,
     enteredGeofenceId: String,
+    onLogoutClicked: () -> Unit,
     onSettingFlagsButtonClicked: () -> Unit,
     onArScannerButtonClicked: () -> Unit,
 ) {
@@ -38,6 +39,10 @@ fun GameNavigation(
     ) {
         composable(route = Screen.Menu.route) {
             MenuScreen(
+                onLogoutClicked = {
+                    viewModel.logout()
+                    onLogoutClicked()
+                },
                 onNewGameClicked = { navController.navigate(Screen.CreateGame.route) },
                 onJoinGameClicked = { navController.navigate(Screen.JoinGame.route) }
             )

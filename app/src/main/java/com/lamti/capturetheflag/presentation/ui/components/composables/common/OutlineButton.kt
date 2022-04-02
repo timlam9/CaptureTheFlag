@@ -32,7 +32,7 @@ fun OutlinedButton(
         modifier = modifier.height(60.dp),
         border = BorderStroke(stroke, color),
         shape = shape,
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = color)
+        colors = ButtonDefaults.outlinedButtonColors(backgroundColor = MaterialTheme.colors.background)
     ) {
         Text(
             text = text,

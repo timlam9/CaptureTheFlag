@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -30,8 +31,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lamti.capturetheflag.R
@@ -41,6 +46,7 @@ import com.lamti.capturetheflag.presentation.ui.components.composables.common.Pa
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.RoundedIcon
 import com.lamti.capturetheflag.presentation.ui.login.components.LoginData
 import com.lamti.capturetheflag.utils.EMPTY
+
 
 @Composable
 fun LoginScreen(isLoading: Boolean = false, onSignInClicked: (LoginData) -> Unit) {
@@ -57,15 +63,20 @@ fun LoginScreen(isLoading: Boolean = false, onSignInClicked: (LoginData) -> Unit
         InfoTextField(
             modifier = Modifier.padding(top = 20.dp),
             text = email,
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Next,
+                keyboardType = KeyboardType.Text,
+                capitalization = KeyboardCapitalization.Words
+            ),
             label = stringResource(id = R.string.email),
-            onValueChange = { email = it },
+            onValueChange = { email = it.trimEnd() },
             leadingIcon = Icons.Default.Email
         )
         PasswordTextField(
             modifier = Modifier.padding(top = 12.dp),
             text = password,
             label = stringResource(id = R.string.password),
-            onValueChange = { password = it }
+            onValueChange = { password = it.trim() }
         )
         ForgotPassword(modifier = Modifier.align(Alignment.End))
         SingInButton(onSignInClicked, email, password)
@@ -111,6 +122,8 @@ private fun SingInButton(
     email: String,
     password: String
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     DefaultButton(
         modifier = Modifier
             .padding(top = 24.dp)
@@ -120,6 +133,7 @@ private fun SingInButton(
         color = MaterialTheme.colors.primary,
         cornerSize = CornerSize(20),
         onclick = {
+            keyboardController?.hide()
             onSignInClicked(
                 LoginData(
                     email = email,

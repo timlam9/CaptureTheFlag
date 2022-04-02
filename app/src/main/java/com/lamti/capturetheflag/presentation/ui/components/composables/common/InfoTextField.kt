@@ -7,6 +7,8 @@ import androidx.compose.material.Icon
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -26,7 +28,7 @@ fun InfoTextField(
         keyboardType = KeyboardType.Text,
         capitalization = KeyboardCapitalization.Words
     ),
-    leadingIcon: ImageVector? = null,
+    leadingIcon: ImageVector = Icons.Default.Info,
     onValueChange: (String) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
@@ -45,7 +47,6 @@ fun InfoTextField(
             onDone = { focusManager.clearFocus() }
         ),
         leadingIcon = {
-            if (leadingIcon == null) return@OutlinedTextField
             Icon(
                 imageVector = leadingIcon,
                 contentDescription = null

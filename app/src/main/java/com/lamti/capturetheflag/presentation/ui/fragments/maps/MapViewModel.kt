@@ -323,6 +323,10 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    fun logout() {
+        firestoreRepository.logout()
+    }
+
     companion object {
 
         private const val GAME_BOUNDARIES_GEOFENCE_ID = "GameBoundariesGeofence"
