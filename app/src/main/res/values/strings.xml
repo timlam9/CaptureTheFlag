@@ -61,4 +61,8 @@
     <string name="both_flags_captured">Both flags have been captured!</string>
     <string name="sign_in">Sign in</string>
     <string name="register">Register</string>
+    <string name="welcome_back">Welcome Back</string>
+    <string name="email">email</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="or_sign_up_with">Or Sign up With</string>
 </resources>

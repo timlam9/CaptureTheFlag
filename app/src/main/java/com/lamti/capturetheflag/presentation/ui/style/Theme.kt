@@ -23,7 +23,7 @@ private val LightColorPalette = lightColors(
     background = White,
     onBackground = Black,
     surface = LightGray,
-    onSurface = TextColor
+    onSurface = TextColorDark
 )
 
 @Composable
