@@ -35,7 +35,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -58,10 +57,10 @@ fun RegisterScreen(
     var password by remember { mutableStateOf(EMPTY) }
     var confirmPassword by remember { mutableStateOf(EMPTY) }
 
-    var nameErrorState by remember { mutableStateOf(false) }
-    var emailErrorState by remember { mutableStateOf(false) }
-    var passwordErrorState by remember { mutableStateOf(false) }
-    var confirmPasswordErrorState by remember { mutableStateOf(false) }
+    var nameError by remember { mutableStateOf(EMPTY) }
+    var emailError by remember { mutableStateOf(EMPTY) }
+    var passwordError by remember { mutableStateOf(EMPTY) }
+    var confirmPasswordError by remember { mutableStateOf(EMPTY) }
 
     Column(
         modifier = Modifier
@@ -75,19 +74,20 @@ fun RegisterScreen(
             text = username,
             label = stringResource(id = R.string.username),
             onValueChange = { username = it.trimEnd() },
-            leadingIcon = Icons.Default.Person
+            leadingIcon = Icons.Default.Person,
+            error = nameError
         )
         InfoTextField(
             modifier = Modifier.padding(top = 12.dp),
             text = email,
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Next,
-                keyboardType = KeyboardType.Text,
-                capitalization = KeyboardCapitalization.Words
+                keyboardType = KeyboardType.Email,
             ),
             label = stringResource(id = R.string.email),
             onValueChange = { email = it.trimEnd() },
-            leadingIcon = Icons.Default.Email
+            leadingIcon = Icons.Default.Email,
+            error = emailError
         )
         PasswordTextField(
             modifier = Modifier.padding(top = 12.dp),
@@ -97,20 +97,60 @@ fun RegisterScreen(
                 keyboardType = KeyboardType.Password
             ),
             label = stringResource(id = R.string.password),
-            onValueChange = { password = it.trim() }
+            onValueChange = { password = it.trim() },
+            error = passwordError
         )
         PasswordTextField(
             modifier = Modifier.padding(top = 12.dp),
             text = confirmPassword,
             label = stringResource(id = R.string.confirm_password),
-            onValueChange = { confirmPassword = it.trim() }
+            onValueChange = { confirmPassword = it.trim() },
+            error = confirmPasswordError
         )
-        SingUpButton(onSignUpClicked = onSignUpClicked, username = username, email = email, password = password)
+        SingUpButton(
+            username = username,
+            email = email,
+            password = password,
+            onSignUpClicked = {
+                nameError = validateUsername(username)
+                emailError = validateEmail(email)
+                passwordError = validatePassword(password)
+                confirmPasswordError = validateConfirmPassword(password, confirmPassword)
+
+                if (nameError.isEmpty() && emailError.isEmpty() && passwordError.isEmpty() && confirmPasswordError.isEmpty())
+                    onSignUpClicked(it)
+            }
+        )
         OrSignUpRow()
         LoginButtonIcons(onLogoClicked)
         Loading(isLoading)
     }
 }
+
+private fun validateUsername(name: String): String = if (name.isEmpty()) "Required filled" else EMPTY
+
+private fun validateEmail(email: String): String = with(email) {
+    when {
+        isEmpty() -> "Required filled"
+        !contains("@") || !contains(".") -> "Not valid email"
+        else -> EMPTY
+    }
+}
+
+private fun validatePassword(password: String): String = with(password) {
+    when {
+        isEmpty() -> "Required filled"
+        length < 8 -> "Password must have at least 8 characters"
+        else -> EMPTY
+    }
+}
+
+private fun validateConfirmPassword(password: String, confirmPassword: String): String = when {
+    confirmPassword.isEmpty() -> "Required filled"
+    confirmPassword != password -> "Doesn't match with the password"
+    else -> EMPTY
+}
+
 
 @Composable
 private fun Title() {

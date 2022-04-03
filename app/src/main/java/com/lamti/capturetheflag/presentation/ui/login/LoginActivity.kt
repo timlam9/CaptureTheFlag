@@ -18,7 +18,6 @@ import androidx.navigation.compose.rememberNavController
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
 import com.lamti.capturetheflag.presentation.ui.login.components.LoginAndRegistration
-import com.lamti.capturetheflag.presentation.ui.login.components.navigateToScreen
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -75,7 +74,8 @@ class LoginActivity : ComponentActivity() {
                                 scope.launch {
                                     val registerSuccessfully = firestoreRepository.registerUser(email, password, username)
                                     if (registerSuccessfully) {
-                                        navController.navigateToScreen("login_screen")
+                                        startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                                        finish()
                                     } else {
                                         Toast.makeText(
                                             this@LoginActivity,
