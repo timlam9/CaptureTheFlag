@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import com.lamti.capturetheflag.utils.EMPTY
 
 @Composable
@@ -47,6 +48,7 @@ fun InfoTextField(
             label = { Text(label) },
             colors = TextFieldDefaults.outlinedTextFieldColors(),
             maxLines = 1,
+            textStyle = MaterialTheme.typography.body1.copy(textAlign = TextAlign.Start),
             singleLine = true,
             keyboardOptions = keyboardOptions,
             keyboardActions = KeyboardActions(

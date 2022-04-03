@@ -15,6 +15,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -155,7 +156,7 @@ fun QrCodeContent(openDialog: MutableState<Boolean>) {
 }
 
 @Composable
-fun CustomDialog(
+private fun CustomDialog(
     openDialog: Boolean,
     onDismissDialog: () -> Unit,
     onJoinClicked: (String) -> Unit
@@ -175,21 +176,22 @@ fun CustomDialog(
                 )
             },
             text = {
-                Column {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Spacer(modifier = Modifier.padding(top = 20.dp))
                     InfoTextField(
                         text = text,
                         label = stringResource(id = R.string.type_code),
                         keyboardOptions = KeyboardOptions.Default.copy(
                             imeAction = ImeAction.Done,
                             keyboardType = KeyboardType.Text
-                        )
-                    ) {
-                        text = it
-                    }
+                        ),
+                        onValueChange = { text = it }
+                    )
                 }
             },
             buttons = {
                 Column(
+                    modifier = Modifier.padding(top = 20.dp),
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -198,7 +200,7 @@ fun CustomDialog(
                             .fillMaxWidth()
                             .padding(start = 20.dp, end = 20.dp),
                         text = stringResource(R.string.join_game),
-                        color = Black,
+                        color = MaterialTheme.colors.onBackground,
                         onclick = {
                             if (text.isEmpty()) return@DefaultButton
                             onJoinClicked(text)

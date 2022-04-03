@@ -15,11 +15,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.PositiveAndNegativeAlertDialog
 import com.lamti.capturetheflag.presentation.ui.style.Blue
 import com.lamti.capturetheflag.presentation.ui.style.Green
 import com.lamti.capturetheflag.presentation.ui.style.Red
@@ -49,6 +54,8 @@ fun StartingGameScreen(
     greenPlayers: Int,
     onStartGameClicked: () -> Unit
 ) {
+    var showConfirmationDialog by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxSize()) {
         GameCard(
             gameTitle = gameTitle,
@@ -58,7 +65,14 @@ fun StartingGameScreen(
         GameContent(
             qrCodeImage = qrCodeImage,
             gameID = gameID,
-            onStartGameClicked = onStartGameClicked
+            onStartGameClicked = { showConfirmationDialog = true }
+        )
+        PositiveAndNegativeAlertDialog(
+            title = stringResource(id = R.string.start_game),
+            description = stringResource(R.string.start_game_description),
+            showDialog = showConfirmationDialog,
+            onNegativeDialogClicked = { showConfirmationDialog = false },
+            onPositiveButtonClicked = onStartGameClicked
         )
     }
 }
@@ -107,7 +121,9 @@ fun GameContent(
                 contentDescription = stringResource(R.string.gr_code)
             )
         }
-        Text(text = annotatedString)
+        SelectionContainer {
+            Text(text = annotatedString)
+        }
         DefaultButton(
             modifier = Modifier
                 .fillMaxWidth()

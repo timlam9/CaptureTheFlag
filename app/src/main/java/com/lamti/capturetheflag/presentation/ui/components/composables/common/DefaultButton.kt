@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -19,6 +20,7 @@ import androidx.compose.ui.unit.sp
 fun DefaultButton(
     modifier: Modifier = Modifier,
     text: String,
+    height: Dp = 60.dp,
     fontSize: TextUnit = 20.sp,
     textColor: Color = MaterialTheme.colors.background,
     color: Color = MaterialTheme.colors.onBackground,
@@ -28,7 +30,7 @@ fun DefaultButton(
 ) {
     Button(
         onClick = onclick,
-        modifier = modifier.height(60.dp),
+        modifier = modifier.height(height),
         shape = shape,
         colors = ButtonDefaults.buttonColors(backgroundColor = color)
     ) {
