@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.PositiveAndNegativeAlertDialog
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.PulseAnimation
 import com.lamti.capturetheflag.presentation.ui.style.Black
 import com.lamti.capturetheflag.presentation.ui.style.Green
@@ -50,22 +51,34 @@ fun ConnectingToGameScreen(
 ) {
     var hasChosenTeam by remember { mutableStateOf(false) }
     var selectedTeam by remember { mutableStateOf(Team.Unknown) }
+    var showConfirmationDialog by remember { mutableStateOf(false) }
 
     when (hasChosenTeam) {
         true -> WaitingContent(selectedTeam = selectedTeam)
-        false -> SelectTeamContent(
-            selectedTeam = selectedTeam,
-            onRedButtonClicked = {
-                selectedTeam = Team.Red
-                onRedButtonClicked()
-            },
-            onGreenButtonClicked = {
-                selectedTeam = Team.Green
-                onGreenButtonClicked()
-            }
-        ) {
-            hasChosenTeam = true
-            onOkButtonClicked()
+        false -> {
+            SelectTeamContent(
+                selectedTeam = selectedTeam,
+                onRedButtonClicked = {
+                    selectedTeam = Team.Red
+                    onRedButtonClicked()
+                },
+                onGreenButtonClicked = {
+                    selectedTeam = Team.Green
+                    onGreenButtonClicked()
+                },
+                onOkButtonClicked = { showConfirmationDialog = true }
+            )
+            PositiveAndNegativeAlertDialog(
+                title = stringResource(id = R.string.join_game),
+                description = stringResource(R.string.join_game_description),
+                showDialog = showConfirmationDialog,
+                onNegativeDialogClicked = { showConfirmationDialog = false },
+                onPositiveButtonClicked = {
+                    hasChosenTeam = true
+                    showConfirmationDialog = false
+                    onOkButtonClicked()
+                }
+            )
         }
     }
 }

@@ -48,6 +48,7 @@ import com.lamti.capturetheflag.presentation.QrCodeAnalyzer
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.InfoTextField
 import com.lamti.capturetheflag.presentation.ui.style.Black
+import com.lamti.capturetheflag.presentation.ui.style.White
 import com.lamti.capturetheflag.utils.EMPTY
 
 @Composable
@@ -149,6 +150,7 @@ fun QrCodeContent(openDialog: MutableState<Boolean>) {
         DefaultButton(
             modifier = Modifier.fillMaxWidth(),
             text = stringResource(id = R.string.insert_code_manually),
+            textColor = White,
             color = Black,
             onclick = { openDialog.value = true }
         )

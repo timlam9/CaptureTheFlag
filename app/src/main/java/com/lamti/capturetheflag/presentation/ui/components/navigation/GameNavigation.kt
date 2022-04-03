@@ -106,7 +106,7 @@ fun GameNavigation(
                 onSafehouseMarkerClicked = { viewModel.updateSafeHousePosition(it) },
                 onArScannerButtonClicked = onArScannerButtonClicked,
                 onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
-                onSetFlagsClicked = { viewModel.onSetFlagsClicked() },
+                onReadyButtonClicked = { viewModel.onSetFlagsClicked() },
                 onBattleButtonClicked = { viewModel.onBattleButtonClicked() }
             )
         }

@@ -50,7 +50,7 @@ fun PositiveAndNegativeAlertDialog(
             },
             buttons = {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 20.dp, end = 12.dp, bottom = 12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(end = 12.dp, bottom = 12.dp),
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
