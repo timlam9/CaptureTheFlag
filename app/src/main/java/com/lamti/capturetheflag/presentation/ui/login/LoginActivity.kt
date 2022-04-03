@@ -45,6 +45,13 @@ class LoginActivity : ComponentActivity() {
                     LoginAndRegistration(
                         navController = navController,
                         isLoading = isLoading,
+                        onLogoClicked = {
+                            Toast.makeText(
+                                this@LoginActivity,
+                                "Not available yet",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
                         onLoginSuccess = { loginData ->
                             scope.launch {
                                 isLoading = true

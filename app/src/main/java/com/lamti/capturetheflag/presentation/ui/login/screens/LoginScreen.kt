@@ -49,7 +49,11 @@ import com.lamti.capturetheflag.utils.EMPTY
 
 
 @Composable
-fun LoginScreen(isLoading: Boolean = false, onSignInClicked: (LoginData) -> Unit) {
+fun LoginScreen(
+    isLoading: Boolean = false,
+    onLogoClicked: () -> Unit,
+    onSignInClicked: (LoginData) -> Unit
+) {
     var email by rememberSaveable { mutableStateOf(EMPTY) }
     var password by remember { mutableStateOf(EMPTY) }
 
@@ -81,7 +85,7 @@ fun LoginScreen(isLoading: Boolean = false, onSignInClicked: (LoginData) -> Unit
         ForgotPassword(modifier = Modifier.align(Alignment.End))
         SingInButton(onSignInClicked, email, password)
         OrSignUpRow()
-        LoginButtonIcons()
+        LoginButtonIcons(onLogoClicked)
         Loading(isLoading)
     }
 }
@@ -190,7 +194,7 @@ private fun OrSignUpRow() {
 }
 
 @Composable
-private fun LoginButtonIcons() {
+private fun LoginButtonIcons(onLogoClicked: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -198,11 +202,20 @@ private fun LoginButtonIcons() {
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        RoundedIcon(icon = R.drawable.ic_google_logo)
+        RoundedIcon(
+            icon = R.drawable.ic_google_logo,
+            onClick = onLogoClicked
+        )
         Spacer(modifier = Modifier.width(16.dp))
-        RoundedIcon(icon = R.drawable.ic_facebook_logo)
+        RoundedIcon(
+            icon = R.drawable.ic_facebook_logo,
+            onClick = onLogoClicked
+        )
         Spacer(modifier = Modifier.width(16.dp))
-        RoundedIcon(icon = R.drawable.ic_apple_logo)
+        RoundedIcon(
+            icon = R.drawable.ic_apple_logo,
+            onClick = onLogoClicked
+        )
     }
 }
 

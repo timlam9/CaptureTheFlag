@@ -13,6 +13,7 @@ import com.lamti.capturetheflag.presentation.ui.login.screens.RegisterScreen
 fun LoginAndRegistration(
     navController: NavHostController,
     isLoading: Boolean,
+    onLogoClicked: () -> Unit,
     onLoginSuccess: (LoginData) -> Unit,
     onRegisterSuccess: (RegisterData) -> Unit
 ) {
@@ -31,10 +32,24 @@ fun LoginAndRegistration(
             )
             composable(
                 route = "login_screen",
-                content = { LoginScreen(isLoading = isLoading, onSignInClicked = onLoginSuccess) })
+                content = {
+                    LoginScreen(
+                        isLoading = isLoading,
+                        onLogoClicked = onLogoClicked,
+                        onSignInClicked = onLoginSuccess
+                    )
+                }
+            )
             composable(
                 route = "register_screen",
-                content = { RegisterScreen(isLoading = isLoading, onSignUpClicked = onRegisterSuccess) })
+                content = {
+                    RegisterScreen(
+                        isLoading = isLoading,
+                        onLogoClicked = onLogoClicked,
+                        onSignUpClicked = onRegisterSuccess
+                    )
+                }
+            )
         }
     )
 }
