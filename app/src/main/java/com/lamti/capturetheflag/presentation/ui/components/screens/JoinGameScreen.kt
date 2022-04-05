@@ -2,7 +2,6 @@ package com.lamti.capturetheflag.presentation.ui.components.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.util.Log
 import android.util.Size
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -50,6 +49,7 @@ import com.lamti.capturetheflag.presentation.ui.components.composables.common.In
 import com.lamti.capturetheflag.presentation.ui.style.Black
 import com.lamti.capturetheflag.presentation.ui.style.White
 import com.lamti.capturetheflag.utils.EMPTY
+import timber.log.Timber
 
 @Composable
 fun JoinGameScreen(onQrCodeScanned: (String) -> Unit) {
@@ -103,7 +103,6 @@ fun QrCodeScanner(onCodeChanged: (String) -> Unit) {
                     imageAnalysis.setAnalyzer(
                         ContextCompat.getMainExecutor(context),
                         QrCodeAnalyzer { result ->
-                            Log.d("TAGARA", "Scan result: $result")
                             onCodeChanged(result)
                         }
                     )
@@ -115,7 +114,7 @@ fun QrCodeScanner(onCodeChanged: (String) -> Unit) {
                             imageAnalysis
                         )
                     } catch (e: Exception) {
-                        Log.d("TAGARA", "Scan result: ${e.message}")
+                        Timber.e("Scan code error: ${e.message}")
                         e.printStackTrace()
                     }
                     previewView

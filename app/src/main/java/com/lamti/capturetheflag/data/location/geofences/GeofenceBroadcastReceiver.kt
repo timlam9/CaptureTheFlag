@@ -3,7 +3,6 @@ package com.lamti.capturetheflag.data.location.geofences
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.annotation.CallSuper
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofenceStatusCodes
@@ -17,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 const val GEOFENCE_BROADCAST_RECEIVER_FILTER = "geofence_broadcast_receiver_filter"
@@ -44,7 +44,7 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
         if (geofencingEvent.hasError()) {
             val errorMessage = GeofenceStatusCodes.getStatusCodeString(geofencingEvent.errorCode)
-            Log.e(TAG, "Error: $errorMessage")
+            Timber.e("Error: $errorMessage")
             return
         }
 
@@ -102,8 +102,8 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
         when (geofenceTransition) {
             Geofence.GEOFENCE_TRANSITION_ENTER -> sendEnterGeofenceIntent(geofenceID, context)
             Geofence.GEOFENCE_TRANSITION_EXIT -> sendExitGeofenceIntent(context)
-            Geofence.GEOFENCE_TRANSITION_DWELL -> Log.d(TAG, geofenceTransitionDetails)
-            else -> Log.e(TAG, "invalid type: $geofenceTransition")
+            Geofence.GEOFENCE_TRANSITION_DWELL -> Timber.d(geofenceTransitionDetails)
+            else -> Timber.e("Invalid type: $geofenceTransition")
         }
     }
 
@@ -142,7 +142,6 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
 
     companion object {
 
-        const val TAG = "TAGARA_GEOFENCE"
         private const val GREEN = "Green"
         private const val RED = "Red"
         private const val SAFEHOUSE = "Safehouse"

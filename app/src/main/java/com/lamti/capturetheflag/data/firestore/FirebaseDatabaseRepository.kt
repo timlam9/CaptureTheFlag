@@ -1,6 +1,5 @@
 package com.lamti.capturetheflag.data.firestore
 
-import android.util.Log
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -11,6 +10,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 import javax.inject.Inject
 
 class FirebaseDatabaseRepository @Inject constructor(private val database: FirebaseDatabase) {
@@ -22,7 +22,7 @@ class FirebaseDatabaseRepository @Inject constructor(private val database: Fireb
             .setValue(player.toRaw())
         true
     } catch (e: Exception) {
-        Log.d(TAG, "Error updating player: ${e.message}")
+        Timber.e("Update game player error: ${e.message}")
         false
     }
 
@@ -41,7 +41,7 @@ class FirebaseDatabaseRepository @Inject constructor(private val database: Fireb
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Log.w(TAG, "Failed to read value.", error.toException())
+                Timber.e("Observe players position error: ${error.message}")
             }
         })
 
@@ -56,13 +56,12 @@ class FirebaseDatabaseRepository @Inject constructor(private val database: Fireb
             .await()
         true
     } catch (e: Exception) {
-        Log.d(TAG, "Error updating player: ${e.message}")
+        Timber.e("Delete game player error: ${e.message}")
         false
     }
 
     companion object {
 
         private const val DATABASE_REFERENCE = "root"
-        private const val TAG = "TAGARA"
     }
 }

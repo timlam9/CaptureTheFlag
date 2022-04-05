@@ -3,7 +3,6 @@ package com.lamti.capturetheflag.data.location
 import android.annotation.SuppressLint
 import android.location.Location
 import android.os.Looper
-import android.util.Log
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -14,10 +13,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.suspendCancellableCoroutine
+import timber.log.Timber
 import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
-
-private const val TAG = "TAGARA_LOCATION"
 
 @SuppressLint("MissingPermission")
 class LocationRepository @Inject constructor(
@@ -44,7 +42,7 @@ class LocationRepository @Inject constructor(
                         try {
                             trySend(location)
                         } catch (t: Throwable) {
-                            Log.d(TAG, "")
+                            Timber.e("Location error: ${t.message}")
                         }
                     }
                 }

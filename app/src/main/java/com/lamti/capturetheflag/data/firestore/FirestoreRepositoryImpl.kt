@@ -1,6 +1,5 @@
 package com.lamti.capturetheflag.data.firestore
 
-import android.util.Log
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -29,6 +28,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.util.Date
 import javax.inject.Inject
 
@@ -69,7 +69,7 @@ class FirestoreRepositoryImpl @Inject constructor(
                     trySend(state).isSuccess
                 }
         } catch (e: Exception) {
-            Log.d("TAGARA", "error: ${e.message}")
+            Timber.e("Observe player error: ${e.message}")
         }
 
         awaitClose {
@@ -91,7 +91,7 @@ class FirestoreRepositoryImpl @Inject constructor(
                     trySend(state).isSuccess
                 }
         } catch (e: Exception) {
-            Log.d("TAGARA", "Game error: ${e.message}")
+            Timber.e("Observe game error: ${e.message}")
         }
 
         awaitClose {
@@ -110,7 +110,7 @@ class FirestoreRepositoryImpl @Inject constructor(
                     trySend(state).isSuccess
                 }
         } catch (e: Exception) {
-            Log.d("TAGARA", "error: ${e.message}")
+            Timber.e("Observe game state error: ${e.message}")
         }
 
         awaitClose {
@@ -167,7 +167,7 @@ class FirestoreRepositoryImpl @Inject constructor(
             .toObject(PlayerRaw::class.java)
             ?.toPlayer()
     } catch (e: Exception) {
-        Log.d("TAGARA", e.message.toString())
+        Timber.e("Get player error: ${e.message}")
         null
     }
 
@@ -230,7 +230,7 @@ class FirestoreRepositoryImpl @Inject constructor(
         try {
             initialGame(id, title, position).toRaw().update()
         } catch (e: Exception) {
-            Log.d("TAGARA", e.message.toString())
+            Timber.e("Create game - Update initial game error: ${e.message}")
             return false
         }
 
@@ -248,7 +248,7 @@ class FirestoreRepositoryImpl @Inject constructor(
                 .toRaw()
                 .update()
         } catch (e: Exception) {
-            Log.d("TAGARA", e.message.toString())
+            Timber.e("Create game error: ${e.message}")
             return false
         }
 

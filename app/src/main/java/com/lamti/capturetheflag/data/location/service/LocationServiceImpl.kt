@@ -1,7 +1,6 @@
 package com.lamti.capturetheflag.data.location.service
 
 import android.content.Intent
-import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.lamti.capturetheflag.data.location.LocationRepository
@@ -13,6 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -29,7 +29,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
         super.onStartCommand(intent, flags, startId)
 
         intent?.extras?.run {
-            Log.d(TAG, "${getSerializable(SERVICE_COMMAND)} command is received")
+            Timber.d("${getSerializable(SERVICE_COMMAND)} command is received")
 
             when (getSerializable(SERVICE_COMMAND) as LocationServiceCommand) {
                 LocationServiceCommand.Start -> {
@@ -52,12 +52,12 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "Service is created")
+        Timber.d("Location Service is created")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(TAG, "Service is destroyed")
+        Timber.d("Location Service is destroyed")
 
         isServiceRunning = false
         locationUpdates?.cancel()
@@ -79,7 +79,6 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
 
     companion object {
 
-        private const val TAG = "location_service"
         const val SERVICE_COMMAND = "service_command"
     }
 

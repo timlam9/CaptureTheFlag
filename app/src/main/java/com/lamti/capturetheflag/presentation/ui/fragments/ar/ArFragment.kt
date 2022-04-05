@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.compose.runtime.collectAsState
@@ -64,7 +63,6 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
     }
 
     override fun onResume() {
-        Log.d("TAGARA", "on resume")
         super.onResume()
 
         when (ArCoreApk.getInstance().requestInstall(requireActivity(), !installRequested)) {
@@ -91,13 +89,11 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
     }
 
     override fun onDestroyView() {
-        Log.d("TAGARA", "on destroy ")
         binding = null
         super.onDestroyView()
     }
 
     override fun onPause() {
-        Log.d("TAGARA", "on pause")
         super.onPause()
 
         viewModel.pauseSession()
@@ -111,7 +107,6 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-        Log.d("TAGARA", "on surface created")
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f)
         viewModel.prepareRenderingObjects { backgroundRenderer, planeRenderer, pointCloudRenderer, virtualObject, virtualObjectShadow ->
             // Create the texture and pass it to ARCore session to be filled during update().
@@ -129,13 +124,11 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
-        Log.d("TAGAR", "on surface changed")
         displayRotationHelper!!.onSurfaceChanged(width, height)
         GLES20.glViewport(0, 0, width, height)
     }
 
     override fun onDrawFrame(gl: GL10?) {
-        Log.d("TAGAR", "on draw frame")
         // Clear screen to notify driver it should not load any pixels from previous frame.
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
         if (viewModel.session.value == null) return

@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
-import android.util.Log
 import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -46,6 +45,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -125,7 +125,7 @@ class MainActivity : AppCompatActivity() {
                     sendCommandToForegroundService(LocationServiceCommand.Start)
                 }
             } else {
-                Log.d("TAGARA", "permission denied: ${grantResults[0]}")
+                Timber.d("Permission denied: ${grantResults[0]}")
             }
         }
     }
@@ -153,11 +153,9 @@ class MainActivity : AppCompatActivity() {
                 if (!isEnterFirstTime) {
                     isEnterFirstTime = true
                     if (!viewModel.isUserLoggedIn) {
-                        Log.d("TAGARA", "Go to login")
                         startActivity(Intent(this@MainActivity, LoginActivity::class.java))
                         finish()
                     } else {
-                        Log.d("TAGARA", "Start location updates")
                         viewModel.observePlayer()
                         startLocationUpdates()
                     }

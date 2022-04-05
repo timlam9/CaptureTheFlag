@@ -1,7 +1,6 @@
 package com.lamti.capturetheflag.presentation
 
 import android.graphics.ImageFormat
-import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.zxing.BarcodeFormat
@@ -38,7 +37,6 @@ class QrCodeAnalyzer(
             )
             val binaryBmp = BinaryBitmap(HybridBinarizer(source))
             try {
-
                 val result = MultiFormatReader().apply {
                     setHints(
                         mapOf(
@@ -48,7 +46,6 @@ class QrCodeAnalyzer(
                         )
                     )
                 }.decode(binaryBmp)
-                Log.d("TAGARA", "QR_ANA_RE: ${result.text}")
                 onQrCodeScanned(result.text)
             } catch (e: Exception) {
                 e.printStackTrace()

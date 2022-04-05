@@ -1,7 +1,6 @@
 package com.lamti.capturetheflag.presentation.ui.fragments.ar
 
 import android.location.Location
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -45,11 +44,11 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.io.IOException
 import java.util.Date
 import javax.inject.Inject
 
-val TAG: String = ArFragment::class.java.simpleName
 private val GREEN_COLOR = floatArrayOf(139.0f, 195.0f, 74.0f, 255.0f)
 private val RED_COLOR = floatArrayOf(255.0f, 0.0f, 0.0f, 255.0f)
 private const val ERROR_MESSAGE = "An error occurred. Please relaunch the app and try again."
@@ -139,7 +138,7 @@ class ArViewModel @Inject constructor(
                 exception = e
             }
             if (_message.value != EMPTY) {
-                Log.e(TAG, "Exception creating session", exception)
+                Timber.e("Exception creating session: $exception")
                 return
             }
         }
@@ -170,7 +169,7 @@ class ArViewModel @Inject constructor(
         try {
             prepareObjects(backgroundRenderer, planeRenderer, pointCloudRenderer, virtualObject, virtualObjectShadow)
         } catch (e: IOException) {
-            Log.e(TAG, "Failed to read an asset file", e)
+            Timber.e("Failed to read an asset file: $e")
         }
     }
 
@@ -240,7 +239,7 @@ class ArViewModel @Inject constructor(
             }
         } catch (t: Throwable) {
             // Avoid crashing the application due to unhandled exceptions.
-            Log.e(TAG, "Exception on the OpenGL thread", t)
+            Timber.e("Exception on the OpenGL thread: $t")
         }
     }
 
