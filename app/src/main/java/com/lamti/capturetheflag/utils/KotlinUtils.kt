@@ -8,6 +8,10 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.gson.Gson
 
 const val EMPTY = ""
+const val LOGGER_TAG = "LOGGER"
+const val GEOFENCE_LOGGER_TAG = "GEOFENCE_LOGGER"
+const val LOCATION_LOGGER_TAG = "LOCATION_LOGGER"
+const val SERVICE_LOCATION_LOGGER_TAG = "SERVICE_LOCATION_LOGGER"
 
 fun emptyPosition() = LatLng(0.0, 0.0)
 

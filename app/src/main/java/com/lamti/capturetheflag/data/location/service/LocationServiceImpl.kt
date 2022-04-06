@@ -6,6 +6,7 @@ import androidx.lifecycle.lifecycleScope
 import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.presentation.ui.toLatLng
+import com.lamti.capturetheflag.utils.SERVICE_LOCATION_LOGGER_TAG
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -29,7 +30,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
         super.onStartCommand(intent, flags, startId)
 
         intent?.extras?.run {
-            Timber.d("${getSerializable(SERVICE_COMMAND)} command is received")
+            Timber.d("[$SERVICE_LOCATION_LOGGER_TAG] ${getSerializable(SERVICE_COMMAND)} command is received")
 
             when (getSerializable(SERVICE_COMMAND) as LocationServiceCommand) {
                 LocationServiceCommand.Start -> {
@@ -52,12 +53,12 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
-        Timber.d("Location Service is created")
+        Timber.d("[$SERVICE_LOCATION_LOGGER_TAG] Location Service is created")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Timber.d("Location Service is destroyed")
+        Timber.d("[$SERVICE_LOCATION_LOGGER_TAG] Location Service is destroyed")
 
         isServiceRunning = false
         locationUpdates?.cancel()

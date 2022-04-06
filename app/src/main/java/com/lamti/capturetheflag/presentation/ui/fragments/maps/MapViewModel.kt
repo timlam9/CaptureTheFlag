@@ -30,6 +30,8 @@ import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
 import com.lamti.capturetheflag.presentation.ui.getRandomString
 import com.lamti.capturetheflag.presentation.ui.toLatLng
 import com.lamti.capturetheflag.utils.EMPTY
+import com.lamti.capturetheflag.utils.GEOFENCE_LOGGER_TAG
+import com.lamti.capturetheflag.utils.LOGGER_TAG
 import com.lamti.capturetheflag.utils.emptyPosition
 import com.lamti.capturetheflag.utils.isInRangeOf
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -52,11 +54,8 @@ class MapViewModel @Inject constructor(
     private val locationRepository: LocationRepository
 ) : ViewModel() {
 
-    private val _enterBattleScreen = mutableStateOf(false)
-    val enterBattleScreen: State<Boolean> = _enterBattleScreen
-
-    private val _enterGameOverScreen = mutableStateOf(false)
-    val enterGameOverScreen: State<Boolean> = _enterGameOverScreen
+    private val _enteredGeofenceId = mutableStateOf(EMPTY)
+    private val _battleID = mutableStateOf(EMPTY)
 
     private val _stayInSplashScreen = mutableStateOf(true)
     val stayInSplashScreen: State<Boolean> = _stayInSplashScreen
@@ -70,20 +69,29 @@ class MapViewModel @Inject constructor(
     private val _initialPosition: MutableState<LatLng> = mutableStateOf(emptyPosition())
     val initialPosition: State<LatLng> = _initialPosition
 
-    private val _canPlaceFlag: MutableState<Boolean> = mutableStateOf(false)
-    val canPlaceFlag: State<Boolean> = _canPlaceFlag
+    private val _player = mutableStateOf(Player.emptyPlayer())
+    val player: State<Player> = _player
 
     private val _game: MutableState<Game> = mutableStateOf(Game.initialGame(_livePosition.value))
     val game: State<Game> = _game
 
-    private val _player = mutableStateOf(Player.emptyPlayer())
-    val player: State<Player> = _player
+    private val _showBattleButton = mutableStateOf(false)
+    val showBattleButton: State<Boolean> = _showBattleButton
+
+    private val _enterBattleScreen = mutableStateOf(false)
+    val enterBattleScreen: State<Boolean> = _enterBattleScreen
+
+    private val _showArFlagButton = mutableStateOf(false)
+    val showArFlagButton: State<Boolean> = _showArFlagButton
+
+    private val _enterGameOverScreen = mutableStateOf(false)
+    val enterGameOverScreen: State<Boolean> = _enterGameOverScreen
+
+    private val _canPlaceFlag: MutableState<Boolean> = mutableStateOf(false)
+    val canPlaceFlag: State<Boolean> = _canPlaceFlag
 
     private val _isSafehouseDraggable = mutableStateOf(false)
     val isSafehouseDraggable: State<Boolean> = _isSafehouseDraggable
-
-    private val _battleID = mutableStateOf(EMPTY)
-    val battleID: State<String> = _battleID
 
     private val _qrCodeBitmap: MutableState<Bitmap?> = mutableStateOf(null)
     val qrCodeBitmap: State<Bitmap?> = _qrCodeBitmap
@@ -95,14 +103,6 @@ class MapViewModel @Inject constructor(
     val arMode: StateFlow<ArMode> = _arMode.asStateFlow()
 
     init {
-        locationRepository.locationFlow().onEach { newLocation ->
-            val safehousePosition = _game.value.gameState.safehouse.position
-            val isNotInsideSafehouse = !newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_SAFEHOUSE_RADIUS)
-            val isInsideGame = newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_GAME_BOUNDARIES_RADIUS)
-
-            _canPlaceFlag.value = isNotInsideSafehouse && isInsideGame
-        }.launchIn(viewModelScope)
-
         startLocationUpdates()
     }
 
@@ -116,30 +116,63 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    fun setEnteredGeofenceId(id: String) {
+        _enteredGeofenceId.value = id
+        _enteredGeofenceId.value.onEnteredGeofenceIdChanged()
+        Timber.d("[$GEOFENCE_LOGGER_TAG] Entered to: ${_enteredGeofenceId.value}")
+    }
+
+    private fun String.onEnteredGeofenceIdChanged() = when {
+        contains(RED_FLAG_GEOFENCE_ID) -> {
+            _showArFlagButton.value =
+                _game.value.gameState.redFlagCaptured == null &&
+                        _player.value.gameDetails?.team == Team.Green
+        }
+        contains(GREEN_FLAG_GEOFENCE_ID) -> {
+            _showArFlagButton.value =
+                _game.value.gameState.greenFlagCaptured == null &&
+                        _player.value.gameDetails?.team == Team.Red
+        }
+        contains(SAFEHOUSE_GEOFENCE_ID) -> _showArFlagButton.value = false
+        else -> _showArFlagButton.value = false
+    }
+
     private fun observeOtherPlayers() {
         firestoreRepository.observePlayersPosition(_game.value.gameID).onEach { players ->
             _otherPlayers.value = players
             foundOpponentToBattle(players)
         }.catch {
-            Timber.e("Catch observe other players error")
+            Timber.e("[$LOGGER_TAG] Catch observe other players error")
         }.launchIn(viewModelScope)
     }
 
     private fun foundOpponentToBattle(players: List<GamePlayer>) {
         var foundOpponent = false
         for (player in players) {
-            if (_player.value.userID != player.id && _livePosition.value.isInRangeOf(
-                    player.position,
-                    DEFAULT_BATTLE_RANGE
-                )
+            if (player.id != _player.value.userID &&
+                player.position.isInBattleableGameZone() &&
+                _livePosition.value.isInBattleableGameZone() &&
+                _livePosition.value.isInRangeOf(player.position, DEFAULT_BATTLE_RANGE)
             ) {
                 _battleID.value = player.id
+                _showBattleButton.value = true
                 foundOpponent = true
                 break
             }
         }
-        if (!foundOpponent) _battleID.value = EMPTY
+        if (!foundOpponent) {
+            _battleID.value = EMPTY
+            _showBattleButton.value = false
+        }
     }
+
+    private fun LatLng.isInBattleableGameZone() = !isInsideSafehouse() && !isInsideRedFlag() && !isInsideGreenFlag()
+
+    private fun LatLng.isInsideSafehouse() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_SAFEHOUSE_RADIUS)
+
+    private fun LatLng.isInsideGreenFlag() = isInRangeOf(_game.value.gameState.greenFlag.position, DEFAULT_FLAG_RADIUS)
+
+    private fun LatLng.isInsideRedFlag() = isInRangeOf(_game.value.gameState.redFlag.position, DEFAULT_FLAG_RADIUS)
 
     private fun enterBattle(battles: List<Battle>) {
         if (battles.isEmpty()) _enterBattleScreen.value = false
@@ -163,7 +196,7 @@ class MapViewModel @Inject constructor(
             _player.value = updatedPlayer
             _stayInSplashScreen.value = false
         }.catch {
-            Timber.e("Catch observe player error")
+            Timber.e("[$LOGGER_TAG] Catch observe player error")
         }.launchIn(viewModelScope)
     }
 
@@ -305,8 +338,13 @@ class MapViewModel @Inject constructor(
     }
 
     private fun startLocationUpdates() {
-        locationRepository.locationFlow().onEach {
-            _livePosition.value = locationRepository.awaitLastLocation().toLatLng()
+        locationRepository.locationFlow().onEach { newLocation ->
+            val safehousePosition = _game.value.gameState.safehouse.position
+            val isNotInsideSafehouse = !newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_SAFEHOUSE_RADIUS)
+            val isInsideGame = newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_GAME_BOUNDARIES_RADIUS)
+
+            _canPlaceFlag.value = isNotInsideSafehouse && isInsideGame
+            _livePosition.value = newLocation.toLatLng()
         }.launchIn(viewModelScope)
     }
 

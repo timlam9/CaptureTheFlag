@@ -39,6 +39,7 @@ import com.lamti.capturetheflag.presentation.ui.fragments.navigation.FragmentScr
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.navigateToScreen
 import com.lamti.capturetheflag.presentation.ui.login.LoginActivity
 import com.lamti.capturetheflag.utils.EMPTY
+import com.lamti.capturetheflag.utils.LOGGER_TAG
 import com.lamti.capturetheflag.utils.myAppPreferences
 import com.lamti.capturetheflag.utils.set
 import dagger.hilt.android.AndroidEntryPoint
@@ -125,7 +126,7 @@ class MainActivity : AppCompatActivity() {
                     sendCommandToForegroundService(LocationServiceCommand.Start)
                 }
             } else {
-                Timber.d("Permission denied: ${grantResults[0]}")
+                Timber.d("[$LOGGER_TAG] Permission denied: ${grantResults[0]}")
             }
         }
     }

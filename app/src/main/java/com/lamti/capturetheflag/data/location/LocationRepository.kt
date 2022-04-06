@@ -7,6 +7,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
+import com.lamti.capturetheflag.utils.LOCATION_LOGGER_TAG
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,7 +43,7 @@ class LocationRepository @Inject constructor(
                         try {
                             trySend(location)
                         } catch (t: Throwable) {
-                            Timber.e("Location error: ${t.message}")
+                            Timber.e("[$LOCATION_LOGGER_TAG] Location error: ${t.message}")
                         }
                     }
                 }

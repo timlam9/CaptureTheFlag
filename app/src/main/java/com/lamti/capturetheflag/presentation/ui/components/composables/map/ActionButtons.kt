@@ -11,10 +11,8 @@ fun ActionButtons(
     buttonModifier: Modifier = Modifier,
     lost: Boolean,
     team: Team,
-    battleID: String,
-    enteredGeofenceId: String,
-    redFlagCaptured: String?,
-    greenFlagCaptured: String?,
+    showBattleButton: Boolean,
+    showArFlagButton: Boolean,
     onArScannerButtonClicked: () -> Unit,
     onBattleButtonClicked: () -> Unit
 ) {
@@ -24,15 +22,12 @@ fun ActionButtons(
             ArFlagButton(
                 modifier = buttonModifier,
                 team = team,
-                enteredGeofenceId = enteredGeofenceId,
-                redFlagPlayer = redFlagCaptured,
-                greenFlagPlayer = greenFlagCaptured,
+                show = showArFlagButton,
                 onArScannerButtonClicked = onArScannerButtonClicked
             )
             BattleButton(
                 modifier = buttonModifier,
-                battleID = battleID,
-                enteredGeofenceId = enteredGeofenceId,
+                show = showBattleButton,
                 team = team,
                 onBattleButtonClicked = onBattleButtonClicked
             )

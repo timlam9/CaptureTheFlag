@@ -18,12 +18,11 @@ import com.lamti.capturetheflag.presentation.ui.style.Red
 @Composable
 fun BattleButton(
     modifier: Modifier = Modifier,
-    battleID: String,
-    enteredGeofenceId: String,
     team: Team,
+    show: Boolean,
     onBattleButtonClicked: () -> Unit
 ) {
-    if (battleID.isNotEmpty() && isInBattleableGameZone(enteredGeofenceId)) {
+    if (show) {
         val teamColor: Color = remember(team) {
             when (team) {
                 Team.Red -> Red
@@ -40,9 +39,3 @@ fun BattleButton(
         )
     }
 }
-
-@Composable
-private fun isInBattleableGameZone(enteredGeofenceId: String) =
-    !enteredGeofenceId.contains("safehouse") &&
-            !enteredGeofenceId.contains(Team.Green.name) &&
-            !enteredGeofenceId.contains(Team.Red.name)

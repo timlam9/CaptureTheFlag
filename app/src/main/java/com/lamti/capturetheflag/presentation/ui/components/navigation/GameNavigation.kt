@@ -25,7 +25,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun GameNavigation(
     viewModel: MapViewModel,
-    enteredGeofenceId: String,
     onLogoutClicked: () -> Unit,
     onSettingFlagsButtonClicked: () -> Unit,
     onArScannerButtonClicked: () -> Unit,
@@ -90,12 +89,12 @@ fun GameNavigation(
                 gameDetails = viewModel.player.value.gameDetails ?: GameDetails.initialGameDetails(),
                 gameState = viewModel.game.value.gameState,
                 canPlaceFlag = viewModel.canPlaceFlag.value,
-                enteredGeofenceId = enteredGeofenceId,
                 initialPosition = viewModel.initialPosition.value,
                 livePosition = viewModel.livePosition.value,
                 isSafehouseDraggable = viewModel.isSafehouseDraggable.value,
                 otherPlayers = viewModel.otherPlayers.value,
-                battleID = viewModel.battleID.value,
+                showBattleButton = viewModel.showBattleButton.value,
+                showArFlagButton = viewModel.showArFlagButton.value,
                 lost = viewModel.player.value.status == Player.Status.Lost,
                 redPlayersCount = viewModel.game.value.redPlayers.size,
                 greenPlayersCount = viewModel.game.value.greenPlayers.size,

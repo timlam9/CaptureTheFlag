@@ -6,6 +6,7 @@ import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.maps.model.LatLng
+import com.lamti.capturetheflag.utils.GEOFENCE_LOGGER_TAG
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -35,10 +36,10 @@ class GeofencingRepository @Inject constructor(
     fun addGeofences() {
         geofencingClient.addGeofences(getGeofencingRequest(), geofencePendingIntent).run {
             addOnSuccessListener {
-                Timber.d("Geofence is added")
+                Timber.d("[$GEOFENCE_LOGGER_TAG] Geofence is added")
             }
             addOnFailureListener {
-                Timber.e("Geofence failed to be added: ${it.message}")
+                Timber.e("[$GEOFENCE_LOGGER_TAG] Geofence failed to be added: ${it.message}")
             }
         }
     }
@@ -46,23 +47,22 @@ class GeofencingRepository @Inject constructor(
     fun removeGeofences() {
         geofencingClient.removeGeofences(geofencePendingIntent).run {
             addOnSuccessListener {
-                Timber.d("Geofence is removed")
+                Timber.d("[$GEOFENCE_LOGGER_TAG] Geofence is removed")
             }
             addOnFailureListener {
-                Timber.e("Geofence failed to be removed: ${it.message}")
+                Timber.e("[$GEOFENCE_LOGGER_TAG] Geofence failed to be removed: ${it.message}")
             }
         }
     }
 
-    private fun getGeofencingRequest(): GeofencingRequest {
-        return GeofencingRequest.Builder().apply {
-            setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-            addGeofences(geofenceList)
-        }.build()
-    }
+    private fun getGeofencingRequest(): GeofencingRequest = GeofencingRequest.Builder().apply {
+        setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+        addGeofences(geofenceList)
+    }.build()
+
 
     companion object {
 
-        const val GEOFENCE_EXPIRATION_IN_MILLISECONDS: Long = 3 * 60 * 1000
+        const val GEOFENCE_EXPIRATION_IN_MILLISECONDS: Long = 3 * 60 * 60 * 1000
     }
 }

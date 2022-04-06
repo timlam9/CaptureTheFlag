@@ -6,7 +6,6 @@ import android.view.View
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.Fragment
@@ -40,17 +39,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         initializeDataOnSplashScreen()
         observeArMode()
         setupMapView()
+        updateEnteredGeofenceId()
     }
 
     override fun onDestroyView() {
         binding = null
         super.onDestroyView()
-    }
-
-    private fun observeArMode() {
-        lifecycleScope.launchWhenStarted {
-            viewModel.arMode.onEach { requireActivity().myAppPreferences[AR_MODE_KEY] = it.name }.launchIn(lifecycleScope)
-        }
     }
 
     private fun initializeDataOnSplashScreen() {
@@ -65,6 +59,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         }
     }
 
+    private fun observeArMode() {
+        lifecycleScope.launchWhenStarted {
+            viewModel.arMode.onEach { requireActivity().myAppPreferences[AR_MODE_KEY] = it.name }.launchIn(lifecycleScope)
+        }
+    }
+
     private fun setupMapView() = binding?.run {
         MapsInitializer.initialize(requireContext())
 
@@ -72,17 +72,23 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             CaptureTheFlagTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
                     val mainActivity = (requireActivity() as MainActivity)
-                    val enteredGeofenceIdState = mainActivity.geofenceIdFLow.collectAsState()
 
                     GameNavigation(
                         viewModel = viewModel,
-                        enteredGeofenceId = enteredGeofenceIdState.value,
                         onLogoutClicked = { mainActivity.onLogoutClicked() },
                         onSettingFlagsButtonClicked = { mainActivity.onSettingFlagsClicked() },
                         onArScannerButtonClicked = { mainActivity.onArScannerButtonClicked() }
                     )
                 }
             }
+        }
+    }
+
+    private fun updateEnteredGeofenceId() {
+        lifecycleScope.launchWhenStarted {
+            (requireActivity() as MainActivity).geofenceIdFLow
+                .onEach { viewModel.setEnteredGeofenceId(it) }
+                .launchIn(this)
         }
     }
 }

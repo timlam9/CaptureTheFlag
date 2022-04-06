@@ -19,14 +19,10 @@ import com.lamti.capturetheflag.presentation.ui.style.Red
 fun ArFlagButton(
     modifier: Modifier = Modifier,
     team: Team,
-    enteredGeofenceId: String,
-    redFlagPlayer: String?,
-    greenFlagPlayer: String?,
+    show: Boolean,
     onArScannerButtonClicked: () -> Unit
 ) {
-    if ((team == Team.Red && enteredGeofenceId.contains(Team.Green.name) && greenFlagPlayer == null) ||
-        (team == Team.Green && enteredGeofenceId.contains(Team.Red.name) && redFlagPlayer == null)
-    ) {
+    if (show) {
         val opponentColor: Color = remember(team) {
             when (team) {
                 Team.Red -> Green

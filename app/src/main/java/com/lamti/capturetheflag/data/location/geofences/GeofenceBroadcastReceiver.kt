@@ -11,6 +11,7 @@ import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.utils.EMPTY
+import com.lamti.capturetheflag.utils.GEOFENCE_LOGGER_TAG
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -102,7 +103,7 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
         when (geofenceTransition) {
             Geofence.GEOFENCE_TRANSITION_ENTER -> sendEnterGeofenceIntent(geofenceID, context)
             Geofence.GEOFENCE_TRANSITION_EXIT -> sendExitGeofenceIntent(context)
-            Geofence.GEOFENCE_TRANSITION_DWELL -> Timber.d(geofenceTransitionDetails)
+            Geofence.GEOFENCE_TRANSITION_DWELL -> Timber.d("[$GEOFENCE_LOGGER_TAG] $geofenceTransitionDetails")
             else -> Timber.e("Invalid type: $geofenceTransition")
         }
     }
