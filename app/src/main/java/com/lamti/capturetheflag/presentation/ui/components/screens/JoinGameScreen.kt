@@ -14,7 +14,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -167,10 +166,11 @@ private fun CustomDialog(
     if (openDialog) {
         AlertDialog(
             modifier = Modifier.fillMaxWidth(),
+            backgroundColor = MaterialTheme.colors.background,
             onDismissRequest = onDismissDialog,
             title = {
                 Text(
-                    text = stringResource(R.string.insert_game_code),
+                    text = stringResource(R.string.insert_code_manually),
                     style = MaterialTheme.typography.h6.copy(
                         fontWeight = FontWeight.Bold
                     )
@@ -178,7 +178,11 @@ private fun CustomDialog(
             },
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Spacer(modifier = Modifier.padding(top = 20.dp))
+                    Text(
+                        modifier = Modifier.padding(bottom = 8.dp),
+                        text = stringResource(id = R.string.insert_game_code),
+                        style = MaterialTheme.typography.body1
+                    )
                     InfoTextField(
                         text = text,
                         label = stringResource(id = R.string.type_code),

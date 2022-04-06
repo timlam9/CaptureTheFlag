@@ -10,7 +10,7 @@ import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.components.screens.BattleScreen
-import com.lamti.capturetheflag.presentation.ui.components.screens.ConnectingToGameScreen
+import com.lamti.capturetheflag.presentation.ui.components.screens.ChooseTeamScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.CreateGameScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.GameOverScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.JoinGameScreen
@@ -71,13 +71,13 @@ fun GameNavigation(
                     val game = viewModel.getGame(qrCode)
                     if (game != null) {
                         viewModel.onJoinButtonClicked(game.gameID)
-                        navController.navigate(Screen.ConnectingToGame.route)
+                        navController.navigate(Screen.ChooseTeam.route)
                     }
                 }
             }
         }
-        composable(route = Screen.ConnectingToGame.route) {
-            ConnectingToGameScreen(
+        composable(route = Screen.ChooseTeam.route) {
+            ChooseTeamScreen(
                 onRedButtonClicked = { viewModel.onTeamButtonClicked(Team.Red) },
                 onGreenButtonClicked = { viewModel.onTeamButtonClicked(Team.Green) },
                 onOkButtonClicked = { viewModel.onTeamOkButtonClicked() }

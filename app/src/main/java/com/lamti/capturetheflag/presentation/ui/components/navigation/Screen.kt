@@ -14,7 +14,7 @@ sealed class Screen(open val route: String = EMPTY) {
 
     object JoinGame : Screen("join_game")
 
-    object ConnectingToGame : Screen("connecting_to_game")
+    object ChooseTeam : Screen("choose_team")
 
     object Battle : Screen("battle")
 

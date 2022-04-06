@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -47,7 +48,8 @@ fun InstructionsCard(modifier: Modifier = Modifier, text: String) {
         modifier = modifier
             .fillMaxWidth()
             .padding(24.dp),
-        elevation = 10.dp
+        elevation = 10.dp,
+        backgroundColor = MaterialTheme.colors.background
     ) {
         Column(
             modifier = Modifier.padding(16.dp)

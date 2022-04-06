@@ -44,7 +44,7 @@ import com.lamti.capturetheflag.presentation.ui.style.Green
 import com.lamti.capturetheflag.presentation.ui.style.Red
 
 @Composable
-fun ConnectingToGameScreen(
+fun ChooseTeamScreen(
     onRedButtonClicked: () -> Unit,
     onGreenButtonClicked: () -> Unit,
     onOkButtonClicked: () -> Unit,
