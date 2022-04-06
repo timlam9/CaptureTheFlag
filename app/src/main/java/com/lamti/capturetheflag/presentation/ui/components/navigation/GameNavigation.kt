@@ -70,7 +70,7 @@ fun GameNavigation(
                 coroutine.launch {
                     val game = viewModel.getGame(qrCode)
                     if (game != null) {
-                        viewModel.onJoinButtonClicked(game.gameID)
+                        viewModel.onGameCodeScanned(game.gameID)
                         navController.navigate(Screen.ChooseTeam.route)
                     }
                 }

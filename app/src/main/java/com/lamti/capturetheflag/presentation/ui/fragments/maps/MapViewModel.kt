@@ -243,7 +243,7 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun onJoinButtonClicked(gameID: String) {
+    fun onGameCodeScanned(gameID: String) {
         viewModelScope.launch {
             firestoreRepository.joinPlayer(gameID)
         }

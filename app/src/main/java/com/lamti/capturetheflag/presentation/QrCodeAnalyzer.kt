@@ -9,8 +9,9 @@ import com.google.zxing.DecodeHintType
 import com.google.zxing.MultiFormatReader
 import com.google.zxing.PlanarYUVLuminanceSource
 import com.google.zxing.common.HybridBinarizer
+import com.lamti.capturetheflag.utils.LOGGER_TAG
+import timber.log.Timber
 import java.nio.ByteBuffer
-
 
 class QrCodeAnalyzer(
     private val onQrCodeScanned: (String) -> Unit
@@ -33,7 +34,7 @@ class QrCodeAnalyzer(
                 0,
                 image.width,
                 image.height,
-                true
+                false
             )
             val binaryBmp = BinaryBitmap(HybridBinarizer(source))
             try {
@@ -46,8 +47,10 @@ class QrCodeAnalyzer(
                         )
                     )
                 }.decode(binaryBmp)
+                Timber.d("[$LOGGER_TAG] Scan code: $result")
                 onQrCodeScanned(result.text)
             } catch (e: Exception) {
+                Timber.e("[$LOGGER_TAG] Scan code: ${e.message}")
                 e.printStackTrace()
             } finally {
                 image.close()
