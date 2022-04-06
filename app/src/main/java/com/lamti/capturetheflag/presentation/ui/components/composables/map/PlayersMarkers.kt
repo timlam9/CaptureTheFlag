@@ -13,11 +13,12 @@ fun PlayerMarkers(
     redFlagIcon: BitmapDescriptor?,
     greenFlagIcon: BitmapDescriptor?,
     userID: String,
+    userTeam: Team,
     redFlagPlayer: String?,
     greenFlagPlayer: String?,
 ) {
     otherPlayers.onEach {
-        if (it.id != userID) {
+        if (it.id != userID && it.team == userTeam) {
             val icon = if (it.team == Team.Green) greenPersonPin else redPersonPin
 
             MapMarker(

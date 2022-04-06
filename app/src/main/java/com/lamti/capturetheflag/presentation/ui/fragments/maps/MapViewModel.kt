@@ -166,7 +166,10 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    private fun LatLng.isInBattleableGameZone() = !isInsideSafehouse() && !isInsideRedFlag() && !isInsideGreenFlag()
+    private fun LatLng.isInBattleableGameZone() =
+        isInsideGame() && !isInsideSafehouse() && !isInsideRedFlag() && !isInsideGreenFlag()
+
+    private fun LatLng.isInsideGame() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_GAME_BOUNDARIES_RADIUS)
 
     private fun LatLng.isInsideSafehouse() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_SAFEHOUSE_RADIUS)
 

@@ -73,7 +73,6 @@ fun MapScreen(
             cameraPositionState.position = CameraPosition.fromLatLngZoom(initialPosition, zoom)
         }
     }
-
     RedirectToBattleScreenIfNeeded(
         enterBattleScreen = enterBattleScreen,
         onEnterBattleScreen = onEnterBattleScreen
@@ -140,7 +139,7 @@ fun MapScreen(
         )
         ReadyButton(
             modifier = Modifier
-                .padding(bottom = 20.dp)
+                .padding(20.dp)
                 .align(Alignment.BottomCenter),
             gameState = gameState.state,
             playerGameDetails = gameDetails,

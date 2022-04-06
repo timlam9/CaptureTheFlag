@@ -32,6 +32,7 @@ fun PositiveAndNegativeAlertDialog(
     if (showDialog) {
         AlertDialog(
             modifier = modifier.fillMaxWidth(),
+            backgroundColor = MaterialTheme.colors.background,
             onDismissRequest = onNegativeDialogClicked,
             title = {
                 Text(

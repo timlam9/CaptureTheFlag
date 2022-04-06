@@ -116,6 +116,7 @@ fun GoogleMapsView(
             greenFlagIcon = greenFlagIcon,
             redFlagIcon = redFlagIcon,
             userID = userID,
+            userTeam = team,
             redFlagPlayer = redFlagPlayer,
             greenFlagPlayer = greenFlagPlayer
         )
