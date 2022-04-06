@@ -26,7 +26,6 @@ import com.lamti.capturetheflag.presentation.arcore.helpers.CameraPermissionHelp
 import com.lamti.capturetheflag.presentation.arcore.helpers.DisplayRotationHelper
 import com.lamti.capturetheflag.presentation.arcore.helpers.TapHelper
 import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
-import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
 import com.lamti.capturetheflag.presentation.ui.components.composables.ar.ArComponents
@@ -108,18 +107,14 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f)
-        viewModel.prepareRenderingObjects { backgroundRenderer, planeRenderer, pointCloudRenderer, virtualObject, virtualObjectShadow ->
+        viewModel.prepareRenderingObjects { backgroundRenderer, planeRenderer, pointCloudRenderer, virtualObject ->
             // Create the texture and pass it to ARCore session to be filled during update().
             backgroundRenderer.createOnGlThread(requireContext())
             planeRenderer.createOnGlThread(requireContext(), "models/tri_grid.png")
             pointCloudRenderer.createOnGlThread(requireContext())
 
-            virtualObject.createOnGlThread(requireContext(), "models/andy.obj", "models/andy.png")
+            virtualObject.createOnGlThread(requireContext(), "models/flag.obj", "models/flag.png")
             virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f)
-
-            virtualObjectShadow.createOnGlThread(requireContext(), "models/andy_shadow.obj", "models/andy_shadow.png")
-            virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow)
-            virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f)
         }
     }
 
@@ -198,7 +193,7 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
             val showCaptureButton by viewModel.captureFlag.collectAsState()
             val arModeState by remember { mutableStateOf(arMode) }
             val teamColor = remember(viewModel.player.value.gameDetails?.team) {
-                when(viewModel.player.value.gameDetails?.team) {
+                when (viewModel.player.value.gameDetails?.team) {
                     Team.Red -> Red
                     Team.Green -> Green
                     Team.Unknown -> Blue

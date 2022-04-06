@@ -87,7 +87,6 @@ class ArViewModel @Inject constructor(
     private val cloudAnchorManager = CloudAnchorManager()
     private val backgroundRenderer: BackgroundRenderer = BackgroundRenderer()
     private val virtualObject: ObjectRenderer = ObjectRenderer()
-    private val virtualObjectShadow: ObjectRenderer = ObjectRenderer()
     private val planeRenderer: PlaneRenderer = PlaneRenderer()
     private val pointCloudRenderer: PointCloudRenderer = PointCloudRenderer()
 
@@ -164,10 +163,10 @@ class ArViewModel @Inject constructor(
         }
     }
 
-    fun prepareRenderingObjects(prepareObjects: (BackgroundRenderer, PlaneRenderer, PointCloudRenderer, ObjectRenderer, ObjectRenderer) -> Unit) {
+    fun prepareRenderingObjects(prepareObjects: (BackgroundRenderer, PlaneRenderer, PointCloudRenderer, ObjectRenderer) -> Unit) {
         // Prepare the rendering objects. This involves reading shaders, so may throw an IOException.
         try {
-            prepareObjects(backgroundRenderer, planeRenderer, pointCloudRenderer, virtualObject, virtualObjectShadow)
+            prepareObjects(backgroundRenderer, planeRenderer, pointCloudRenderer, virtualObject)
         } catch (e: IOException) {
             Timber.e("Failed to read an asset file: $e")
         }
@@ -233,9 +232,7 @@ class ArViewModel @Inject constructor(
                 currentAnchor?.pose?.toMatrix(anchorMatrix, 0)
                 // Update and draw the model and its shadow.
                 virtualObject.updateModelMatrix(anchorMatrix, 1f)
-                virtualObjectShadow.updateModelMatrix(anchorMatrix, 1f)
                 virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, flagColor)
-                virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, flagColor)
             }
         } catch (t: Throwable) {
             // Avoid crashing the application due to unhandled exceptions.
