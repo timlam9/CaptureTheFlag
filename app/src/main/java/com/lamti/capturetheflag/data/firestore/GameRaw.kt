@@ -4,9 +4,11 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.ServerTimestamp
 import com.lamti.capturetheflag.data.authentication.toTeam
+import com.lamti.capturetheflag.data.firestore.ActivePlayerRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.BattleRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.GameStateRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.GeofenceObjectRaw.Companion.toRaw
+import com.lamti.capturetheflag.domain.game.ActivePlayer
 import com.lamti.capturetheflag.domain.game.Battle
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GamePlayer
@@ -21,8 +23,8 @@ data class GameRaw(
     val gameID: String = EMPTY,
     val title: String = EMPTY,
     val gameState: GameStateRaw = GameStateRaw(),
-    val redPlayers: List<String> = emptyList(),
-    val greenPlayers: List<String> = emptyList(),
+    val redPlayers: List<ActivePlayerRaw> = emptyList(),
+    val greenPlayers: List<ActivePlayerRaw> = emptyList(),
     val battles: List<BattleRaw> = emptyList()
 ) {
 
@@ -30,8 +32,8 @@ data class GameRaw(
         gameID = gameID,
         title = title,
         gameState = gameState.toGameState(),
-        redPlayers = redPlayers,
-        greenPlayers = greenPlayers,
+        redPlayers = redPlayers.map { it.toActivePlayer() },
+        greenPlayers = greenPlayers.map { it.toActivePlayer() },
         battles = battles.toBattles()
     )
 
@@ -41,14 +43,34 @@ data class GameRaw(
             gameID = gameID,
             title = title,
             gameState = gameState.toRaw(),
-            redPlayers = redPlayers,
-            greenPlayers = greenPlayers,
+            redPlayers = redPlayers.map { it.toRaw() },
+            greenPlayers = greenPlayers.map { it.toRaw() },
             battles = battles.toRaw()
         )
     }
 }
 
+data class ActivePlayerRaw(
+    val id: String = EMPTY,
+    val hasLost: Boolean = false
+) {
+
+    fun toActivePlayer() = ActivePlayer(
+        id = id,
+        hasLost = hasLost
+    )
+
+    companion object {
+
+        fun ActivePlayer.toRaw() = ActivePlayerRaw(
+            id = id,
+            hasLost = hasLost
+        )
+    }
+}
+
 private fun List<Battle>.toRaw() = map { it.toRaw() }
+
 private fun List<BattleRaw>.toBattles() = map { it.toBattle() }
 
 data class BattleRaw(

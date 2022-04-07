@@ -9,6 +9,7 @@ import com.lamti.capturetheflag.data.authentication.PlayerRaw
 import com.lamti.capturetheflag.data.authentication.PlayerRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.GameRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.FirestoreRepository
+import com.lamti.capturetheflag.domain.game.ActivePlayer
 import com.lamti.capturetheflag.domain.game.Battle
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.game.Game
@@ -212,12 +213,12 @@ class FirestoreRepositoryImpl @Inject constructor(
         val updatedGame: Game = when (playerTeam) {
             Team.Red -> {
                 val newList = game.redPlayers.toMutableList()
-                newList.add(playerID)
+                newList.add(ActivePlayer(id = playerID, hasLost = false))
                 game.copy(redPlayers = newList)
             }
             Team.Green -> {
                 val newList = game.greenPlayers.toMutableList()
-                newList.add(playerID)
+                newList.add(ActivePlayer(id = playerID, hasLost = false))
                 game.copy(greenPlayers = newList)
             }
             Team.Unknown -> game
@@ -289,7 +290,7 @@ class FirestoreRepositoryImpl @Inject constructor(
             state = ProgressState.Created,
             winners = Team.Unknown
         ),
-        redPlayers = listOf(userID),
+        redPlayers = listOf(ActivePlayer(id = userID, hasLost = false)),
         greenPlayers = emptyList(),
         battles = emptyList()
     )
@@ -441,10 +442,36 @@ class FirestoreRepositoryImpl @Inject constructor(
             else -> currentGame.gameState
         }
 
+        val (redPlayers, greenPlayers) = when (player.gameDetails.team) {
+            Team.Red -> {
+                val redPlayers: MutableList<ActivePlayer> = currentGame.redPlayers.toMutableList()
+                val index = redPlayers.indexOfFirst { it.id == player.userID }
+                redPlayers.removeAt(index)
+                redPlayers.add(
+                    index = index,
+                    element = ActivePlayer(id = player.userID, hasLost = true)
+                )
+                Pair(redPlayers, currentGame.greenPlayers)
+            }
+            Team.Green -> {
+                val greenPlayers: MutableList<ActivePlayer> = currentGame.greenPlayers.toMutableList()
+                val index = greenPlayers.indexOfFirst { it.id == player.userID }
+                greenPlayers.removeAt(index)
+                greenPlayers.add(
+                    index = index,
+                    element = ActivePlayer(id = player.userID, hasLost = true)
+                )
+                Pair(currentGame.redPlayers, greenPlayers)
+            }
+            Team.Unknown -> Pair(currentGame.redPlayers, currentGame.greenPlayers)
+        }
+
         currentGame
             .copy(
                 battles = updatedBattles,
-                gameState = updatedGameState
+                gameState = updatedGameState,
+                redPlayers = redPlayers,
+                greenPlayers = greenPlayers
             )
             .toRaw()
             .update()

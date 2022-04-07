@@ -10,8 +10,8 @@ data class Game(
     val gameID: String,
     val title: String,
     val gameState: GameState,
-    val redPlayers: List<String>,
-    val greenPlayers: List<String>,
+    val redPlayers: List<ActivePlayer>,
+    val greenPlayers: List<ActivePlayer>,
     val battles: List<Battle>,
 ) {
 
@@ -27,6 +27,11 @@ data class Game(
         )
     }
 }
+
+data class ActivePlayer(
+    val id: String,
+    val hasLost: Boolean
+)
 
 data class Battle(
     val battleID: String,
