@@ -1,8 +1,11 @@
 package com.lamti.capturetheflag.presentation.ui.components.composables.map
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.rememberMarkerState
 import com.lamti.capturetheflag.domain.game.GeofenceObject
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.style.GreenOpacity
@@ -18,11 +21,25 @@ fun FlagMarkers(
     greenFlagIcon: BitmapDescriptor?,
     greenFlagMarkerTitle: String,
     redFlagPlayer: String?,
-    greenFlagPlayer: String?,
+    greenFlagPlayer: String?
 ) {
-    if ((team == Team.Red || redFlag.isDiscovered) && redFlagPlayer == null) {
+    val redFlagMarkerState = rememberMarkerState(position = redFlag.position)
+    val greenFlagMarkerState = rememberMarkerState(position = greenFlag.position)
+
+    LaunchedEffect(key1 = redFlag.position) {
+        redFlagMarkerState.position = redFlag.position
+    }
+    LaunchedEffect(key1 = greenFlag.position) {
+        greenFlagMarkerState.position = greenFlag.position
+    }
+
+    if (
+        redFlagMarkerState.position != LatLng(0.0, 0.0) &&
+        (team == Team.Red || redFlag.isDiscovered) &&
+        redFlagPlayer == null
+    ) {
         MapMarker(
-            position = redFlag.position,
+            markerState = redFlagMarkerState,
             icon = redFlagIcon,
             title = redFlagMarkerTitle,
             hasGeofence = true,
@@ -30,9 +47,13 @@ fun FlagMarkers(
             strokeColor = Color.Red,
         )
     }
-    if ((team == Team.Green || greenFlag.isDiscovered) && greenFlagPlayer == null) {
+    if (
+        greenFlagMarkerState.position != LatLng(0.0, 0.0) &&
+        (team == Team.Green || greenFlag.isDiscovered) &&
+        greenFlagPlayer == null
+    ) {
         MapMarker(
-            position = greenFlag.position,
+            markerState = greenFlagMarkerState,
             icon = greenFlagIcon,
             title = greenFlagMarkerTitle,
             hasGeofence = true,

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,23 +15,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.InstructionsCard
-import com.lamti.capturetheflag.presentation.ui.components.composables.common.PositiveAndNegativeAlertDialog
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.ActionButtons
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.GoogleMapsView
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.InfoBar
-import com.lamti.capturetheflag.presentation.ui.components.composables.map.ReadyButton
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.SettingFlags
 import kotlinx.coroutines.launch
 
@@ -42,6 +36,7 @@ fun MapScreen(
     gameDetails: GameDetails,
     gameState: GameState,
     canPlaceFlag: Boolean,
+    safehousePosition: LatLng,
     initialPosition: LatLng,
     livePosition: LatLng,
     isSafehouseDraggable: Boolean,
@@ -55,14 +50,12 @@ fun MapScreen(
     enterGameOverScreen: Boolean,
     onEnterBattleScreen: () -> Unit,
     onEnterGameOverScreen: () -> Unit,
-    onSafehouseMarkerClicked: (LatLng) -> Unit,
     onArScannerButtonClicked: () -> Unit,
     onSettingFlagsButtonClicked: () -> Unit,
-    onReadyButtonClicked: () -> Unit,
+    onReadyButtonClicked: (LatLng) -> Unit,
     onBattleButtonClicked: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var showConfirmationDialog by remember { mutableStateOf(false) }
     var zoom by remember { mutableStateOf(15f) }
     val cameraPositionState: CameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(initialPosition, zoom)
@@ -85,49 +78,37 @@ fun MapScreen(
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         GoogleMapsView(
             cameraPositionState = cameraPositionState,
-            safehousePosition = gameState.safehouse.position,
+            safehousePosition = safehousePosition,
             isSafeHouseDraggable = isSafehouseDraggable,
             team = gameDetails.team,
             userID = userID,
             redFlag = gameState.redFlag,
+            gameState = gameState.state,
+            gameDetails = gameDetails,
             greenFlag = gameState.greenFlag,
             redFlagPlayer = gameState.redFlagCaptured,
             greenFlagPlayer = gameState.greenFlagCaptured,
             otherPlayers = otherPlayers,
-            onSafehouseMarkerClicked = onSafehouseMarkerClicked
+            onReadyButtonClicked = onReadyButtonClicked
         )
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceAround
-        ) {
-            InfoBar(
-                team = gameDetails.team,
-                redPlayersCount = redPlayersCount,
-                greenPlayersCount = greenPlayersCount,
-                onCompassClicked = {
-                    zoom = if (zoom == 15f) 18f else 15f
-                    coroutineScope.launch {
-                        cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(livePosition, zoom))
-                    }
-                },
-                onGpsClicked = {
-                    coroutineScope.launch {
-                        cameraPositionState.animate(CameraUpdateFactory.newLatLng(livePosition))
-                    }
+        TopBar(
+            gameDetails = gameDetails,
+            redPlayersCount = redPlayersCount,
+            greenPlayersCount = greenPlayersCount,
+            gameState = gameState,
+            canPlaceFlag = canPlaceFlag,
+            onCompassClicked = {
+                zoom = if (zoom == 15f) 18f else 15f
+                coroutineScope.launch {
+                    cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(livePosition, zoom))
                 }
-            )
-            InstructionsCard(
-                team = gameDetails.team,
-                rank = gameDetails.rank,
-                state = gameState.state,
-                canPlaceFlag = canPlaceFlag,
-                isRedFlagPlaced = gameState.redFlag.isPlaced,
-                isGreenFlagPlaced = gameState.greenFlag.isPlaced,
-                redFlagCaptured = gameState.redFlagCaptured,
-                greenFlagCaptured = gameState.greenFlagCaptured,
-            )
-        }
+            },
+            onGpsClicked = {
+                coroutineScope.launch {
+                    cameraPositionState.animate(CameraUpdateFactory.newLatLng(livePosition))
+                }
+            }
+        )
         SettingFlags(
             modifier = Modifier.align(Alignment.BottomCenter),
             gameState = gameState.state,
@@ -136,14 +117,6 @@ fun MapScreen(
             greenFlagIsPlaced = gameState.greenFlag.isPlaced,
             canPlaceFlag = canPlaceFlag,
             onSettingFlagsButtonClicked = onSettingFlagsButtonClicked
-        )
-        ReadyButton(
-            modifier = Modifier
-                .padding(20.dp)
-                .align(Alignment.BottomCenter),
-            gameState = gameState.state,
-            playerGameDetails = gameDetails,
-            onReadyButtonClicked = { showConfirmationDialog = true }
         )
         ActionButtons(
             modifier = Modifier.align(Alignment.Center),
@@ -155,15 +128,40 @@ fun MapScreen(
             onArScannerButtonClicked = onArScannerButtonClicked,
             onBattleButtonClicked = onBattleButtonClicked
         )
-        PositiveAndNegativeAlertDialog(
-            title = stringResource(id = R.string.start_game),
-            description = stringResource(R.string.start_game_description),
-            showDialog = showConfirmationDialog,
-            onNegativeDialogClicked = { showConfirmationDialog = false },
-            onPositiveButtonClicked = {
-                showConfirmationDialog = false
-                onReadyButtonClicked()
-            }
+    }
+}
+
+@Composable
+private fun TopBar(
+    gameDetails: GameDetails,
+    redPlayersCount: Int,
+    greenPlayersCount: Int,
+    gameState: GameState,
+    canPlaceFlag: Boolean,
+    onCompassClicked: () -> Unit,
+    onGpsClicked: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceAround
+    ) {
+        InfoBar(
+            team = gameDetails.team,
+            redPlayersCount = redPlayersCount,
+            greenPlayersCount = greenPlayersCount,
+            onCompassClicked = onCompassClicked,
+            onGpsClicked = onGpsClicked
+        )
+        InstructionsCard(
+            team = gameDetails.team,
+            rank = gameDetails.rank,
+            state = gameState.state,
+            canPlaceFlag = canPlaceFlag,
+            isRedFlagPlaced = gameState.redFlag.isPlaced,
+            isGreenFlagPlaced = gameState.greenFlag.isPlaced,
+            redFlagCaptured = gameState.redFlagCaptured,
+            greenFlagCaptured = gameState.greenFlagCaptured,
         )
     }
 }

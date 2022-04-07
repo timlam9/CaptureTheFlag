@@ -89,6 +89,7 @@ fun GameNavigation(
                 gameDetails = viewModel.player.value.gameDetails ?: GameDetails.initialGameDetails(),
                 gameState = viewModel.game.value.gameState,
                 canPlaceFlag = viewModel.canPlaceFlag.value,
+                safehousePosition = viewModel.game.value.gameState.safehouse.position,
                 initialPosition = viewModel.initialPosition.value,
                 livePosition = viewModel.livePosition.value,
                 isSafehouseDraggable = viewModel.isSafehouseDraggable.value,
@@ -102,10 +103,9 @@ fun GameNavigation(
                 enterGameOverScreen = viewModel.enterGameOverScreen.value,
                 onEnterBattleScreen = { navController.popNavigate(Screen.Battle.route) },
                 onEnterGameOverScreen = { navController.popNavigate(Screen.GameOver.route) },
-                onSafehouseMarkerClicked = { viewModel.updateSafeHousePosition(it) },
                 onArScannerButtonClicked = onArScannerButtonClicked,
                 onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
-                onReadyButtonClicked = { viewModel.onSetFlagsClicked() },
+                onReadyButtonClicked = { viewModel.onReadyButtonClicked(it) },
                 onBattleButtonClicked = { viewModel.onBattleButtonClicked() }
             )
         }

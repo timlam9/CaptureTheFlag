@@ -213,7 +213,7 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun updateSafeHousePosition(position: LatLng) {
+    fun onReadyButtonClicked(position: LatLng) {
         val gameID = _player.value.gameDetails?.gameID ?: return
         viewModelScope.launch {
             firestoreRepository.updateSafehousePosition(gameID, position)
@@ -233,13 +233,6 @@ class MapViewModel @Inject constructor(
     fun onSetGameClicked() {
         viewModelScope.launch {
             firestoreRepository.updatePlayerStatus(Player.Status.Playing)
-        }
-    }
-
-    fun onSetFlagsClicked() {
-        val gameID = _player.value.gameDetails?.gameID ?: return
-        viewModelScope.launch {
-            firestoreRepository.updateGameStatus(gameID, ProgressState.SettingFlags)
         }
     }
 

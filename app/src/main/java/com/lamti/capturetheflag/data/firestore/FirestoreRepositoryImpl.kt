@@ -351,7 +351,6 @@ class FirestoreRepositoryImpl @Inject constructor(
             .copy(gameState = currentGame.gameState.copy(state = state))
             .toRaw()
             .update()
-
     }
 
     override suspend fun updateSafehousePosition(gameID: String, position: LatLng) {
@@ -366,6 +365,8 @@ class FirestoreRepositoryImpl @Inject constructor(
             )
             .toRaw()
             .update()
+
+        updateGameStatus(gameID, ProgressState.SettingFlags)
     }
 
     override suspend fun discoverFlag(flagFound: Flag): Boolean {
