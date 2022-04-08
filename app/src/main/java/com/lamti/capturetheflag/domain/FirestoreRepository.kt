@@ -4,8 +4,6 @@ import com.google.android.gms.maps.model.LatLng
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GamePlayer
-import com.lamti.capturetheflag.domain.game.GameState
-import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Team
 import kotlinx.coroutines.flow.Flow
@@ -20,41 +18,35 @@ interface FirestoreRepository {
 
     fun observeGame(): Flow<Game>
 
-    fun observeGameState(id: String): Flow<GameState>
-
     suspend fun registerUser(email: String, password: String, username: String): Boolean
 
     suspend fun loginUser(email: String, password: String): Boolean
 
-    suspend fun joinPlayer(gameID: String)
+    suspend fun joinPlayer(player: Player, gameID: String)
 
-    suspend fun connectPlayer(): Boolean
+    suspend fun connectPlayer(player: Player): Boolean
 
     suspend fun getPlayer(): Player?
 
-    suspend fun updatePlayerStatus(status: Player.Status)
+    suspend fun updatePlayer(player: Player) :Boolean
 
-    suspend fun setPlayerTeam(team: Team)
+    suspend fun setPlayerTeam(player: Player)
 
-    suspend fun createGame(id: String, title: String, position: LatLng): Boolean
+    suspend fun createGame(id: String, title: String, position: LatLng, player: Player): Boolean
 
     suspend fun getGame(id: String): Game?
 
-    suspend fun endGame(team: Team)
+    suspend fun endGame(game: Game, team: Team): Boolean
 
-    suspend fun quitGame(): Boolean
-
-    suspend fun updateGameStatus(gameID: String, state: ProgressState)
-
-    suspend fun updateSafehousePosition(gameID: String, position: LatLng)
+    suspend fun updateSafehousePosition(game: Game, position: LatLng): Boolean
 
     suspend fun discoverFlag(flagFound: Flag): Boolean
 
     suspend fun captureFlag(): Boolean
 
-    suspend fun createBattle(opponentID: String): Boolean
+    suspend fun createBattle(opponentID: String, game: Game): Boolean
 
-    suspend fun lost()
+    suspend fun lost(player: Player, game: Game)
 
     fun logout()
 

@@ -77,18 +77,17 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
         applicationScope.launch {
             val player = firestoreRepository.getPlayer() ?: return@launch
             val gameDetails = player.gameDetails ?: return@launch
-            val playerTeam = gameDetails.team
-            val gameID = gameDetails.gameID
-            val game = firestoreRepository.getGame(gameID) ?: return@launch
+            val game = firestoreRepository.getGame(gameDetails.gameID) ?: return@launch
 
             if (player.userID == game.gameState.greenFlagCaptured) {
-                if (playerTeam == Team.Red) {
-                    firestoreRepository.endGame(Team.Red)
+                if (gameDetails.team == Team.Red) {
+                    firestoreRepository.endGame(game, Team.Red)
                 }
             }
+
             if (player.userID == game.gameState.redFlagCaptured) {
-                if (playerTeam == Team.Green) {
-                    firestoreRepository.endGame(Team.Green)
+                if (gameDetails.team == Team.Green) {
+                    firestoreRepository.endGame(game, Team.Green)
                 }
             }
         }

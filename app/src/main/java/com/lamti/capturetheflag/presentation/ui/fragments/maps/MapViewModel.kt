@@ -118,8 +118,13 @@ class MapViewModel @Inject constructor(
 
     fun setEnteredGeofenceId(id: String) {
         _enteredGeofenceId.value = id
-        _enteredGeofenceId.value.onEnteredGeofenceIdChanged()
-        Timber.d("[$GEOFENCE_LOGGER_TAG] Entered to: ${_enteredGeofenceId.value}")
+        if (id.isNotEmpty()) {
+            _enteredGeofenceId.value.onEnteredGeofenceIdChanged()
+            Timber.d("[$GEOFENCE_LOGGER_TAG] Entered to: ${_enteredGeofenceId.value}")
+        } else {
+            _showArFlagButton.value = false
+            Timber.d("[$GEOFENCE_LOGGER_TAG] Exited from geofence")
+        }
     }
 
     private fun String.onEnteredGeofenceIdChanged() = when {
@@ -133,8 +138,7 @@ class MapViewModel @Inject constructor(
                 _game.value.gameState.greenFlagCaptured == null &&
                         _player.value.gameDetails?.team == Team.Red
         }
-        contains(SAFEHOUSE_GEOFENCE_ID) -> _showArFlagButton.value = false
-        else -> _showArFlagButton.value = false
+        else -> Unit
     }
 
     private fun observeOtherPlayers() {
@@ -216,7 +220,7 @@ class MapViewModel @Inject constructor(
     fun onReadyButtonClicked(position: LatLng) {
         val gameID = _player.value.gameDetails?.gameID ?: return
         viewModelScope.launch {
-            firestoreRepository.updateSafehousePosition(gameID, position)
+            firestoreRepository.updateSafehousePosition(_game.value, position)
         }
     }
 
@@ -225,20 +229,20 @@ class MapViewModel @Inject constructor(
             val gameID = getRandomString(5)
             generateQrCode(gameID)
             _player.value = _player.value.copy(gameDetails = _player.value.gameDetails?.copy(gameID = gameID))
-            firestoreRepository.createGame(gameID, title, _livePosition.value)
+            firestoreRepository.createGame(gameID, title, _livePosition.value, _player.value)
             observeGame()
         }
     }
 
     fun onSetGameClicked() {
         viewModelScope.launch {
-            firestoreRepository.updatePlayerStatus(Player.Status.Playing)
+            firestoreRepository.updatePlayer(_player.value.copy(status = Player.Status.Playing))
         }
     }
 
     fun onGameCodeScanned(gameID: String) {
         viewModelScope.launch {
-            firestoreRepository.joinPlayer(gameID)
+            firestoreRepository.joinPlayer(_player.value, gameID)
         }
     }
 
@@ -248,14 +252,20 @@ class MapViewModel @Inject constructor(
 
     fun onTeamOkButtonClicked() {
         viewModelScope.launch {
-            firestoreRepository.setPlayerTeam(_player.value.gameDetails?.team ?: Team.Unknown)
+            firestoreRepository.setPlayerTeam(
+                _player.value.copy(
+                    gameDetails = _player.value.gameDetails?.copy(
+                        team = _player.value.gameDetails?.team ?: Team.Unknown
+                    )
+                )
+            )
             observeGame()
         }
     }
 
     private fun onConnect(onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val result = firestoreRepository.connectPlayer()
+            val result = firestoreRepository.connectPlayer(_player.value)
             onResult(result)
         }
     }
@@ -306,6 +316,12 @@ class MapViewModel @Inject constructor(
         ProgressState.Started -> {
             _enterGameOverScreen.value = false
             _isSafehouseDraggable.value = false
+            if(_game.value.gameState.greenFlagCaptured != null && _player.value.gameDetails?.team == Team.Red) {
+                _showArFlagButton.value = false
+            }
+            if(_game.value.gameState.redFlagCaptured != null && _player.value.gameDetails?.team == Team.Green) {
+                _showArFlagButton.value = false
+            }
             _arMode.value = ArMode.Scanner
             onGameStarted()
         }
@@ -329,7 +345,7 @@ class MapViewModel @Inject constructor(
 
     fun onBattleButtonClicked() {
         viewModelScope.launch {
-            firestoreRepository.createBattle(_battleID.value)
+            firestoreRepository.createBattle(_battleID.value, _game.value)
         }
     }
 
@@ -346,14 +362,20 @@ class MapViewModel @Inject constructor(
 
     fun onLostBattleButtonClicked() {
         viewModelScope.launch {
-            firestoreRepository.lost()
+            firestoreRepository.lost(_player.value, _game.value)
         }
     }
 
     fun onGameOverOkClicked(onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val result = firestoreRepository.quitGame()
-            onResult(result)
+            onResult(
+                firestoreRepository.updatePlayer(
+                    _player.value.copy(
+                        status = Player.Status.Online,
+                        gameDetails = null
+                    )
+                )
+            )
         }
     }
 
