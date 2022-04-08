@@ -208,17 +208,15 @@ class MapViewModel @Inject constructor(
     }
 
     fun observeGame() {
-        viewModelScope.launch {
-            firestoreRepository.observeGame().onEach { game ->
-                _game.value = game
-                game.gameState.handleGameStateEvents()
-                enterBattle(game.battles)
-            }.launchIn(viewModelScope)
-        }
+        val gameID: String = if (_player.value.gameDetails != null) _player.value.gameDetails!!.gameID else return
+        firestoreRepository.observeGame(gameID).onEach { game ->
+            _game.value = game
+            game.gameState.handleGameStateEvents()
+            enterBattle(game.battles)
+        }.launchIn(viewModelScope)
     }
 
     fun onReadyButtonClicked(position: LatLng) {
-        val gameID = _player.value.gameDetails?.gameID ?: return
         viewModelScope.launch {
             firestoreRepository.updateSafehousePosition(_game.value, position)
         }
@@ -316,10 +314,10 @@ class MapViewModel @Inject constructor(
         ProgressState.Started -> {
             _enterGameOverScreen.value = false
             _isSafehouseDraggable.value = false
-            if(_game.value.gameState.greenFlagCaptured != null && _player.value.gameDetails?.team == Team.Red) {
+            if (_game.value.gameState.greenFlagCaptured != null && _player.value.gameDetails?.team == Team.Red) {
                 _showArFlagButton.value = false
             }
-            if(_game.value.gameState.redFlagCaptured != null && _player.value.gameDetails?.team == Team.Green) {
+            if (_game.value.gameState.redFlagCaptured != null && _player.value.gameDetails?.team == Team.Green) {
                 _showArFlagButton.value = false
             }
             _arMode.value = ArMode.Scanner

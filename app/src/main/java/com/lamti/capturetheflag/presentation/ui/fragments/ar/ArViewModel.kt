@@ -100,7 +100,7 @@ class ArViewModel @Inject constructor(
             _player.value = firestoreRepository.getPlayer() ?: emptyPlayer()
             flagColor = getFlagColor(_player.value.gameDetails?.team)
         }
-        firestoreRepository.observeGame().onEach {
+        firestoreRepository.observeGame(_game.value.gameID).onEach {
             _game.value = it
             if (_scannerMode.value) onResolveObjects()
         }.launchIn(viewModelScope)

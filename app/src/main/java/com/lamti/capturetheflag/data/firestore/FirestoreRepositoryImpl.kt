@@ -1,42 +1,27 @@
 package com.lamti.capturetheflag.data.firestore
 
 import com.google.android.gms.maps.model.LatLng
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.SetOptions
 import com.lamti.capturetheflag.data.authentication.AuthenticationRepository
-import com.lamti.capturetheflag.data.firestore.GameRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.ActivePlayer
 import com.lamti.capturetheflag.domain.game.Battle
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GamePlayer
-import com.lamti.capturetheflag.domain.game.GameState
-import com.lamti.capturetheflag.domain.game.GeofenceObject
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.PlayerDetails
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.utils.EMPTY
-import com.lamti.capturetheflag.utils.FIRESTORE_LOGGER_TAG
-import com.lamti.capturetheflag.utils.emptyPosition
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
-import timber.log.Timber
-import java.util.Date
 import javax.inject.Inject
 
 class FirestoreRepositoryImpl @Inject constructor(
-    private val firestore: FirebaseFirestore,
     private val authenticationRepository: AuthenticationRepository,
     private val databaseRepository: FirebaseDatabaseRepository,
-    private val playersRepository: PlayersRepository
+    private val playersRepository: PlayersRepository,
+    private val gamesRepository: GamesRepository
 ) : FirestoreRepository {
 
     // Authentication
@@ -66,66 +51,95 @@ class FirestoreRepositoryImpl @Inject constructor(
     // Players
     override fun observePlayer(): Flow<Player> = playersRepository.observePlayer(userID)
 
+    override suspend fun getPlayer(): Player? = playersRepository.getPlayer(userID)
+
     override suspend fun joinPlayer(player: Player, gameID: String) = playersRepository.joinPlayer(player, gameID)
 
     override suspend fun connectPlayer(player: Player): Boolean = playersRepository.connectPlayer(player)
 
-    override suspend fun getPlayer(): Player? = playersRepository.getPlayer(userID)
-
     override suspend fun updatePlayer(player: Player) = playersRepository.updatePlayer(player)
 
 
-    // Firebase Database
-    override suspend fun uploadGamePlayer(position: LatLng) {
-        val currentPlayer = getPlayer() ?: return
-        if (currentPlayer.status != Player.Status.Playing) return
-        val gameDetails = currentPlayer.gameDetails ?: return
+    // Games
+    override fun observeGame(gameID: String): Flow<Game> = gamesRepository.observeGame(gameID = gameID)
 
-        databaseRepository.updateGamePlayer(
-            gameID = gameDetails.gameID,
-            player = GamePlayer(
-                id = userID,
-                team = gameDetails.team,
-                position = position,
-                username = currentPlayer.details.username
+    override suspend fun getGame(id: String): Game? = gamesRepository.getGame(id)
+
+    override suspend fun endGame(game: Game, team: Team) = gamesRepository.updateGame(
+        game = game
+            .copy(
+                gameState = game.gameState.copy(
+                    state = ProgressState.Ended,
+                    winners = team
+                )
+            )
+    )
+
+    override suspend fun updateSafehousePosition(game: Game, position: LatLng): Boolean = gamesRepository.updateGame(
+        game = game.copy(
+            gameState = game.gameState.copy(
+                state = ProgressState.SettingFlags,
+                safehouse = game.gameState.safehouse.copy(position = position)
             )
         )
+    )
+
+    override suspend fun createBattle(opponentID: String, game: Game): Boolean = gamesRepository.updateGame(
+        game = game
+            .copy(
+                battles = game.battles + Battle(
+                    battleID = userID,
+                    playersIDs = listOf(userID, opponentID)
+                )
+            )
+    )
+
+
+    // Player and Game
+    override suspend fun discoverFlag(flagFound: Flag): Boolean {
+        val player = getPlayer()
+        val gameID = player?.gameDetails?.gameID ?: return false
+        val team = player.gameDetails.team
+        val currentGame = getGame(gameID) ?: return false
+
+        val game: Game = when {
+            team == Team.Red && flagFound == Flag.Green -> currentGame.copy(
+                gameState = currentGame.gameState.copy(
+                    greenFlag = currentGame.gameState.greenFlag.copy(isDiscovered = true)
+                )
+            )
+            team == Team.Green && flagFound == Flag.Red -> currentGame.copy(
+                gameState = currentGame.gameState.copy(
+                    redFlag = currentGame.gameState.redFlag.copy(isDiscovered = true)
+                )
+            )
+            else -> return false
+        }
+
+        return gamesRepository.updateGame(game)
     }
 
-    override fun observePlayersPosition(gameID: String) = databaseRepository.observePlayersPosition(gameID)
+    override suspend fun captureFlag(): Boolean {
+        val currentPlayer = getPlayer() ?: return false
+        val gameDetails = currentPlayer.gameDetails ?: return false
+        val currentGame = getGame(gameDetails.gameID) ?: return false
 
-
-    // Games
-    override fun observeGame(): Flow<Game> = callbackFlow {
-        var snapshotListener: ListenerRegistration? = null
-        try {
-            val player = getPlayer()
-            val gameID = player?.gameDetails?.gameID ?: EMPTY
-
-            snapshotListener = firestore
-                .collection(COLLECTION_GAMES)
-                .document(gameID)
-                .addSnapshotListener { snapshot, e ->
-                    val state = snapshot?.toObject(GameRaw::class.java)?.toGame() ?: return@addSnapshotListener
-                    trySend(state).isSuccess
-                }
-        } catch (e: Exception) {
-            Timber.e("Observe game error: ${e.message}")
+        val game = when (gameDetails.team) {
+            Team.Red -> currentGame.copy(gameState = currentGame.gameState.copy(greenFlagCaptured = currentPlayer.userID))
+            Team.Green -> currentGame.copy(gameState = currentGame.gameState.copy(redFlagCaptured = currentPlayer.userID))
+            Team.Unknown -> currentGame.copy(gameState = currentGame.gameState.copy())
         }
 
-        awaitClose {
-            snapshotListener?.remove()
-        }
+        return gamesRepository.updateGame(game)
     }
 
     override suspend fun createGame(id: String, title: String, position: LatLng, player: Player): Boolean {
-        try {
-            initialGame(id, title, position).toRaw().update()
-        } catch (e: Exception) {
-            Timber.e("Update initial game error: ${e.message}")
-            return false
-        }
-
+        gamesRepository.createGame(
+            id = id,
+            title = title,
+            position = position,
+            userID = player.userID
+        )
         playersRepository.updatePlayer(
             player = player
                 .copy(
@@ -137,146 +151,10 @@ class FirestoreRepositoryImpl @Inject constructor(
                     status = Player.Status.Connecting
                 )
         )
-
         return true
     }
 
-    private fun initialGame(
-        id: String,
-        title: String,
-        position: LatLng
-    ) = Game(
-        gameID = id,
-        title = title,
-        gameState = GameState(
-            safehouse = GeofenceObject(
-                position = position,
-                isPlaced = true,
-                isDiscovered = true,
-                id = EMPTY,
-                timestamp = Date()
-            ),
-            greenFlag = GeofenceObject(
-                position = emptyPosition(),
-                isPlaced = false,
-                isDiscovered = false,
-                id = EMPTY,
-                timestamp = Date()
-            ),
-            redFlag = GeofenceObject(
-                position = emptyPosition(),
-                isPlaced = false,
-                isDiscovered = false,
-                id = EMPTY,
-                timestamp = Date()
-            ),
-            greenFlagCaptured = null,
-            redFlagCaptured = null,
-            state = ProgressState.Created,
-            winners = Team.Unknown
-        ),
-        redPlayers = listOf(ActivePlayer(id = userID, hasLost = false)),
-        greenPlayers = emptyList(),
-        battles = emptyList()
-    )
-
-    override suspend fun endGame(game: Game, team: Team) = game
-        .copy(
-            gameState = game.gameState.copy(
-                state = ProgressState.Ended,
-                winners = team
-            )
-        )
-        .toRaw()
-        .update()
-
-    override suspend fun getGame(id: String): Game? = withContext(Dispatchers.IO) {
-        try {
-            firestore
-                .collection(COLLECTION_GAMES)
-                .document(id)
-                .get()
-                .await()
-                .toObject(GameRaw::class.java)
-                ?.toGame()
-        } catch (e: Exception) {
-            Timber.e("[$FIRESTORE_LOGGER_TAG] ${e.message}")
-            null
-        }
-    }
-
-    override suspend fun updateSafehousePosition(game: Game, position: LatLng): Boolean = game
-        .copy(
-            gameState = game.gameState.copy(
-                state = ProgressState.SettingFlags,
-                safehouse = game.gameState.safehouse.copy(position = position)
-            )
-        )
-        .toRaw()
-        .update()
-
-    override suspend fun discoverFlag(flagFound: Flag): Boolean {
-        val player = getPlayer()
-        val gameID = player?.gameDetails?.gameID ?: return false
-        val team = player.gameDetails.team
-        val game = getGame(gameID) ?: return false
-
-        val updatedGame: Game = when {
-            team == Team.Red && flagFound == Flag.Green -> game.copy(
-                gameState = game.gameState.copy(
-                    greenFlag = game.gameState.greenFlag.copy(isDiscovered = true)
-                )
-            )
-            team == Team.Green && flagFound == Flag.Red -> game.copy(
-                gameState = game.gameState.copy(
-                    redFlag = game.gameState.redFlag.copy(isDiscovered = true)
-                )
-            )
-            else -> return false
-        }
-
-        updatedGame.toRaw().update()
-        return true
-    }
-
-    override suspend fun captureFlag(): Boolean {
-        val currentPlayer = getPlayer() ?: return false
-        val gameDetails = currentPlayer.gameDetails ?: return false
-        val currentGame = getGame(gameDetails.gameID) ?: return false
-
-        return when (gameDetails.team) {
-            Team.Red -> currentGame.copy(gameState = currentGame.gameState.copy(greenFlagCaptured = currentPlayer.userID))
-            Team.Green -> currentGame.copy(gameState = currentGame.gameState.copy(redFlagCaptured = currentPlayer.userID))
-            Team.Unknown -> currentGame.copy(gameState = currentGame.gameState.copy())
-        }.toRaw().update()
-    }
-
-    override suspend fun createBattle(opponentID: String, game: Game): Boolean = game
-        .copy(
-            battles = game.battles + Battle(
-                battleID = userID,
-                playersIDs = listOf(userID, opponentID)
-            )
-        )
-        .toRaw()
-        .update()
-
-    private suspend fun GameRaw.update(): Boolean = try {
-        firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .set(this, SetOptions.merge())
-            .await()
-        true
-    } catch (e: Exception) {
-        Timber.e("[$FIRESTORE_LOGGER_TAG] ${e.message}")
-        false
-    }
-
-
-    // Player and Game
     override suspend fun lost(player: Player, game: Game) {
-
         val updatedBattles: MutableList<Battle> = game.battles.toMutableList()
         updatedBattles.removeIf { it.playersIDs.contains(player.userID) }
 
@@ -300,16 +178,15 @@ class FirestoreRepositoryImpl @Inject constructor(
             else -> Pair(game.redPlayers, game.greenPlayers)
         }
 
-        game
-            .copy(
-                battles = updatedBattles,
-                gameState = updatedGameState,
-                redPlayers = redPlayers,
-                greenPlayers = greenPlayers
-            )
-            .toRaw()
-            .update()
-
+        gamesRepository.updateGame(
+            game = game
+                .copy(
+                    battles = updatedBattles,
+                    gameState = updatedGameState,
+                    redPlayers = redPlayers,
+                    greenPlayers = greenPlayers
+                )
+        )
         playersRepository.updatePlayer(player = player.copy(status = Player.Status.Lost))
         databaseRepository.deleteGamePlayer(game.gameID, player.userID)
     }
@@ -343,26 +220,41 @@ class FirestoreRepositoryImpl @Inject constructor(
         addPlayerToGame(game, team, player.userID)
     }
 
-    private suspend fun addPlayerToGame(game: Game, playerTeam: Team, playerID: String) {
-        val updatedGame: Game = when (playerTeam) {
+    private suspend fun addPlayerToGame(currentGame: Game, playerTeam: Team, playerID: String) {
+        val game: Game = when (playerTeam) {
             Team.Red -> {
-                val newList = game.redPlayers.toMutableList()
+                val newList = currentGame.redPlayers.toMutableList()
                 newList.add(ActivePlayer(id = playerID, hasLost = false))
-                game.copy(redPlayers = newList)
+                currentGame.copy(redPlayers = newList)
             }
             Team.Green -> {
-                val newList = game.greenPlayers.toMutableList()
+                val newList = currentGame.greenPlayers.toMutableList()
                 newList.add(ActivePlayer(id = playerID, hasLost = false))
-                game.copy(greenPlayers = newList)
+                currentGame.copy(greenPlayers = newList)
             }
-            Team.Unknown -> game
+            Team.Unknown -> currentGame
         }
 
-        updatedGame.toRaw().update()
+        gamesRepository.updateGame(game)
     }
 
-    companion object {
 
-        const val COLLECTION_GAMES = "games"
+    // Firebase Database
+    override suspend fun uploadGamePlayer(position: LatLng) {
+        val currentPlayer = getPlayer() ?: return
+        if (currentPlayer.status != Player.Status.Playing) return
+        val gameDetails = currentPlayer.gameDetails ?: return
+
+        databaseRepository.updateGamePlayer(
+            gameID = gameDetails.gameID,
+            player = GamePlayer(
+                id = userID,
+                team = gameDetails.team,
+                position = position,
+                username = currentPlayer.details.username
+            )
+        )
     }
+
+    override fun observePlayersPosition(gameID: String) = databaseRepository.observePlayersPosition(gameID)
 }

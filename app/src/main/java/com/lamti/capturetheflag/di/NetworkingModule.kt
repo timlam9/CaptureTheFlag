@@ -16,6 +16,7 @@ import com.google.firebase.ktx.Firebase
 import com.lamti.capturetheflag.data.authentication.AuthenticationRepository
 import com.lamti.capturetheflag.data.firestore.FirebaseDatabaseRepository
 import com.lamti.capturetheflag.data.firestore.FirestoreRepositoryImpl
+import com.lamti.capturetheflag.data.firestore.GamesRepository
 import com.lamti.capturetheflag.data.firestore.PlayersRepository
 import com.lamti.capturetheflag.data.location.geofences.GeofenceBroadcastReceiver
 import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
@@ -48,17 +49,20 @@ object NetworkingModule {
     fun providePlayersRepository(firestore: FirebaseFirestore): PlayersRepository = PlayersRepository(firestore)
 
     @Provides
+    fun provideGamesRepository(firestore: FirebaseFirestore): GamesRepository = GamesRepository(firestore)
+
+    @Provides
     fun provideFirestoreRepository(
-        firestore: FirebaseFirestore,
         authenticationRepository: AuthenticationRepository,
         databaseRepository: FirebaseDatabaseRepository,
-        playersRepository: PlayersRepository
+        playersRepository: PlayersRepository,
+        gamesRepository: GamesRepository
     ): FirestoreRepository =
         FirestoreRepositoryImpl(
-            firestore = firestore,
             authenticationRepository = authenticationRepository,
             databaseRepository = databaseRepository,
-            playersRepository = playersRepository
+            playersRepository = playersRepository,
+            gamesRepository = gamesRepository
         )
 
 }
