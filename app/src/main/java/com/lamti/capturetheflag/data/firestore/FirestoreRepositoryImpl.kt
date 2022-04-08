@@ -444,23 +444,13 @@ class FirestoreRepositoryImpl @Inject constructor(
 
         val (redPlayers, greenPlayers) = when (player.gameDetails.team) {
             Team.Red -> {
-                val redPlayers: MutableList<ActivePlayer> = currentGame.redPlayers.toMutableList()
-                val index = redPlayers.indexOfFirst { it.id == player.userID }
-                redPlayers.removeAt(index)
-                redPlayers.add(
-                    index = index,
-                    element = ActivePlayer(id = player.userID, hasLost = true)
-                )
+                val redPlayers = currentGame.redPlayers.map { if (it.id == player.userID) it.copy(hasLost = true) else it }
                 Pair(redPlayers, currentGame.greenPlayers)
             }
             Team.Green -> {
-                val greenPlayers: MutableList<ActivePlayer> = currentGame.greenPlayers.toMutableList()
-                val index = greenPlayers.indexOfFirst { it.id == player.userID }
-                greenPlayers.removeAt(index)
-                greenPlayers.add(
-                    index = index,
-                    element = ActivePlayer(id = player.userID, hasLost = true)
-                )
+                val greenPlayers = currentGame.greenPlayers.map {
+                    if (it.id == player.userID) it.copy(hasLost = true) else it
+                }
                 Pair(currentGame.redPlayers, greenPlayers)
             }
             Team.Unknown -> Pair(currentGame.redPlayers, currentGame.greenPlayers)
