@@ -10,28 +10,38 @@ import kotlinx.coroutines.flow.Flow
 
 interface FirestoreRepository {
 
-    suspend fun uploadGamePlayer(position: LatLng)
-
     fun observePlayersPosition(gameID: String): Flow<List<GamePlayer>>
 
     fun observePlayer(): Flow<Player>
 
     fun observeGame(): Flow<Game>
 
+
+    // Authentication repository
+    fun logout()
+
     suspend fun registerUser(email: String, password: String, username: String): Boolean
 
     suspend fun loginUser(email: String, password: String): Boolean
+
+
+    // Database repository
+    suspend fun uploadGamePlayer(position: LatLng)
+
+
+    // Player repository
+    suspend fun getPlayer(): Player?
 
     suspend fun joinPlayer(player: Player, gameID: String)
 
     suspend fun connectPlayer(player: Player): Boolean
 
-    suspend fun getPlayer(): Player?
-
     suspend fun updatePlayer(player: Player) :Boolean
 
     suspend fun setPlayerTeam(player: Player)
 
+
+    // Game repository
     suspend fun createGame(id: String, title: String, position: LatLng, player: Player): Boolean
 
     suspend fun getGame(id: String): Game?
@@ -46,8 +56,8 @@ interface FirestoreRepository {
 
     suspend fun createBattle(opponentID: String, game: Game): Boolean
 
-    suspend fun lost(player: Player, game: Game)
 
-    fun logout()
+    // Player and Game repositories
+    suspend fun lost(player: Player, game: Game)
 
 }
