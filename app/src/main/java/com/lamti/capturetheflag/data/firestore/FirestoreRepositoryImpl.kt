@@ -53,10 +53,6 @@ class FirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun getPlayer(): Player? = playersRepository.getPlayer(userID)
 
-    override suspend fun joinPlayer(player: Player, gameID: String) = playersRepository.joinPlayer(player, gameID)
-
-    override suspend fun connectPlayer(player: Player): Boolean = playersRepository.connectPlayer(player)
-
     override suspend fun updatePlayer(player: Player) = playersRepository.updatePlayer(player)
 
 

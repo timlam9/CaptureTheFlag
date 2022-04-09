@@ -240,7 +240,17 @@ class MapViewModel @Inject constructor(
 
     fun onGameCodeScanned(gameID: String) {
         viewModelScope.launch {
-            firestoreRepository.joinPlayer(_player.value, gameID)
+            // join player
+            firestoreRepository.updatePlayer(
+                _player.value.copy(
+                    gameDetails = GameDetails(
+                        gameID = gameID,
+                        team = Team.Unknown,
+                        rank = GameDetails.Rank.Soldier
+                    ),
+                    status = Player.Status.Connecting
+                )
+            )
         }
     }
 
@@ -263,8 +273,14 @@ class MapViewModel @Inject constructor(
 
     private fun onConnect(onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val result = firestoreRepository.connectPlayer(_player.value)
-            onResult(result)
+            // connect player
+            onResult(
+                firestoreRepository.updatePlayer(
+                    _player.value.copy(
+                        status = Player.Status.Playing
+                    )
+                )
+            )
         }
     }
 

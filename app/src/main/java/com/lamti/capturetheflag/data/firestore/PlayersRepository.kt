@@ -5,9 +5,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import com.lamti.capturetheflag.data.authentication.PlayerRaw
 import com.lamti.capturetheflag.data.authentication.PlayerRaw.Companion.toRaw
-import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Player
-import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.utils.FIRESTORE_LOGGER_TAG
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -37,24 +35,6 @@ class PlayersRepository @Inject constructor(private val firestore: FirebaseFires
         }
     }
 
-    suspend fun joinPlayer(player: Player, gameID: String) {
-        player
-            .copy(
-                gameDetails = GameDetails(
-                    gameID = gameID,
-                    team = Team.Unknown,
-                    rank = GameDetails.Rank.Soldier
-                ),
-                status = Player.Status.Connecting
-            )
-            .toRaw()
-            .update()
-    }
-
-    suspend fun connectPlayer(player: Player): Boolean = player.copy(status = Player.Status.Playing).toRaw().update()
-
-    suspend fun updatePlayer(player: Player) = player.toRaw().update()
-
     suspend fun getPlayer(userID: String): Player? = try {
         firestore
             .collection(COLLECTION_PLAYERS)
@@ -67,6 +47,8 @@ class PlayersRepository @Inject constructor(private val firestore: FirebaseFires
         Timber.e("Get player error: ${e.message}")
         null
     }
+
+    suspend fun updatePlayer(player: Player) = player.toRaw().update()
 
     private suspend fun PlayerRaw.update(): Boolean = try {
         firestore

@@ -23,10 +23,6 @@ interface FirestoreRepository {
 
     suspend fun getPlayer(): Player?
 
-    suspend fun joinPlayer(player: Player, gameID: String)
-
-    suspend fun connectPlayer(player: Player): Boolean
-
     suspend fun updatePlayer(player: Player) :Boolean
 
 
