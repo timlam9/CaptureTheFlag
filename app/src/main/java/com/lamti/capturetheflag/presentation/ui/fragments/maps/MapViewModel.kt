@@ -13,6 +13,7 @@ import com.google.zxing.qrcode.QRCodeWriter
 import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
+import com.lamti.capturetheflag.domain.game.ActivePlayer
 import com.lamti.capturetheflag.domain.game.Battle
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GamePlayer
@@ -54,14 +55,11 @@ class MapViewModel @Inject constructor(
     private val locationRepository: LocationRepository
 ) : ViewModel() {
 
-    private val _enteredGeofenceId = mutableStateOf(EMPTY)
-    private val _battleID = mutableStateOf(EMPTY)
+    private val _initialScreen: MutableState<Screen> = mutableStateOf(Screen.Menu)
+    val initialScreen: State<Screen> = _initialScreen
 
     private val _stayInSplashScreen = mutableStateOf(true)
     val stayInSplashScreen: State<Boolean> = _stayInSplashScreen
-
-    private val _initialScreen: MutableState<Screen> = mutableStateOf(Screen.Menu)
-    val initialScreen: State<Screen> = _initialScreen
 
     private val _livePosition: MutableState<LatLng> = mutableStateOf(emptyPosition())
     val livePosition: State<LatLng> = _livePosition
@@ -75,6 +73,12 @@ class MapViewModel @Inject constructor(
     private val _game: MutableState<Game> = mutableStateOf(Game.initialGame(_livePosition.value))
     val game: State<Game> = _game
 
+    private val _qrCodeBitmap: MutableState<Bitmap?> = mutableStateOf(null)
+    val qrCodeBitmap: State<Bitmap?> = _qrCodeBitmap
+
+    private val _enteredGeofenceId = mutableStateOf(EMPTY)
+    private val _battleID = mutableStateOf(EMPTY)
+
     private val _showBattleButton = mutableStateOf(false)
     val showBattleButton: State<Boolean> = _showBattleButton
 
@@ -84,17 +88,14 @@ class MapViewModel @Inject constructor(
     private val _showArFlagButton = mutableStateOf(false)
     val showArFlagButton: State<Boolean> = _showArFlagButton
 
-    private val _enterGameOverScreen = mutableStateOf(false)
-    val enterGameOverScreen: State<Boolean> = _enterGameOverScreen
-
     private val _canPlaceFlag: MutableState<Boolean> = mutableStateOf(false)
     val canPlaceFlag: State<Boolean> = _canPlaceFlag
 
     private val _isSafehouseDraggable = mutableStateOf(false)
     val isSafehouseDraggable: State<Boolean> = _isSafehouseDraggable
 
-    private val _qrCodeBitmap: MutableState<Bitmap?> = mutableStateOf(null)
-    val qrCodeBitmap: State<Bitmap?> = _qrCodeBitmap
+    private val _enterGameOverScreen = mutableStateOf(false)
+    val enterGameOverScreen: State<Boolean> = _enterGameOverScreen
 
     private val _otherPlayers: MutableState<List<GamePlayer>> = mutableStateOf(emptyList())
     val otherPlayers: State<List<GamePlayer>> = _otherPlayers
@@ -108,91 +109,6 @@ class MapViewModel @Inject constructor(
 
     suspend fun getGame(id: String) = withContext(Dispatchers.IO) {
         firestoreRepository.getGame(id)
-    }
-
-    fun getLastLocation() {
-        viewModelScope.launch {
-            _initialPosition.value = locationRepository.awaitLastLocation().toLatLng()
-        }
-    }
-
-    fun setEnteredGeofenceId(id: String) {
-        _enteredGeofenceId.value = id
-        if (id.isNotEmpty()) {
-            _enteredGeofenceId.value.onEnteredGeofenceIdChanged()
-            Timber.d("[$GEOFENCE_LOGGER_TAG] Entered to: ${_enteredGeofenceId.value}")
-        } else {
-            _showArFlagButton.value = false
-            Timber.d("[$GEOFENCE_LOGGER_TAG] Exited from geofence")
-        }
-    }
-
-    private fun String.onEnteredGeofenceIdChanged() = when {
-        contains(RED_FLAG_GEOFENCE_ID) -> {
-            _showArFlagButton.value =
-                _game.value.gameState.redFlagCaptured == null &&
-                        _player.value.gameDetails?.team == Team.Green
-        }
-        contains(GREEN_FLAG_GEOFENCE_ID) -> {
-            _showArFlagButton.value =
-                _game.value.gameState.greenFlagCaptured == null &&
-                        _player.value.gameDetails?.team == Team.Red
-        }
-        else -> Unit
-    }
-
-    private fun observeOtherPlayers() {
-        firestoreRepository.observePlayersPosition(_game.value.gameID).onEach { players ->
-            _otherPlayers.value = players
-            foundOpponentToBattle(players)
-        }.catch {
-            Timber.e("[$LOGGER_TAG] Catch observe other players error")
-        }.launchIn(viewModelScope)
-    }
-
-    private fun foundOpponentToBattle(players: List<GamePlayer>) {
-        var foundOpponent = false
-        for (player in players) {
-            if (player.id != _player.value.userID &&
-                player.position.isInBattleableGameZone() &&
-                _livePosition.value.isInBattleableGameZone() &&
-                _livePosition.value.isInRangeOf(player.position, DEFAULT_BATTLE_RANGE)
-            ) {
-                _battleID.value = player.id
-                _showBattleButton.value = true
-                foundOpponent = true
-                break
-            }
-        }
-        if (!foundOpponent) {
-            _battleID.value = EMPTY
-            _showBattleButton.value = false
-        }
-    }
-
-    private fun LatLng.isInBattleableGameZone() =
-        isInsideGame() && !isInsideSafehouse() && !isInsideRedFlag() && !isInsideGreenFlag()
-
-    private fun LatLng.isInsideGame() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_GAME_BOUNDARIES_RADIUS)
-
-    private fun LatLng.isInsideSafehouse() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_SAFEHOUSE_RADIUS)
-
-    private fun LatLng.isInsideGreenFlag() = isInRangeOf(_game.value.gameState.greenFlag.position, DEFAULT_FLAG_RADIUS)
-
-    private fun LatLng.isInsideRedFlag() = isInRangeOf(_game.value.gameState.redFlag.position, DEFAULT_FLAG_RADIUS)
-
-    private fun enterBattle(battles: List<Battle>) {
-        if (battles.isEmpty()) _enterBattleScreen.value = false
-
-        var isInBattle = false
-        for (battle in battles) {
-            if (battle.playersIDs.contains(_player.value.userID)) {
-                _enterBattleScreen.value = true
-                isInBattle = true
-                break
-            }
-        }
-        if (!isInBattle) _enterBattleScreen.value = false
     }
 
     fun observePlayer() {
@@ -216,6 +132,34 @@ class MapViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
+    fun onCreateGameClicked(title: String) {
+        viewModelScope.launch {
+            val gameID = getRandomString(5)
+
+            generateQrCode(gameID)
+            _player.value = _player.value.copy(gameDetails = _player.value.gameDetails?.copy(gameID = gameID))
+
+            firestoreRepository.createGame(
+                id = gameID,
+                title = title,
+                position = _livePosition.value,
+                player = _player.value
+            )
+            firestoreRepository.updatePlayer(
+                player = _player.value
+                    .copy(
+                        gameDetails = GameDetails(
+                            gameID = gameID,
+                            team = Team.Red,
+                            rank = GameDetails.Rank.Captain
+                        ),
+                        status = Player.Status.Connecting
+                    )
+            )
+            observeGame()
+        }
+    }
+
     fun onReadyButtonClicked(position: LatLng) {
         viewModelScope.launch {
             // update safehouse position
@@ -227,16 +171,6 @@ class MapViewModel @Inject constructor(
                     )
                 )
             )
-        }
-    }
-
-    fun onCreateGameClicked(title: String) {
-        viewModelScope.launch {
-            val gameID = getRandomString(5)
-            generateQrCode(gameID)
-            _player.value = _player.value.copy(gameDetails = _player.value.gameDetails?.copy(gameID = gameID))
-            firestoreRepository.createGame(gameID, title, _livePosition.value, _player.value)
-            observeGame()
         }
     }
 
@@ -268,28 +202,135 @@ class MapViewModel @Inject constructor(
 
     fun onTeamOkButtonClicked() {
         viewModelScope.launch {
-            firestoreRepository.setPlayerTeam(
-                _player.value.copy(
-                    gameDetails = _player.value.gameDetails?.copy(
-                        team = _player.value.gameDetails?.team ?: Team.Unknown
+            // set player's team
+            val team = _player.value.gameDetails?.team ?: Team.Unknown
+            val gameDetails = _player.value.gameDetails
+
+            val rank = when (team) {
+                Team.Green -> {
+                    when (_game.value.greenPlayers.isEmpty()) {
+                        true -> GameDetails.Rank.Leader
+                        false -> GameDetails.Rank.Soldier
+                    }
+                }
+                else -> GameDetails.Rank.Soldier
+            }
+
+            firestoreRepository.updatePlayer(
+                player = _player.value.copy(
+                    gameDetails = gameDetails?.copy(
+                        gameID = _game.value.gameID,
+                        team = team,
+                        rank = rank
                     )
                 )
             )
+
+            val updatedGame = when (_player.value.gameDetails?.team) {
+                Team.Red -> {
+                    val newList = _game.value.redPlayers.toMutableList()
+                    newList.add(ActivePlayer(id = _player.value.userID, hasLost = false))
+                    _game.value.copy(redPlayers = newList)
+                }
+                Team.Green -> {
+                    val newList = _game.value.greenPlayers.toMutableList()
+                    newList.add(ActivePlayer(id = _player.value.userID, hasLost = false))
+                    _game.value.copy(greenPlayers = newList)
+                }
+                else -> _game.value
+            }
+            firestoreRepository.updateGame(updatedGame)
+
             observeGame()
         }
     }
 
-    private fun onConnect(onResult: (Boolean) -> Unit) {
+    fun onBattleButtonClicked() {
         viewModelScope.launch {
-            // connect player
-            onResult(
-                firestoreRepository.updatePlayer(
-                    _player.value.copy(
-                        status = Player.Status.Playing
+            // create battle
+            firestoreRepository.updateGame(
+                _game.value.copy(
+                    battles = _game.value.battles + Battle(
+                        battleID = _player.value.userID,
+                        playersIDs = listOf(_player.value.userID, _battleID.value)
                     )
                 )
             )
         }
+    }
+
+    fun onLostBattleButtonClicked() {
+        viewModelScope.launch {
+            // lost
+            val updatedBattles: MutableList<Battle> = _game.value.battles.toMutableList()
+            updatedBattles.removeIf { it.playersIDs.contains(_player.value.userID) }
+
+            val updatedGameState = when (_player.value.userID) {
+                _game.value.gameState.redFlagCaptured -> _game.value.gameState.copy(redFlagCaptured = null)
+                _game.value.gameState.greenFlagCaptured -> _game.value.gameState.copy(greenFlagCaptured = null)
+                else -> _game.value.gameState
+            }
+
+            val (redPlayers, greenPlayers) = when (_player.value.gameDetails?.team) {
+                Team.Red -> {
+                    val redPlayers =
+                        _game.value.redPlayers.map { if (it.id == _player.value.userID) it.copy(hasLost = true) else it }
+                    Pair(redPlayers, _game.value.greenPlayers)
+                }
+                Team.Green -> {
+                    val greenPlayers = _game.value.greenPlayers.map {
+                        if (it.id == _player.value.userID) it.copy(hasLost = true) else it
+                    }
+                    Pair(_game.value.redPlayers, greenPlayers)
+                }
+                else -> Pair(_game.value.redPlayers, _game.value.greenPlayers)
+            }
+
+            firestoreRepository.updateGame(
+                game = _game.value.copy(
+                    battles = updatedBattles,
+                    gameState = updatedGameState,
+                    redPlayers = redPlayers,
+                    greenPlayers = greenPlayers
+                )
+            )
+            firestoreRepository.updatePlayer(player = _player.value.copy(status = Player.Status.Lost))
+            firestoreRepository.deleteGamePlayer(gameID = _game.value.gameID, playerID = _player.value.userID)
+        }
+    }
+
+    fun onGameOverOkClicked(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            onResult(
+                firestoreRepository.updatePlayer(
+                    _player.value.copy(
+                        status = Player.Status.Online,
+                        gameDetails = null
+                    )
+                )
+            )
+        }
+    }
+
+    fun setEnteredGeofenceId(id: String) {
+        _enteredGeofenceId.value = id
+        if (id.isNotEmpty()) {
+            _enteredGeofenceId.value.onEnteredGeofenceIdChanged()
+            Timber.d("[$GEOFENCE_LOGGER_TAG] Entered to: ${_enteredGeofenceId.value}")
+        } else {
+            _showArFlagButton.value = false
+            Timber.d("[$GEOFENCE_LOGGER_TAG] Exited from geofence")
+        }
+    }
+
+    fun getLastLocation() {
+        viewModelScope.launch {
+            _initialPosition.value = locationRepository.awaitLastLocation().toLatLng()
+        }
+    }
+
+    fun logout() {
+        firestoreRepository.logout()
     }
 
     private fun generateQrCode(text: String): Bitmap? {
@@ -312,16 +353,97 @@ class MapViewModel @Inject constructor(
         return null
     }
 
-    private fun GameState.startGeofencesListener() {
-        geofencingHelper.addGeofence(safehouse.position, GAME_BOUNDARIES_GEOFENCE_ID, DEFAULT_GAME_BOUNDARIES_RADIUS)
-        geofencingHelper.addGeofence(safehouse.position, SAFEHOUSE_GEOFENCE_ID, DEFAULT_SAFEHOUSE_RADIUS)
-        geofencingHelper.addGeofence(greenFlag.position, GREEN_FLAG_GEOFENCE_ID, DEFAULT_FLAG_RADIUS)
-        geofencingHelper.addGeofence(redFlag.position, RED_FLAG_GEOFENCE_ID, DEFAULT_FLAG_RADIUS)
-        geofencingHelper.addGeofences()
+    private fun onConnect(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            // connect player
+            onResult(
+                firestoreRepository.updatePlayer(
+                    _player.value.copy(
+                        status = Player.Status.Playing
+                    )
+                )
+            )
+        }
+    }
+
+    private fun observeOtherPlayers() {
+        firestoreRepository.observePlayersPosition(_game.value.gameID).onEach { players ->
+            _otherPlayers.value = players
+            foundOpponentToBattle(players)
+        }.catch {
+            Timber.e("[$LOGGER_TAG] Catch observe other players error")
+        }.launchIn(viewModelScope)
+    }
+
+    private fun foundOpponentToBattle(players: List<GamePlayer>) {
+        var foundOpponent = false
+        for (player in players) {
+            if (player.id != _player.value.userID &&
+                player.position.isInBattleableGameZone() &&
+                _livePosition.value.isInBattleableGameZone() &&
+                _livePosition.value.isInRangeOf(player.position, DEFAULT_BATTLE_RANGE)
+            ) {
+                _battleID.value = player.id
+                _showBattleButton.value = true
+                foundOpponent = true
+                break
+            }
+        }
+        if (!foundOpponent) {
+            _battleID.value = EMPTY
+            _showBattleButton.value = false
+        }
+    }
+
+    private fun enterBattle(battles: List<Battle>) {
+        if (battles.isEmpty()) _enterBattleScreen.value = false
+
+        var isInBattle = false
+        for (battle in battles) {
+            if (battle.playersIDs.contains(_player.value.userID)) {
+                _enterBattleScreen.value = true
+                isInBattle = true
+                break
+            }
+        }
+        if (!isInBattle) _enterBattleScreen.value = false
+    }
+
+    private fun startLocationUpdates() {
+        locationRepository.locationFlow().onEach { newLocation ->
+            val safehousePosition = _game.value.gameState.safehouse.position
+            val isNotInsideSafehouse = !newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_SAFEHOUSE_RADIUS)
+            val isInsideGame = newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_GAME_BOUNDARIES_RADIUS)
+
+            _canPlaceFlag.value = isNotInsideSafehouse && isInsideGame
+            _livePosition.value = newLocation.toLatLng()
+        }.launchIn(viewModelScope)
     }
 
     private fun removeGeofencesListener() {
         geofencingHelper.removeGeofences()
+    }
+
+    // Game extensions
+    private fun String.onEnteredGeofenceIdChanged() = when {
+        contains(RED_FLAG_GEOFENCE_ID) -> {
+            _showArFlagButton.value =
+                _game.value.gameState.redFlagCaptured == null &&
+                        _player.value.gameDetails?.team == Team.Green
+        }
+        contains(GREEN_FLAG_GEOFENCE_ID) -> {
+            _showArFlagButton.value =
+                _game.value.gameState.greenFlagCaptured == null &&
+                        _player.value.gameDetails?.team == Team.Red
+        }
+        else -> Unit
+    }
+
+    private fun GameState.onGameStarted() {
+        if (safehouse.isPlaced && redFlag.isPlaced && greenFlag.isPlaced) {
+            startGeofencesListener()
+            observeOtherPlayers()
+        }
     }
 
     private fun GameState.handleGameStateEvents() = when (state) {
@@ -358,60 +480,26 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    private fun GameState.onGameStarted() {
-        if (safehouse.isPlaced && redFlag.isPlaced && greenFlag.isPlaced) {
-            startGeofencesListener()
-            observeOtherPlayers()
-        }
+    private fun GameState.startGeofencesListener() {
+        geofencingHelper.addGeofence(safehouse.position, GAME_BOUNDARIES_GEOFENCE_ID, DEFAULT_GAME_BOUNDARIES_RADIUS)
+        geofencingHelper.addGeofence(safehouse.position, SAFEHOUSE_GEOFENCE_ID, DEFAULT_SAFEHOUSE_RADIUS)
+        geofencingHelper.addGeofence(greenFlag.position, GREEN_FLAG_GEOFENCE_ID, DEFAULT_FLAG_RADIUS)
+        geofencingHelper.addGeofence(redFlag.position, RED_FLAG_GEOFENCE_ID, DEFAULT_FLAG_RADIUS)
+        geofencingHelper.addGeofences()
     }
 
-    fun onBattleButtonClicked() {
-        viewModelScope.launch {
-            // create battle
-            firestoreRepository.updateGame(
-                _game.value.copy(
-                    battles = _game.value.battles + Battle(
-                        battleID = _player.value.userID,
-                        playersIDs = listOf(_player.value.userID, _battleID.value)
-                    )
-                )
-            )
-        }
-    }
+    // Position extensions
+    private fun LatLng.isInBattleableGameZone() =
+        isInsideGame() && !isInsideSafehouse() && !isInsideRedFlag() && !isInsideGreenFlag()
 
-    private fun startLocationUpdates() {
-        locationRepository.locationFlow().onEach { newLocation ->
-            val safehousePosition = _game.value.gameState.safehouse.position
-            val isNotInsideSafehouse = !newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_SAFEHOUSE_RADIUS)
-            val isInsideGame = newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_GAME_BOUNDARIES_RADIUS)
+    private fun LatLng.isInsideGame() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_GAME_BOUNDARIES_RADIUS)
 
-            _canPlaceFlag.value = isNotInsideSafehouse && isInsideGame
-            _livePosition.value = newLocation.toLatLng()
-        }.launchIn(viewModelScope)
-    }
+    private fun LatLng.isInsideSafehouse() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_SAFEHOUSE_RADIUS)
 
-    fun onLostBattleButtonClicked() {
-        viewModelScope.launch {
-            firestoreRepository.lost(_player.value, _game.value)
-        }
-    }
+    private fun LatLng.isInsideGreenFlag() = isInRangeOf(_game.value.gameState.greenFlag.position, DEFAULT_FLAG_RADIUS)
 
-    fun onGameOverOkClicked(onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            onResult(
-                firestoreRepository.updatePlayer(
-                    _player.value.copy(
-                        status = Player.Status.Online,
-                        gameDetails = null
-                    )
-                )
-            )
-        }
-    }
+    private fun LatLng.isInsideRedFlag() = isInRangeOf(_game.value.gameState.redFlag.position, DEFAULT_FLAG_RADIUS)
 
-    fun logout() {
-        firestoreRepository.logout()
-    }
 
     companion object {
 

@@ -1,7 +1,6 @@
 package com.lamti.capturetheflag.domain
 
 import com.google.android.gms.maps.model.LatLng
-import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.player.Player
@@ -16,14 +15,12 @@ interface FirestoreRepository {
 
     fun logout()
 
-
     // Players
     fun observePlayer(): Flow<Player>
 
     suspend fun getPlayer(): Player?
 
     suspend fun updatePlayer(player: Player) :Boolean
-
 
     // Games
     fun observeGame(gameID: String): Flow<Game>
@@ -32,21 +29,12 @@ interface FirestoreRepository {
 
     suspend fun updateGame(game: Game): Boolean
 
-
-    // Players and Games
-    suspend fun discoverFlag(flagFound: Flag): Boolean
-
-    suspend fun captureFlag(): Boolean
-
     suspend fun createGame(id: String, title: String, position: LatLng, player: Player): Boolean
-
-    suspend fun lost(player: Player, game: Game)
-
-    suspend fun setPlayerTeam(player: Player)
-
 
     // Database repository
     fun observePlayersPosition(gameID: String): Flow<List<GamePlayer>>
 
     suspend fun uploadGamePlayer(position: LatLng)
+
+    suspend fun deleteGamePlayer(gameID: String, playerID: String): Boolean
 }

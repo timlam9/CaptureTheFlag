@@ -9,6 +9,7 @@ import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Flag
+import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.utils.EMPTY
@@ -140,7 +141,26 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
 
     private fun discoverFlag(flag: Flag) {
         applicationScope.launch {
-            firestoreRepository.discoverFlag(flag)
+            val player = firestoreRepository.getPlayer()
+            val gameID = player?.gameDetails?.gameID ?: return@launch
+            val team = player.gameDetails.team
+            val currentGame = firestoreRepository.getGame(gameID) ?: return@launch
+
+            val game: Game = when {
+                team == Team.Red && flag == Flag.Green -> currentGame.copy(
+                    gameState = currentGame.gameState.copy(
+                        greenFlag = currentGame.gameState.greenFlag.copy(isDiscovered = true)
+                    )
+                )
+                team == Team.Green && flag == Flag.Red -> currentGame.copy(
+                    gameState = currentGame.gameState.copy(
+                        redFlag = currentGame.gameState.redFlag.copy(isDiscovered = true)
+                    )
+                )
+                else -> return@launch
+            }
+
+            firestoreRepository.updateGame(game)
         }
     }
 

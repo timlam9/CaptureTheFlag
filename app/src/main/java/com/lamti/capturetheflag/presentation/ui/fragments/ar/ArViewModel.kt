@@ -254,8 +254,14 @@ class ArViewModel @Inject constructor(
 
     fun onCaptureClicked(onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val result = firestoreRepository.captureFlag()
-            onResult(result)
+            // capture flag
+            val game = when (_player.value.gameDetails?.team) {
+                Team.Red -> _game.value.copy(gameState = _game.value.gameState.copy(greenFlagCaptured = _player.value.userID))
+                Team.Green -> _game.value.copy(gameState = _game.value.gameState.copy(redFlagCaptured = _player.value.userID))
+                else -> _game.value.copy(gameState = _game.value.gameState.copy())
+            }
+
+            onResult(firestoreRepository.updateGame(game))
         }
     }
 
