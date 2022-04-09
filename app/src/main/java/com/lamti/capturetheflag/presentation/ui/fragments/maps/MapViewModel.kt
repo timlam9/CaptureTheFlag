@@ -218,7 +218,15 @@ class MapViewModel @Inject constructor(
 
     fun onReadyButtonClicked(position: LatLng) {
         viewModelScope.launch {
-            firestoreRepository.updateSafehousePosition(_game.value, position)
+            // update safehouse position
+            firestoreRepository.updateGame(
+                _game.value.copy(
+                    gameState = _game.value.gameState.copy(
+                        state = ProgressState.SettingFlags,
+                        safehouse = _game.value.gameState.safehouse.copy(position = position)
+                    )
+                )
+            )
         }
     }
 
@@ -359,7 +367,15 @@ class MapViewModel @Inject constructor(
 
     fun onBattleButtonClicked() {
         viewModelScope.launch {
-            firestoreRepository.createBattle(_battleID.value, _game.value)
+            // create battle
+            firestoreRepository.updateGame(
+                _game.value.copy(
+                    battles = _game.value.battles + Battle(
+                        battleID = _player.value.userID,
+                        playersIDs = listOf(_player.value.userID, _battleID.value)
+                    )
+                )
+            )
         }
     }
 

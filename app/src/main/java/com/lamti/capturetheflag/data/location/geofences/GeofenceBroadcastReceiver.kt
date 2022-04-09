@@ -9,6 +9,7 @@ import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Flag
+import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.GEOFENCE_LOGGER_TAG
@@ -81,13 +82,29 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
 
             if (player.userID == game.gameState.greenFlagCaptured) {
                 if (gameDetails.team == Team.Red) {
-                    firestoreRepository.endGame(game, Team.Red)
+                    firestoreRepository.updateGame(
+                        game
+                            .copy(
+                                gameState = game.gameState.copy(
+                                    state = ProgressState.Ended,
+                                    winners = Team.Red
+                                )
+                            )
+                    )
                 }
             }
 
             if (player.userID == game.gameState.redFlagCaptured) {
                 if (gameDetails.team == Team.Green) {
-                    firestoreRepository.endGame(game, Team.Green)
+                    firestoreRepository.updateGame(
+                        game
+                            .copy(
+                                gameState = game.gameState.copy(
+                                    state = ProgressState.Ended,
+                                    winners = Team.Green
+                                )
+                            )
+                    )
                 }
             }
         }

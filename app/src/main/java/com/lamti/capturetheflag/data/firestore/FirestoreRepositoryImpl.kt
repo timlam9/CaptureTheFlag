@@ -8,7 +8,6 @@ import com.lamti.capturetheflag.domain.game.Battle
 import com.lamti.capturetheflag.domain.game.Flag
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GamePlayer
-import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.PlayerDetails
@@ -57,38 +56,11 @@ class FirestoreRepositoryImpl @Inject constructor(
 
 
     // Games
-    override fun observeGame(gameID: String): Flow<Game> = gamesRepository.observeGame(gameID = gameID)
+    override fun observeGame(gameID: String): Flow<Game> = gamesRepository.observeGame(gameID)
 
     override suspend fun getGame(id: String): Game? = gamesRepository.getGame(id)
 
-    override suspend fun endGame(game: Game, team: Team) = gamesRepository.updateGame(
-        game = game
-            .copy(
-                gameState = game.gameState.copy(
-                    state = ProgressState.Ended,
-                    winners = team
-                )
-            )
-    )
-
-    override suspend fun updateSafehousePosition(game: Game, position: LatLng): Boolean = gamesRepository.updateGame(
-        game = game.copy(
-            gameState = game.gameState.copy(
-                state = ProgressState.SettingFlags,
-                safehouse = game.gameState.safehouse.copy(position = position)
-            )
-        )
-    )
-
-    override suspend fun createBattle(opponentID: String, game: Game): Boolean = gamesRepository.updateGame(
-        game = game
-            .copy(
-                battles = game.battles + Battle(
-                    battleID = userID,
-                    playersIDs = listOf(userID, opponentID)
-                )
-            )
-    )
+    override suspend fun updateGame(game: Game): Boolean = gamesRepository.updateGame(game)
 
 
     // Player and Game

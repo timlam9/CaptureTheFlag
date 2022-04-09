@@ -32,7 +32,7 @@ class GamesRepository @Inject constructor(private val firestore: FirebaseFiresto
             snapshotListener = firestore
                 .collection(COLLECTION_GAMES)
                 .document(gameID)
-                .addSnapshotListener { snapshot, e ->
+                .addSnapshotListener { snapshot, _ ->
                     val state = snapshot?.toObject(GameRaw::class.java)?.toGame() ?: return@addSnapshotListener
                     trySend(state).isSuccess
                 }
@@ -44,11 +44,6 @@ class GamesRepository @Inject constructor(private val firestore: FirebaseFiresto
             snapshotListener?.remove()
         }
     }
-
-    suspend fun createGame(id: String, title: String, position: LatLng, userID: String): Boolean =
-        initialGame(id, title, position, userID).toRaw().update()
-
-    suspend fun updateGame(game: Game): Boolean = game.toRaw().update()
 
     suspend fun getGame(id: String): Game? = withContext(Dispatchers.IO) {
         try {
@@ -65,6 +60,14 @@ class GamesRepository @Inject constructor(private val firestore: FirebaseFiresto
         }
     }
 
+    suspend fun createGame(id: String, title: String, position: LatLng, userID: String): Boolean = initialGame(
+        id = id,
+        title = title,
+        position = position,
+        userID = userID
+    ).toRaw().update()
+
+    suspend fun updateGame(game: Game): Boolean = game.toRaw().update()
 
     private fun initialGame(
         id: String,
