@@ -19,7 +19,7 @@ class FirestoreRepositoryImpl @Inject constructor(
 ) : FirestoreRepository {
 
     // Authentication
-    private val userID = authenticationRepository.currentUser?.uid ?: EMPTY
+    private val userID = authenticationRepository.getCurrentUser()?.uid ?: EMPTY
 
     override suspend fun registerUser(
         email: String,

@@ -12,8 +12,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
 @Module
@@ -31,13 +29,11 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideApplicationCoroutineScope() = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    fun provideLocationRepository(client: FusedLocationProviderClient, scope: CoroutineScope): LocationRepository =
+        LocationRepository(client, scope)
 
     @Provides
     @Singleton
-    fun provideLocationRepository(client: FusedLocationProviderClient, scope: CoroutineScope) = LocationRepository(client, scope)
-
-    @Provides
-    fun provideLocationService() = LocationServiceImpl()
+    fun provideLocationService(): LocationServiceImpl = LocationServiceImpl()
 
 }

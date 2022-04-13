@@ -14,7 +14,7 @@ import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.FIRESTORE_LOGGER_TAG
 import com.lamti.capturetheflag.utils.emptyPosition
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -24,7 +24,10 @@ import timber.log.Timber
 import java.util.Date
 import javax.inject.Inject
 
-class GamesRepository @Inject constructor(private val firestore: FirebaseFirestore) {
+class GamesRepository @Inject constructor(
+    private val firestore: FirebaseFirestore,
+    private val ioDispatcher: CoroutineDispatcher
+) {
 
     fun observeGame(gameID: String): Flow<Game> = callbackFlow {
         var snapshotListener: ListenerRegistration? = null
@@ -34,7 +37,7 @@ class GamesRepository @Inject constructor(private val firestore: FirebaseFiresto
                 .document(gameID)
                 .addSnapshotListener { snapshot, _ ->
                     val state = snapshot?.toObject(GameRaw::class.java)?.toGame() ?: return@addSnapshotListener
-                    trySend(state).isSuccess
+                    trySend(state)
                 }
         } catch (e: Exception) {
             Timber.e("Observe game error: ${e.message}")
@@ -45,7 +48,7 @@ class GamesRepository @Inject constructor(private val firestore: FirebaseFiresto
         }
     }
 
-    suspend fun getGame(id: String): Game? = withContext(Dispatchers.IO) {
+    suspend fun getGame(id: String): Game? = withContext(ioDispatcher) {
         try {
             firestore
                 .collection(COLLECTION_GAMES)
@@ -109,16 +112,18 @@ class GamesRepository @Inject constructor(private val firestore: FirebaseFiresto
         battles = emptyList()
     )
 
-    private suspend fun GameRaw.update(): Boolean = try {
-        firestore
-            .collection(COLLECTION_GAMES)
-            .document(gameID)
-            .set(this, SetOptions.merge())
-            .await()
-        true
-    } catch (e: Exception) {
-        Timber.e("[$FIRESTORE_LOGGER_TAG] ${e.message}")
-        false
+    private suspend fun GameRaw.update(): Boolean = withContext(ioDispatcher) {
+        try {
+            firestore
+                .collection(COLLECTION_GAMES)
+                .document(gameID)
+                .set(this@update, SetOptions.merge())
+                .await()
+            true
+        } catch (e: Exception) {
+            Timber.e("[$FIRESTORE_LOGGER_TAG] ${e.message}")
+            false
+        }
     }
 
     companion object {

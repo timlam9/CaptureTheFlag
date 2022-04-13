@@ -30,16 +30,17 @@ class GeofencingRepository @Inject constructor(
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
                 .build()
         )
+        Timber.d("[$GEOFENCE_LOGGER_TAG] Geofence with id '$id' is added to list")
     }
 
     @SuppressLint("MissingPermission")
     fun addGeofences() {
         geofencingClient.addGeofences(getGeofencingRequest(), geofencePendingIntent).run {
             addOnSuccessListener {
-                Timber.d("[$GEOFENCE_LOGGER_TAG] Geofence is added")
+                Timber.d("[$GEOFENCE_LOGGER_TAG] Geofences are added")
             }
             addOnFailureListener {
-                Timber.e("[$GEOFENCE_LOGGER_TAG] Geofence failed to be added: ${it.message}")
+                Timber.e("[$GEOFENCE_LOGGER_TAG] Geofences failed to be added: ${it.message}")
             }
         }
     }
@@ -47,19 +48,19 @@ class GeofencingRepository @Inject constructor(
     fun removeGeofences() {
         geofencingClient.removeGeofences(geofencePendingIntent).run {
             addOnSuccessListener {
-                Timber.d("[$GEOFENCE_LOGGER_TAG] Geofence is removed")
+                Timber.d("[$GEOFENCE_LOGGER_TAG] Geofences are removed")
             }
             addOnFailureListener {
-                Timber.e("[$GEOFENCE_LOGGER_TAG] Geofence failed to be removed: ${it.message}")
+                Timber.e("[$GEOFENCE_LOGGER_TAG] Geofences failed to be removed: ${it.message}")
             }
         }
     }
 
     private fun getGeofencingRequest(): GeofencingRequest = GeofencingRequest.Builder().apply {
+        Timber.d("[$GEOFENCE_LOGGER_TAG] Geofence list to be added: $geofenceList")
         setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
         addGeofences(geofenceList)
     }.build()
-
 
     companion object {
 

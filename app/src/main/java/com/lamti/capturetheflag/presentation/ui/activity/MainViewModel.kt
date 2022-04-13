@@ -17,11 +17,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    authenticationRepository: AuthenticationRepository,
+    private val authenticationRepository: AuthenticationRepository,
     private val firestoreRepository: FirestoreRepository
 ) : ViewModel() {
 
-    val isUserLoggedIn = authenticationRepository.currentUser?.uid != null
+    fun isUserLoggedIn() = authenticationRepository.getCurrentUser()?.uid != null
 
     private val _currentScreen = MutableStateFlow(FragmentScreen.Map)
     val currentScreen: StateFlow<FragmentScreen> = _currentScreen.asStateFlow()

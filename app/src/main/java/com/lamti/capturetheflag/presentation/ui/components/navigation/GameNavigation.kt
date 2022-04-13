@@ -1,6 +1,8 @@
 package com.lamti.capturetheflag.presentation.ui.components.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.navigation.compose.NavHost
@@ -19,7 +21,6 @@ import com.lamti.capturetheflag.presentation.ui.components.screens.MenuScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.StartingGameScreen
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
 import com.lamti.capturetheflag.presentation.ui.popNavigate
-import com.lamti.capturetheflag.utils.EMPTY
 import kotlinx.coroutines.launch
 
 @Composable
@@ -32,9 +33,23 @@ fun GameNavigation(
     val navController = rememberNavController()
     val coroutine = rememberCoroutineScope()
 
+    val qrCodeImage by viewModel.qrCodeBitmap.collectAsState()
+    val initialScreen by viewModel.initialScreen.collectAsState()
+    val player by viewModel.player.collectAsState()
+    val canPlaceFlag by viewModel.canPlaceFlag.collectAsState()
+    val initialPosition by viewModel.initialPosition.collectAsState()
+    val livePosition by viewModel.livePosition.collectAsState()
+    val isSafehouseDraggable by viewModel.isSafehouseDraggable.collectAsState()
+    val otherPlayers by viewModel.otherPlayers.collectAsState()
+    val showBattleButton by viewModel.showBattleButton.collectAsState()
+    val showArFlagButton by viewModel.showArFlagButton.collectAsState()
+    val enterBattleScreen by viewModel.enterBattleScreen.collectAsState()
+    val enterGameOverScreen by viewModel.enterGameOverScreen.collectAsState()
+
+
     NavHost(
         navController = navController,
-        startDestination = viewModel.initialScreen.value.route,
+        startDestination = initialScreen.route,
     ) {
         composable(route = Screen.Menu.route) {
             MenuScreen(
@@ -54,13 +69,10 @@ fun GameNavigation(
         }
         composable(route = Screen.StartingGame.route) {
             StartingGameScreen(
-                gameID = viewModel.player.value.gameDetails?.gameID ?: EMPTY,
-                qrCodeImage = viewModel.qrCodeBitmap.value?.asImageBitmap(),
-                gameTitle = viewModel.game.value.title,
-                redPlayers = viewModel.game.value.redPlayers.size,
-                greenPlayers = viewModel.game.value.greenPlayers.size,
+                game = viewModel.game.value,
+                qrCodeImage = qrCodeImage?.asImageBitmap(),
                 onStartGameClicked = {
-                    viewModel.onSetGameClicked()
+                    viewModel.onStartGameClicked()
                     navController.popNavigate(Screen.Map.route)
                 }
             )
@@ -68,9 +80,9 @@ fun GameNavigation(
         composable(route = Screen.JoinGame.route) {
             JoinGameScreen { qrCode ->
                 coroutine.launch {
-                    val game = viewModel.getGame(qrCode)
-                    if (game != null) {
-                        viewModel.onGameCodeScanned(game.gameID)
+                    val gameToJoin = viewModel.getGame(qrCode)
+                    if (gameToJoin != null) {
+                        viewModel.onGameCodeScanned(qrCode)
                         navController.navigate(Screen.ChooseTeam.route)
                     }
                 }
@@ -85,22 +97,22 @@ fun GameNavigation(
         }
         composable(route = Screen.Map.route) {
             MapScreen(
-                userID = viewModel.player.value.userID,
-                gameDetails = viewModel.player.value.gameDetails ?: GameDetails.initialGameDetails(),
+                userID = player.userID,
+                gameDetails = player.gameDetails ?: GameDetails.initialGameDetails(),
                 gameState = viewModel.game.value.gameState,
-                canPlaceFlag = viewModel.canPlaceFlag.value,
+                canPlaceFlag = canPlaceFlag,
                 safehousePosition = viewModel.game.value.gameState.safehouse.position,
-                initialPosition = viewModel.initialPosition.value,
-                livePosition = viewModel.livePosition.value,
-                isSafehouseDraggable = viewModel.isSafehouseDraggable.value,
-                otherPlayers = viewModel.otherPlayers.value,
-                showBattleButton = viewModel.showBattleButton.value,
-                showArFlagButton = viewModel.showArFlagButton.value,
-                lost = viewModel.player.value.status == Player.Status.Lost,
+                initialPosition = initialPosition,
+                livePosition = livePosition,
+                isSafehouseDraggable = isSafehouseDraggable,
+                otherPlayers = otherPlayers,
+                showBattleButton = showBattleButton,
+                showArFlagButton = showArFlagButton,
+                lost = player.status == Player.Status.Lost,
                 redPlayersCount = viewModel.game.value.redPlayers.filterNot { it.hasLost }.size,
                 greenPlayersCount = viewModel.game.value.greenPlayers.filterNot { it.hasLost }.size,
-                enterBattleScreen = viewModel.enterBattleScreen.value,
-                enterGameOverScreen = viewModel.enterGameOverScreen.value,
+                enterBattleScreen = enterBattleScreen,
+                enterGameOverScreen = enterGameOverScreen,
                 onEnterBattleScreen = { navController.popNavigate(Screen.Battle.route) },
                 onEnterGameOverScreen = { navController.popNavigate(Screen.GameOver.route) },
                 onArScannerButtonClicked = onArScannerButtonClicked,
@@ -111,8 +123,8 @@ fun GameNavigation(
         }
         composable(route = Screen.Battle.route) {
             BattleScreen(
-                team = viewModel.player.value.gameDetails?.team ?: Team.Unknown,
-                enterBattleScreen = viewModel.enterBattleScreen.value,
+                team = player.gameDetails?.team ?: Team.Unknown,
+                enterBattleScreen = enterBattleScreen,
                 onEnterBattleScreen = { navController.popNavigate(Screen.Map.route) },
                 onLostButtonClicked = { viewModel.onLostBattleButtonClicked() }
             )

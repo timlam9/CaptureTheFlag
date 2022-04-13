@@ -37,6 +37,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lamti.capturetheflag.R
+import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.PositiveAndNegativeAlertDialog
@@ -47,24 +48,21 @@ import com.lamti.capturetheflag.presentation.ui.style.White
 
 @Composable
 fun StartingGameScreen(
-    gameID: String,
+    game: Game,
     qrCodeImage: ImageBitmap?,
-    gameTitle: String,
-    redPlayers: Int,
-    greenPlayers: Int,
     onStartGameClicked: () -> Unit
 ) {
     var showConfirmationDialog by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         GameCard(
-            gameTitle = gameTitle,
-            greenPlayers = greenPlayers,
-            redPlayers = redPlayers
+            gameTitle = game.title,
+            greenPlayers = game.greenPlayers.size,
+            redPlayers = game.redPlayers.size
         )
         GameContent(
             qrCodeImage = qrCodeImage,
-            gameID = gameID,
+            gameID = game.gameID,
             onStartGameClicked = { showConfirmationDialog = true }
         )
         PositiveAndNegativeAlertDialog(
@@ -90,7 +88,7 @@ fun GameContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        val annotatedString = remember {
+        val annotatedString = remember(gameID) {
             buildAnnotatedString {
                 append("Or share code: ")
                 withStyle(

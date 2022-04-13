@@ -12,6 +12,7 @@ const val LOGGER_TAG = "LOGGER"
 const val GEOFENCE_LOGGER_TAG = "GEOFENCE_LOGGER"
 const val LOCATION_LOGGER_TAG = "LOCATION_LOGGER"
 const val FIRESTORE_LOGGER_TAG = "FIRESTORE_LOGGER"
+const val CLOUD_ANCHOR_LOGGER_TAG = "CLOUD_ANCHOR_LOGGER"
 const val SERVICE_LOCATION_LOGGER_TAG = "SERVICE_LOCATION_LOGGER"
 
 fun emptyPosition() = LatLng(0.0, 0.0)
@@ -43,7 +44,7 @@ inline fun <reified T : Any> SharedPreferences.getObject(key: String): T? {
 }
 
 @Suppress("UNCHECKED_CAST")
-inline fun <reified T : Any> SharedPreferences.get(key: String, defaultValue: T? = null): T {
+inline operator fun <reified T : Any> SharedPreferences.get(key: String, defaultValue: T? = null): T {
     return when (T::class) {
         Boolean::class -> getBoolean(key, defaultValue as? Boolean? ?: false) as T
         Float::class -> getFloat(key, defaultValue as? Float? ?: 0.0f) as T

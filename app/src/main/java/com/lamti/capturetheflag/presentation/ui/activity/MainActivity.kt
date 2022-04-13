@@ -39,7 +39,9 @@ import com.lamti.capturetheflag.presentation.ui.fragments.navigation.FragmentScr
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.navigateToScreen
 import com.lamti.capturetheflag.presentation.ui.login.LoginActivity
 import com.lamti.capturetheflag.utils.EMPTY
+import com.lamti.capturetheflag.utils.GEOFENCE_LOGGER_TAG
 import com.lamti.capturetheflag.utils.LOGGER_TAG
+import com.lamti.capturetheflag.utils.get
 import com.lamti.capturetheflag.utils.myAppPreferences
 import com.lamti.capturetheflag.utils.set
 import dagger.hilt.android.AndroidEntryPoint
@@ -64,11 +66,23 @@ class MainActivity : AppCompatActivity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             showWhenLockedAndTurnScreenOn()
             super.onReceive(context, intent)
+            Timber.d("[$GEOFENCE_LOGGER_TAG] Geofence intent received: ${intent?.getStringExtra(GEOFENCE_KEY)}")
 
-            geofenceIdFLow.value = intent?.getStringExtra(GEOFENCE_KEY) ?: return
+            myAppPreferences[GEOFENCE_KEY] = intent?.getStringExtra(GEOFENCE_KEY) ?: EMPTY
+            geofenceIdFLow.value = intent?.getStringExtra(GEOFENCE_KEY) ?: EMPTY
+
             if (geofenceIdFLow.value.isNotEmpty() && !isAppInForegrounded()) {
                 notificationHelper.showFlagFoundNotification()
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Timber.d("[$GEOFENCE_LOGGER_TAG] Saved value: ${myAppPreferences[GEOFENCE_KEY, EMPTY]}")
+
+        if (myAppPreferences[GEOFENCE_KEY, EMPTY].isNotEmpty()) {
+            geofenceIdFLow.value = myAppPreferences[GEOFENCE_KEY, EMPTY]
         }
     }
 
@@ -153,7 +167,7 @@ class MainActivity : AppCompatActivity() {
             setKeepOnScreenCondition {
                 if (!isEnterFirstTime) {
                     isEnterFirstTime = true
-                    if (!viewModel.isUserLoggedIn) {
+                    if (!viewModel.isUserLoggedIn()) {
                         startActivity(Intent(this@MainActivity, LoginActivity::class.java))
                         finish()
                     } else {
@@ -161,7 +175,7 @@ class MainActivity : AppCompatActivity() {
                         startLocationUpdates()
                     }
                 }
-                return@setKeepOnScreenCondition !viewModel.isUserLoggedIn
+                return@setKeepOnScreenCondition false
             }
         }
     }

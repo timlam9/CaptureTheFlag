@@ -2,7 +2,6 @@ package com.lamti.capturetheflag.presentation.ui.fragments.ar
 
 import android.location.Location
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.ar.core.Anchor
@@ -18,15 +17,12 @@ import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
-import com.lamti.capturetheflag.data.location.LocationRepository
-import com.lamti.capturetheflag.domain.FirestoreRepository
+import com.lamti.capturetheflag.domain.GameEngine
 import com.lamti.capturetheflag.domain.anchors.CloudAnchorRepository
 import com.lamti.capturetheflag.domain.game.Game
-import com.lamti.capturetheflag.domain.game.Game.Companion.initialGame
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Player
-import com.lamti.capturetheflag.domain.player.Player.Companion.emptyPlayer
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.arcore.helpers.CloudAnchorManager
 import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
@@ -35,13 +31,13 @@ import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PointCloudRenderer
 import com.lamti.capturetheflag.presentation.ui.toLatLng
+import com.lamti.capturetheflag.utils.CLOUD_ANCHOR_LOGGER_TAG
 import com.lamti.capturetheflag.utils.EMPTY
+import com.lamti.capturetheflag.utils.LOGGER_TAG
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -53,12 +49,10 @@ private val GREEN_COLOR = floatArrayOf(139.0f, 195.0f, 74.0f, 255.0f)
 private val RED_COLOR = floatArrayOf(255.0f, 0.0f, 0.0f, 255.0f)
 private const val ERROR_MESSAGE = "An error occurred. Please relaunch the app and try again."
 
-
 @HiltViewModel
 class ArViewModel @Inject constructor(
-    private val cloudAnchorRepository: CloudAnchorRepository,
-    private val locationRepository: LocationRepository,
-    private val firestoreRepository: FirestoreRepository
+    private val gameEngine: GameEngine,
+    private val cloudAnchorRepository: CloudAnchorRepository
 ) : ViewModel() {
 
     private var _session: MutableStateFlow<Session?> = MutableStateFlow(null)
@@ -70,11 +64,8 @@ class ArViewModel @Inject constructor(
     private val _instructions = MutableStateFlow(EMPTY)
     val instructions: StateFlow<String> = _instructions.asStateFlow()
 
-    private val _player = mutableStateOf(emptyPlayer())
-    val player: State<Player> = _player
-
-    private val _game = MutableStateFlow(initialGame())
-    val game: StateFlow<Game> = _game.asStateFlow()
+    val player: StateFlow<Player> = gameEngine.player
+    val game: State<Game> = gameEngine.game
 
     private val _captureFlag = MutableStateFlow(false)
     val captureFlag: StateFlow<Boolean> = _captureFlag.asStateFlow()
@@ -96,14 +87,7 @@ class ArViewModel @Inject constructor(
     private var currentAnchor: Anchor? = null
 
     init {
-        viewModelScope.launch {
-            _player.value = firestoreRepository.getPlayer() ?: emptyPlayer()
-            flagColor = getFlagColor(_player.value.gameDetails?.team)
-        }
-        firestoreRepository.observeGame(_game.value.gameID).onEach {
-            _game.value = it
-            if (_scannerMode.value) onResolveObjects()
-        }.launchIn(viewModelScope)
+        flagColor = getFlagColor(player.value.gameDetails?.team)
     }
 
     fun createSession(session: Session?) {
@@ -137,7 +121,7 @@ class ArViewModel @Inject constructor(
                 exception = e
             }
             if (_message.value != EMPTY) {
-                Timber.e("Exception creating session: $exception")
+                Timber.e("[$LOGGER_TAG] Exception creating session: $exception")
                 return
             }
         }
@@ -147,6 +131,12 @@ class ArViewModel @Inject constructor(
         // Note that order matters - see the note in onPause(), the reverse applies here.
         try {
             _session.value?.resume()
+            if (_scannerMode.value) {
+                if (!isResolveObjectStarted) {
+                    isResolveObjectStarted = true
+                    onResolveObjects()
+                }
+            }
         } catch (e: CameraNotAvailableException) {
             _message.update { "Camera not available. Try restarting the app." }
             _session.update { null }
@@ -168,7 +158,7 @@ class ArViewModel @Inject constructor(
         try {
             prepareObjects(backgroundRenderer, planeRenderer, pointCloudRenderer, virtualObject)
         } catch (e: IOException) {
-            Timber.e("Failed to read an asset file: $e")
+            Timber.e("[$LOGGER_TAG] Failed to read an asset file: $e")
         }
     }
 
@@ -236,7 +226,7 @@ class ArViewModel @Inject constructor(
             }
         } catch (t: Throwable) {
             // Avoid crashing the application due to unhandled exceptions.
-            Timber.e("Exception on the OpenGL thread: $t")
+            Timber.e("[$LOGGER_TAG] Exception on the OpenGL thread: $t")
         }
     }
 
@@ -247,139 +237,22 @@ class ArViewModel @Inject constructor(
 
     fun isCurrentAnchorNull(): Boolean = currentAnchor != null
 
-    fun setInstructions(text: String, scanner: Boolean) {
+    var isResolveObjectStarted = false
+
+    fun setInstructions(text: String, isScanner: Boolean) {
         _instructions.update { text }
-        _scannerMode.update { scanner }
+        _scannerMode.update { isScanner }
     }
 
-    fun onCaptureClicked(onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            // capture flag
-            val game = when (_player.value.gameDetails?.team) {
-                Team.Red -> _game.value.copy(gameState = _game.value.gameState.copy(greenFlagCaptured = _player.value.userID))
-                Team.Green -> _game.value.copy(gameState = _game.value.gameState.copy(redFlagCaptured = _player.value.userID))
-                else -> _game.value.copy(gameState = _game.value.gameState.copy())
-            }
+    fun onCaptureClicked(onResult: (Boolean) -> Unit) = viewModelScope.launch { gameEngine.captureFlag(onResult) }
 
-            onResult(firestoreRepository.updateGame(game))
-        }
-    }
-
-    fun onOkButtonPressed(onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            val newGame = when (_player.value.gameDetails?.team) {
-                Team.Red -> {
-                    val redFlag = _game.value.gameState.redFlag.copy(isPlaced = true)
-                    val newGameState: GameState = _game.value.gameState.copy(redFlag = redFlag)
-                    _game.value.copy(gameState = newGameState)
-                }
-                Team.Green -> {
-                    val greenFlag = _game.value.gameState.greenFlag.copy(isPlaced = true)
-                    val newGameState: GameState = _game.value.gameState.copy(greenFlag = greenFlag)
-                    _game.value.copy(gameState = newGameState)
-                }
-                Team.Unknown -> return@launch
-                null -> return@launch
-            }
-
-            val latestGameState = if (newGame.gameState.redFlag.isPlaced && newGame.gameState.greenFlag.isPlaced) {
-                newGame.gameState.copy(state = ProgressState.Started)
-            } else {
-                newGame.gameState
-            }
-            val latestGame = newGame.copy(gameState = latestGameState)
-
-            val result = cloudAnchorRepository.uploadGeofenceObject(latestGame)
-            onResult(result)
-        }
-    }
+    fun onOkButtonPressed(onResult: (Boolean) -> Unit) = viewModelScope.launch { uploadFlagObject(onResult) }
 
     fun onCancelButtonPressed(text: String = "Tap to a discovered area to place your flag") {
         cloudAnchorManager.clearListeners()
         currentAnchor = null
         _showPlacerButtons.value = false
         _message.update { text }
-    }
-
-    @Synchronized
-    private fun onHostedAnchorAvailable(anchor: Anchor) {
-        val cloudState = anchor.cloudAnchorState
-        if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
-            val cloudAnchorId = anchor.cloudAnchorId
-
-            viewModelScope.launch {
-                val currentPosition: Location = locationRepository.awaitLastLocation()
-                val newGame = when (_player.value.gameDetails?.team) {
-                    Team.Red -> {
-                        val redFlag = _game.value.gameState.redFlag.copy(
-                            id = cloudAnchorId,
-                            position = currentPosition.toLatLng(),
-                            isPlaced = false,
-                            isDiscovered = false,
-                            timestamp = Date(),
-                        )
-                        val newGameState: GameState = _game.value.gameState.copy(redFlag = redFlag)
-                        _game.value.copy(gameState = newGameState)
-                    }
-                    Team.Green -> {
-                        val greenFlag = _game.value.gameState.greenFlag.copy(
-                            id = cloudAnchorId,
-                            position = currentPosition.toLatLng(),
-                            isPlaced = false,
-                            isDiscovered = false,
-                            timestamp = Date(),
-                        )
-                        val newGameState: GameState = _game.value.gameState.copy(greenFlag = greenFlag)
-                        _game.value.copy(gameState = newGameState)
-                    }
-                    Team.Unknown -> return@launch
-                    null -> return@launch
-                }
-
-                cloudAnchorRepository.uploadGeofenceObject(newGame)
-            }
-            _message.update { "Your flag was placed successfully!" }
-            _showPlacerButtons.update { true }
-            currentAnchor = anchor
-        } else {
-            _showPlacerButtons.update { false }
-            onCancelButtonPressed(ERROR_MESSAGE)
-        }
-    }
-
-    @Synchronized
-    private fun onResolvedAnchorAvailable(anchor: Anchor) {
-        val cloudState = anchor.cloudAnchorState
-        if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
-            _captureFlag.update { true }
-            _message.update { "You discovered your opponent's flag. \'Capture\' it and run to safehouse to win the game" }
-            currentAnchor = anchor
-        } else {
-            _message.update { ERROR_MESSAGE }
-        }
-    }
-
-    @Synchronized
-    private fun onResolveObjects() {
-        viewModelScope.launch {
-            val redFlagID = _game.value.gameState.redFlag.id
-            val greenFlagID = _game.value.gameState.greenFlag.id
-
-            if (redFlagID.isEmpty() || greenFlagID.isEmpty()) {
-                _message.update { "Flag was not found." }
-                return@launch
-            }
-
-            if (_player.value.gameDetails?.team == Team.Red) {
-                cloudAnchorManager.resolveCloudAnchor(_session.value, greenFlagID) { anchor ->
-                    onResolvedAnchorAvailable(anchor)
-                }
-            } else if (_player.value.gameDetails?.team == Team.Green) {
-                cloudAnchorManager.resolveCloudAnchor(_session.value, redFlagID) { anchor ->
-                    onResolvedAnchorAvailable(anchor)
-                }
-            }
-        }
     }
 
     /**
@@ -394,13 +267,6 @@ class ArViewModel @Inject constructor(
         return false
     }
 
-    private fun sendAnchorToCloud() {
-        _message.update { "Your flag is placing. Please wait..." }
-        cloudAnchorManager.hostCloudAnchor(_session.value, currentAnchor) { anchor: Anchor? ->
-            onHostedAnchorAvailable(anchor!!)
-        }
-    }
-
     private fun getFlagColor(team: Team?) = when (_scannerMode.value) {
         true -> if (team == Team.Red) GREEN_COLOR else RED_COLOR
         false -> if (team == Team.Red) RED_COLOR else GREEN_COLOR
@@ -409,6 +275,123 @@ class ArViewModel @Inject constructor(
     private fun getStartingMessage() = when (_scannerMode.value) {
         true -> "Move your camera around to find your opponent's flag"
         false -> "Tap to a discovered area to place your flag"
+    }
+
+    // Cloud anchors functions
+    private suspend fun uploadFlagObject(onResult: (Boolean) -> Unit) {
+        val newGame = when (player.value.gameDetails?.team) {
+            Team.Red -> {
+                val redFlag = game.value.gameState.redFlag.copy(isPlaced = true)
+                val newGameState: GameState = game.value.gameState.copy(redFlag = redFlag)
+                game.value.copy(gameState = newGameState)
+            }
+            Team.Green -> {
+                val greenFlag = game.value.gameState.greenFlag.copy(isPlaced = true)
+                val newGameState: GameState = game.value.gameState.copy(greenFlag = greenFlag)
+                game.value.copy(gameState = newGameState)
+            }
+            else -> return
+        }
+        val latestGame = newGame.copy(
+            gameState = if (newGame.gameState.redFlag.isPlaced && newGame.gameState.greenFlag.isPlaced) {
+                newGame.gameState.copy(state = ProgressState.Started)
+            } else {
+                newGame.gameState
+            }
+        )
+        onResult(cloudAnchorRepository.uploadGeofenceObject(latestGame))
+    }
+
+    private fun sendAnchorToCloud() {
+        _message.update { "Your flag is placing. Please wait..." }
+        cloudAnchorManager.hostCloudAnchor(_session.value, currentAnchor) { anchor: Anchor? ->
+            Timber.d("[$CLOUD_ANCHOR_LOGGER_TAG] Uploading anchor to cloud: $anchor")
+            onHostedAnchorAvailable(anchor!!)
+        }
+    }
+
+    @Synchronized
+    private fun onHostedAnchorAvailable(anchor: Anchor) {
+        val cloudState = anchor.cloudAnchorState
+        if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
+            val cloudAnchorId = anchor.cloudAnchorId
+
+            viewModelScope.launch {
+                val currentPosition: Location = gameEngine.getLastLocation()
+                val newGame = when (player.value.gameDetails?.team) {
+                    Team.Red -> {
+                        val redFlag = game.value.gameState.redFlag.copy(
+                            id = cloudAnchorId,
+                            position = currentPosition.toLatLng(),
+                            isPlaced = false,
+                            isDiscovered = false,
+                            timestamp = Date(),
+                        )
+                        val newGameState: GameState = game.value.gameState.copy(redFlag = redFlag)
+                        game.value.copy(gameState = newGameState)
+                    }
+                    Team.Green -> {
+                        val greenFlag = game.value.gameState.greenFlag.copy(
+                            id = cloudAnchorId,
+                            position = currentPosition.toLatLng(),
+                            isPlaced = false,
+                            isDiscovered = false,
+                            timestamp = Date(),
+                        )
+                        val newGameState: GameState = game.value.gameState.copy(greenFlag = greenFlag)
+                        game.value.copy(gameState = newGameState)
+                    }
+                    Team.Unknown -> return@launch
+                    null -> return@launch
+                }
+
+                cloudAnchorRepository.uploadGeofenceObject(newGame)
+                _message.update { "Your flag was placed successfully!" }
+                _showPlacerButtons.update { true }
+                currentAnchor = anchor
+                Timber.d("[$CLOUD_ANCHOR_LOGGER_TAG] Anchor uploaded successfully: $anchor")
+            }
+        } else {
+            _showPlacerButtons.update { false }
+            onCancelButtonPressed(ERROR_MESSAGE)
+            Timber.d("[$CLOUD_ANCHOR_LOGGER_TAG] Anchor failed to be uploaded")
+        }
+    }
+
+    @Synchronized
+    private fun onResolveObjects() {
+        Timber.d("[$CLOUD_ANCHOR_LOGGER_TAG] On resolve objects")
+
+        val redFlagID = game.value.gameState.redFlag.id
+        val greenFlagID = game.value.gameState.greenFlag.id
+
+        if (redFlagID.isEmpty() || greenFlagID.isEmpty()) {
+            _message.update { "Flag was not found." }
+            return
+        }
+
+        if (player.value.gameDetails?.team == Team.Red) {
+            cloudAnchorManager.resolveCloudAnchor(_session.value, greenFlagID) { anchor ->
+                onResolvedAnchorAvailable(anchor)
+            }
+        } else if (player.value.gameDetails?.team == Team.Green) {
+            cloudAnchorManager.resolveCloudAnchor(_session.value, redFlagID) { anchor ->
+                onResolvedAnchorAvailable(anchor)
+            }
+        }
+    }
+
+    @Synchronized
+    private fun onResolvedAnchorAvailable(anchor: Anchor) {
+        Timber.d("[$CLOUD_ANCHOR_LOGGER_TAG] On cloud anchor available: $anchor")
+        val cloudState = anchor.cloudAnchorState
+        if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
+            _captureFlag.update { true }
+            _message.update { "You discovered your opponent's flag. \'Capture\' it and run to safehouse to win the game" }
+            currentAnchor = anchor
+        } else {
+            _message.update { ERROR_MESSAGE }
+        }
     }
 
 }

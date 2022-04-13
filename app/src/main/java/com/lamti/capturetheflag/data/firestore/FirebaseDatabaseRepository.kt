@@ -6,14 +6,19 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.lamti.capturetheflag.data.firestore.GamePlayerRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.game.GamePlayer
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 
-class FirebaseDatabaseRepository @Inject constructor(private val database: FirebaseDatabase) {
+class FirebaseDatabaseRepository @Inject constructor(
+    private val database: FirebaseDatabase,
+    private val ioDispatcher: CoroutineDispatcher
+) {
 
     fun updateGamePlayer(gameID: String, player: GamePlayer): Boolean = try {
         database.getReference(DATABASE_REFERENCE)
@@ -48,16 +53,18 @@ class FirebaseDatabaseRepository @Inject constructor(private val database: Fireb
         awaitClose { reference.removeEventListener(subscription) }
     }
 
-    suspend fun deleteGamePlayer(gameID: String, userID: String): Boolean = try {
-        database.getReference(DATABASE_REFERENCE)
-            .child(gameID)
-            .child(userID)
-            .removeValue()
-            .await()
-        true
-    } catch (e: Exception) {
-        Timber.e("Delete game player error: ${e.message}")
-        false
+    suspend fun deleteGamePlayer(gameID: String, userID: String): Boolean = withContext(ioDispatcher) {
+        try {
+            database.getReference(DATABASE_REFERENCE)
+                .child(gameID)
+                .child(userID)
+                .removeValue()
+                .await()
+            true
+        } catch (e: Exception) {
+            Timber.e("Delete game player error: ${e.message}")
+            false
+        }
     }
 
     companion object {

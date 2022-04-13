@@ -18,7 +18,6 @@ import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
 import com.lamti.capturetheflag.presentation.ui.components.navigation.GameNavigation
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.AR_MODE_KEY
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
-import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.myAppPreferences
 import com.lamti.capturetheflag.utils.set
 import dagger.hilt.android.AndroidEntryPoint
@@ -50,10 +49,6 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private fun initializeDataOnSplashScreen() {
         requireActivity().installSplashScreen().apply {
             setKeepOnScreenCondition {
-                viewModel.getLastLocation()
-                viewModel.observePlayer()
-                if (viewModel.player.value.gameDetails != null && viewModel.player.value.gameDetails?.gameID != EMPTY)
-                    viewModel.observeGame()
                 return@setKeepOnScreenCondition viewModel.stayInSplashScreen.value
             }
         }
@@ -85,10 +80,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     }
 
     private fun updateEnteredGeofenceId() {
-        lifecycleScope.launchWhenStarted {
-            (requireActivity() as MainActivity).geofenceIdFLow
-                .onEach { viewModel.setEnteredGeofenceId(it) }
-                .launchIn(this)
-        }
+        (requireActivity() as MainActivity).geofenceIdFLow
+            .onEach { viewModel.setEnteredGeofenceId(it) }
+            .launchIn(lifecycleScope)
     }
 }

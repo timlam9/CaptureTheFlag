@@ -191,9 +191,11 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
             val message by viewModel.message.collectAsState()
             val showPlacerButtons by viewModel.showPlacerButtons.collectAsState()
             val showCaptureButton by viewModel.captureFlag.collectAsState()
+            val player by viewModel.player.collectAsState()
+
             val arModeState by remember { mutableStateOf(arMode) }
-            val teamColor = remember(viewModel.player.value.gameDetails?.team) {
-                when (viewModel.player.value.gameDetails?.team) {
+            val teamColor = remember(player.gameDetails?.team) {
+                when (player.gameDetails?.team) {
                     Team.Red -> Red
                     Team.Green -> Green
                     Team.Unknown -> Blue
