@@ -52,9 +52,6 @@ class GameEngine @Inject constructor(
     private val coroutineScope: CoroutineScope
 ) {
 
-    private val _enteredGeofenceId = mutableStateOf(EMPTY)
-    private val _battleID = mutableStateOf(EMPTY)
-
     private val _livePosition: MutableStateFlow<LatLng> = MutableStateFlow(emptyPosition())
     val livePosition: StateFlow<LatLng> = _livePosition
 
@@ -100,25 +97,16 @@ class GameEngine @Inject constructor(
     private val _arMode: MutableStateFlow<ArMode> = MutableStateFlow(ArMode.Placer)
     val arMode: StateFlow<ArMode> = _arMode
 
-    private fun startLocationUpdates() = coroutineScope.launch {
-        locationRepository.locationFlow().onEach { newLocation ->
-            val safehousePosition = _game.value.gameState.safehouse.position
-            val isNotInsideSafehouse = !newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_SAFEHOUSE_RADIUS)
-            val isInsideGame = newLocation.toLatLng().isInRangeOf(safehousePosition, DEFAULT_GAME_BOUNDARIES_RADIUS)
-
-            _canPlaceFlag.value = isNotInsideSafehouse && isInsideGame
-            _livePosition.value = newLocation.toLatLng()
-        }.launchIn(coroutineScope)
-    }
+    private val _enteredGeofenceId = mutableStateOf(EMPTY)
+    private val _battleID = mutableStateOf(EMPTY)
+    private var hasGeofenceListenerStarted = false
 
     fun observePlayer() = firestoreRepository.observePlayer().onEach { updatedPlayer ->
-        _initialScreen.value = if (
-            updatedPlayer.status == Player.Status.Playing || updatedPlayer.status == Player.Status.Lost
-        ) Screen.Map
-        else Screen.Menu
-
-        _player.value = updatedPlayer
-        _stayInSplashScreen.value = false
+        updatedPlayer.run {
+            _player.value = this
+            _stayInSplashScreen.value = false
+            _initialScreen.value = getInitialScreen()
+        }
     }.catch {
         Timber.e("[$LOGGER_TAG] Catch observe player error")
     }.launchIn(coroutineScope)
@@ -130,7 +118,9 @@ class GameEngine @Inject constructor(
                 _stayInSplashScreen.value = false
                 _game.value = game
                 game.gameState.handleGameStateEvents()
-                enterBattle(game.battles)
+                game.battles.searchOpponent()
+            }.catch {
+                Timber.e("[$LOGGER_TAG] Catch observe game error")
             }.launchIn(coroutineScope)
         }
     }
@@ -144,19 +134,13 @@ class GameEngine @Inject constructor(
 
     fun setEnteredGeofenceId(id: String) {
         _enteredGeofenceId.value = id
-        if (id.isNotEmpty()) {
-            _enteredGeofenceId.value.onEnteredGeofenceIdChanged()
-            Timber.d("[$GEOFENCE_LOGGER_TAG] Entered to: ${_enteredGeofenceId.value}")
-        } else {
-            _showArFlagButton.value = false
-            Timber.d("[$GEOFENCE_LOGGER_TAG] Exited from geofence")
-        }
+        setCaptureFlagButtonVisibility(id)
     }
 
     fun logout() = firestoreRepository.logout()
 
     suspend fun createNewGameWithRedCaptain(title: String) = coroutineScope.launch {
-        val gameID = getRandomString(5)
+        val gameID = getRandomString(GAME_CODE_LENGTH)
         generateQrCode(gameID)
 
         _player.value = _player.value.copy(
@@ -325,81 +309,38 @@ class GameEngine @Inject constructor(
         onResult(firestoreRepository.updateGame(game))
     }
 
-    private fun generateQrCode(text: String): Bitmap? {
-        try {
-            val width = 300
-            val height = 300
-            val qrCodeWriter = QRCodeWriter()
-            val bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, width, height)
-            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-            for (x in 0 until width) {
-                for (y in 0 until height) {
-                    bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.BLACK else Color.WHITE)
-                }
-            }
-            _qrCodeBitmap.value = bitmap
-            return bitmap
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return null
-    }
-
-    private fun enterBattle(battles: List<Battle>) {
-        if (battles.isEmpty()) _enterBattleScreen.value = false
-
-        var isInBattle = false
-        for (battle in battles) {
-            if (battle.playersIDs.contains(_player.value.userID)) {
-                _enterBattleScreen.value = true
-                isInBattle = true
-                break
-            }
-        }
-        if (!isInBattle) _enterBattleScreen.value = false
-    }
-
-    private var hasGeofenceListenerStarted = false
-
     private suspend fun GameState.handleGameStateEvents(): Unit = when (state) {
         ProgressState.Created -> {
-            removeGeofencesListener()
             _enterGameOverScreen.value = false
             _isSafehouseDraggable.value = _player.value.gameDetails?.rank == GameDetails.Rank.Captain
+            removeGeofencesListener()
         }
         ProgressState.SettingFlags -> {
-            startLocationUpdates()
             _enterGameOverScreen.value = false
             _isSafehouseDraggable.value = false
+            connectPlayer()
+            startLocationUpdates()
             _arMode.value = ArMode.Placer
-            connectPlayer { }
         }
         ProgressState.Started -> {
             _enterGameOverScreen.value = false
             _isSafehouseDraggable.value = false
-            if (_game.value.gameState.greenFlagCaptured != null && _player.value.gameDetails?.team == Team.Red) {
-                _showArFlagButton.value = false
-            }
-            if (_game.value.gameState.redFlagCaptured != null && _player.value.gameDetails?.team == Team.Green) {
-                _showArFlagButton.value = false
-            }
-            if (safehouse.isPlaced && redFlag.isPlaced && greenFlag.isPlaced) {
-                withContext(Dispatchers.Main) {
-                    if (!hasGeofenceListenerStarted) {
-                        hasGeofenceListenerStarted = true
-                        startGeofencesListener()
-                    }
-                }
-            }
-            observeOtherPlayers()
             _arMode.value = ArMode.Scanner
+            hideCaptureFlagButton()
+            observeOtherPlayers()
+            startGeofencesListenerIfGameIsReady()
         }
         ProgressState.Ended -> {
             _enterGameOverScreen.value = true
             _isSafehouseDraggable.value = false
+            firestoreRepository.clearCache()
             removeGeofencesListener()
         }
-        else -> {
+        ProgressState.Idle -> {
+            _enterGameOverScreen.value = false
+            _isSafehouseDraggable.value = false
+        }
+        ProgressState.SettingGame -> {
             _enterGameOverScreen.value = false
             _isSafehouseDraggable.value = false
         }
@@ -409,7 +350,68 @@ class GameEngine @Inject constructor(
         firestoreRepository.observePlayersPosition(_game.value.gameID).onEach { players ->
             _otherPlayers.value = players
             foundOpponentToBattle(players)
+        }.catch {
+            Timber.e("[$LOGGER_TAG] Catch observe other players error")
         }.launchIn(coroutineScope)
+    }
+
+    private fun startLocationUpdates() = coroutineScope.launch {
+        locationRepository.locationFlow().onEach { newLocation ->
+            newLocation.toLatLng().run {
+                _livePosition.value = this
+                _canPlaceFlag.value = isPlayerInsideGame()
+            }
+        }.catch {
+            Timber.e("[$LOGGER_TAG] Catch start location updates error")
+        }.launchIn(coroutineScope)
+    }
+
+    private fun LatLng.isPlayerInsideGame(): Boolean {
+        val safehousePosition = _game.value.gameState.safehouse.position
+        val isNotInsideSafehouse = !isInRangeOf(safehousePosition, DEFAULT_SAFEHOUSE_RADIUS)
+        val isInsideGame = isInRangeOf(safehousePosition, DEFAULT_GAME_BOUNDARIES_RADIUS)
+
+        return isNotInsideSafehouse && isInsideGame
+    }
+
+    private fun Player.getInitialScreen() = if (status == Player.Status.Playing || status == Player.Status.Lost)
+        Screen.Map
+    else
+        Screen.Menu
+
+    private fun List<Battle>.searchOpponent() {
+        if (isEmpty()) _enterBattleScreen.value = false
+
+        var isInBattle = false
+        for (battle in this) {
+            if (battle.playersIDs.contains(_player.value.userID)) {
+                _enterBattleScreen.value = true
+                isInBattle = true
+                break
+            }
+        }
+        if (!isInBattle) _enterBattleScreen.value = false
+    }
+
+    private fun setCaptureFlagButtonVisibility(id: String) = when (id.isNotEmpty()) {
+        true -> {
+            Timber.d("[$GEOFENCE_LOGGER_TAG] Entered to: ${_enteredGeofenceId.value}")
+            _enteredGeofenceId.value.onEnteredGeofenceIdChanged()
+        }
+        false -> {
+            Timber.d("[$GEOFENCE_LOGGER_TAG] Exited from geofence")
+            _showArFlagButton.value = false
+        }
+    }
+
+
+    private fun hideCaptureFlagButton() {
+        if (_game.value.gameState.greenFlagCaptured != null && _player.value.gameDetails?.team == Team.Red) {
+            _showArFlagButton.value = false
+        }
+        if (_game.value.gameState.redFlagCaptured != null && _player.value.gameDetails?.team == Team.Green) {
+            _showArFlagButton.value = false
+        }
     }
 
     private fun foundOpponentToBattle(players: List<GamePlayer>) {
@@ -432,21 +434,44 @@ class GameEngine @Inject constructor(
         }
     }
 
-    private suspend fun connectPlayer(onResult: (Boolean) -> Unit) {
-        coroutineScope.launch {
-            onResult(
-                firestoreRepository.updatePlayer(
-                    _player.value.copy(
-                        status = Player.Status.Playing
-                    )
-                )
+    private suspend fun connectPlayer() = coroutineScope.launch {
+        firestoreRepository.updatePlayer(
+            _player.value.copy(
+                status = Player.Status.Playing
             )
-        }
+        )
     }
 
-    private fun removeGeofencesListener() {
-        hasGeofenceListenerStarted = false
-        geofencingRepository.removeGeofences()
+
+    private fun generateQrCode(text: String): Bitmap? {
+        try {
+            val width = 300
+            val height = 300
+            val qrCodeWriter = QRCodeWriter()
+            val bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, width, height)
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+            for (x in 0 until width) {
+                for (y in 0 until height) {
+                    bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.BLACK else Color.WHITE)
+                }
+            }
+            _qrCodeBitmap.value = bitmap
+            return bitmap
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
+    private suspend fun GameState.startGeofencesListenerIfGameIsReady() {
+        if (safehouse.isPlaced && redFlag.isPlaced && greenFlag.isPlaced) {
+            withContext(Dispatchers.Main) {
+                if (!hasGeofenceListenerStarted) {
+                    hasGeofenceListenerStarted = true
+                    startGeofencesListener()
+                }
+            }
+        }
     }
 
     private fun GameState.startGeofencesListener() {
@@ -455,6 +480,11 @@ class GameEngine @Inject constructor(
         geofencingRepository.addGeofence(greenFlag.position, GREEN_FLAG_GEOFENCE_ID, DEFAULT_FLAG_RADIUS)
         geofencingRepository.addGeofence(redFlag.position, RED_FLAG_GEOFENCE_ID, DEFAULT_FLAG_RADIUS)
         geofencingRepository.addGeofences()
+    }
+
+    private fun removeGeofencesListener() {
+        hasGeofenceListenerStarted = false
+        geofencingRepository.removeGeofences()
     }
 
     // Game extensions
@@ -490,6 +520,7 @@ class GameEngine @Inject constructor(
         private const val SAFEHOUSE_GEOFENCE_ID = "SafehouseGeofence"
         private const val GREEN_FLAG_GEOFENCE_ID = "GreenFlagGeofence"
         private const val RED_FLAG_GEOFENCE_ID = "RedFlagGeofence"
+        private const val GAME_CODE_LENGTH = 5
     }
 }
 

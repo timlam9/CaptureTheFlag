@@ -13,20 +13,23 @@ import com.lamti.capturetheflag.presentation.ui.style.BlueOpacity
 fun MapMarker(
     icon: BitmapDescriptor?,
     title: String,
-    hasGeofence: Boolean = false,
     fillColor: Color = BlueOpacity,
     strokeColor: Color = Color.Blue,
     radius: Double = DEFAULT_FLAG_RADIUS.toDouble(),
     strokeWidth: Float = 4f,
+    showMarker: Boolean = true,
+    hasGeofence: Boolean = false,
     draggable: Boolean = false,
     markerState: MarkerState,
 ) {
-    Marker(
-        title = title,
-        icon = icon,
-        draggable = draggable,
-        state = markerState
-    )
+    if(showMarker) {
+        Marker(
+            title = title,
+            icon = icon,
+            draggable = draggable,
+            state = markerState
+        )
+    }
     if (hasGeofence) {
         Circle(
             center = markerState.position,

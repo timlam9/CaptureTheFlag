@@ -126,6 +126,8 @@ class GamesRepository @Inject constructor(
         }
     }
 
+    fun clearCache(): Boolean = firestore.clearPersistence().isSuccessful
+
     companion object {
 
         private const val COLLECTION_GAMES = "games"

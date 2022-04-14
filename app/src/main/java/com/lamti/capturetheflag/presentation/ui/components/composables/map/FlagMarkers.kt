@@ -4,12 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.rememberMarkerState
 import com.lamti.capturetheflag.domain.game.GeofenceObject
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.style.GreenOpacity
 import com.lamti.capturetheflag.presentation.ui.style.RedOpacity
+import com.lamti.capturetheflag.utils.emptyPosition
 
 @Composable
 fun FlagMarkers(
@@ -34,9 +34,8 @@ fun FlagMarkers(
     }
 
     if (
-        redFlagMarkerState.position != LatLng(0.0, 0.0) &&
-        (team == Team.Red || redFlag.isDiscovered) &&
-        redFlagPlayer == null
+        redFlagMarkerState.position != emptyPosition() &&
+        (team == Team.Red || redFlag.isDiscovered)
     ) {
         MapMarker(
             markerState = redFlagMarkerState,
@@ -45,12 +44,12 @@ fun FlagMarkers(
             hasGeofence = true,
             fillColor = RedOpacity,
             strokeColor = Color.Red,
+            showMarker = redFlagPlayer == null
         )
     }
     if (
-        greenFlagMarkerState.position != LatLng(0.0, 0.0) &&
-        (team == Team.Green || greenFlag.isDiscovered) &&
-        greenFlagPlayer == null
+        greenFlagMarkerState.position != emptyPosition() &&
+        (team == Team.Green || greenFlag.isDiscovered)
     ) {
         MapMarker(
             markerState = greenFlagMarkerState,
@@ -59,6 +58,7 @@ fun FlagMarkers(
             hasGeofence = true,
             fillColor = GreenOpacity,
             strokeColor = Color.Green,
+            showMarker = greenFlagPlayer == null
         )
     }
 }

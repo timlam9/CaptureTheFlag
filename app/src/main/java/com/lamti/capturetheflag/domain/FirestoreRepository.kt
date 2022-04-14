@@ -37,4 +37,6 @@ interface FirestoreRepository {
     suspend fun uploadGamePlayer(position: LatLng)
 
     suspend fun deleteGamePlayer(gameID: String, playerID: String): Boolean
+
+    fun clearCache(): Boolean
 }
