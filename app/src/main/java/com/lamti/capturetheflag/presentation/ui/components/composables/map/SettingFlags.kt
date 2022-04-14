@@ -1,7 +1,8 @@
 package com.lamti.capturetheflag.presentation.ui.components.composables.map
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,6 +20,7 @@ import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.LoadingAnimation
 import com.lamti.capturetheflag.presentation.ui.style.DarkBlueOpacity
 import com.lamti.capturetheflag.presentation.ui.style.White
 
@@ -59,15 +61,14 @@ fun SettingFlags(
 
 @Composable
 private fun WaitingLeaders(modifier: Modifier = Modifier) {
-    Box(
+    Column(
         modifier = modifier
-            .fillMaxSize()
             .background(color = DarkBlueOpacity)
             .fillMaxSize(),
-        contentAlignment = Alignment.Center
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceAround
     ) {
         Text(
-            modifier = Modifier.align(Alignment.Center),
             text = stringResource(id = R.string.wait_leaders),
             style = MaterialTheme.typography.h4.copy(
                 color = White,
@@ -75,5 +76,6 @@ private fun WaitingLeaders(modifier: Modifier = Modifier) {
                 textAlign = TextAlign.Center
             )
         )
+        LoadingAnimation()
     }
 }

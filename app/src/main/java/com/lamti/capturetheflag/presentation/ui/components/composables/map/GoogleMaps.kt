@@ -30,7 +30,7 @@ import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.MapStyle
 import com.lamti.capturetheflag.presentation.ui.bitmapDescriptorFromVector
-import com.lamti.capturetheflag.presentation.ui.components.composables.common.PositiveAndNegativeAlertDialog
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.ConfirmationDialog
 
 @Composable
 fun GoogleMapsView(
@@ -148,7 +148,7 @@ fun GoogleMapsView(
             playerGameDetails = gameDetails,
             onReadyButtonClicked = { showConfirmationDialog = true }
         )
-        PositiveAndNegativeAlertDialog(
+        ConfirmationDialog(
             title = stringResource(id = R.string.start_game),
             description = stringResource(R.string.start_game_description),
             showDialog = showConfirmationDialog,

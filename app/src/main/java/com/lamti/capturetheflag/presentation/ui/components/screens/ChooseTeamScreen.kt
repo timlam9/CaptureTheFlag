@@ -36,9 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.ConfirmationDialog
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
-import com.lamti.capturetheflag.presentation.ui.components.composables.common.PositiveAndNegativeAlertDialog
-import com.lamti.capturetheflag.presentation.ui.components.composables.common.PulseAnimation
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.LoadingAnimation
 import com.lamti.capturetheflag.presentation.ui.style.Black
 import com.lamti.capturetheflag.presentation.ui.style.Green
 import com.lamti.capturetheflag.presentation.ui.style.Red
@@ -68,7 +68,7 @@ fun ChooseTeamScreen(
                 },
                 onOkButtonClicked = { showConfirmationDialog = true }
             )
-            PositiveAndNegativeAlertDialog(
+            ConfirmationDialog(
                 title = stringResource(id = R.string.join_game),
                 description = stringResource(R.string.join_game_description),
                 showDialog = showConfirmationDialog,
@@ -94,15 +94,16 @@ fun WaitingContent(selectedTeam: Team) {
             }
         )
     }
-    Box(
+    Column(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceAround
     ) {
         Text(
             text = stringResource(id = R.string.wait_captain),
             style = MaterialTheme.typography.h4.copy(fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
         )
-        PulseAnimation(color = color)
+        LoadingAnimation(animatedCircleColor = color)
     }
 }
 

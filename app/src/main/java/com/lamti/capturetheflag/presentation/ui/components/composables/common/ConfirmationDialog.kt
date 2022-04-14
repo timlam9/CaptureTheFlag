@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.lamti.capturetheflag.R
 
 @Composable
-fun PositiveAndNegativeAlertDialog(
+fun ConfirmationDialog(
     modifier: Modifier = Modifier,
     title: String,
     description: String,

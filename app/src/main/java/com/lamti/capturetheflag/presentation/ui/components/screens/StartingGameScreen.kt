@@ -39,8 +39,8 @@ import androidx.compose.ui.unit.sp
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.ConfirmationDialog
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
-import com.lamti.capturetheflag.presentation.ui.components.composables.common.PositiveAndNegativeAlertDialog
 import com.lamti.capturetheflag.presentation.ui.style.Blue
 import com.lamti.capturetheflag.presentation.ui.style.Green
 import com.lamti.capturetheflag.presentation.ui.style.Red
@@ -65,7 +65,7 @@ fun StartingGameScreen(
             gameID = game.gameID,
             onStartGameClicked = { showConfirmationDialog = true }
         )
-        PositiveAndNegativeAlertDialog(
+        ConfirmationDialog(
             title = stringResource(id = R.string.start_game),
             description = stringResource(R.string.start_game_description),
             showDialog = showConfirmationDialog,
