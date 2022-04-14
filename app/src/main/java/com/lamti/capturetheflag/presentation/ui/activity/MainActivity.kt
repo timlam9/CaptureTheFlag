@@ -31,7 +31,10 @@ import com.lamti.capturetheflag.data.location.service.isLocationEnabledOrNot
 import com.lamti.capturetheflag.data.location.service.isMyServiceRunning
 import com.lamti.capturetheflag.data.location.service.showAlertLocation
 import com.lamti.capturetheflag.databinding.ActivityMainBinding
+import com.lamti.capturetheflag.domain.GameEngine.Companion.GREEN_FLAG_GEOFENCE_ID
+import com.lamti.capturetheflag.domain.GameEngine.Companion.RED_FLAG_GEOFENCE_ID
 import com.lamti.capturetheflag.domain.player.Player
+import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.arcore.helpers.FullScreenHelper
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.AR_MODE_KEY
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
@@ -71,10 +74,20 @@ class MainActivity : AppCompatActivity() {
             myAppPreferences[GEOFENCE_KEY] = intent?.getStringExtra(GEOFENCE_KEY) ?: EMPTY
             geofenceIdFLow.value = intent?.getStringExtra(GEOFENCE_KEY) ?: EMPTY
 
-            if (geofenceIdFLow.value.isNotEmpty() && !isAppInForegrounded()) {
-                notificationHelper.showFlagFoundNotification()
+            if ((greenPlayerEntersUncapturedRedFlag() || redPlayerEntersUncapturedGreenFlag()) && !isAppInForegrounded()) {
+                notificationHelper.showEventNotification()
             }
         }
+
+        private fun redPlayerEntersUncapturedGreenFlag() =
+            viewModel.player.value.gameDetails?.team == Team.Red &&
+                    geofenceIdFLow.value == GREEN_FLAG_GEOFENCE_ID &&
+                    viewModel.game.value.gameState.greenFlagCaptured == null
+
+        private fun greenPlayerEntersUncapturedRedFlag() =
+            viewModel.player.value.gameDetails?.team == Team.Green &&
+                    geofenceIdFLow.value == RED_FLAG_GEOFENCE_ID &&
+                    viewModel.game.value.gameState.redFlagCaptured == null
     }
 
     override fun onResume() {

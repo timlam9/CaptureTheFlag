@@ -55,7 +55,10 @@ class NotificationHelper(private val context: Context) {
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")
-    fun showFlagFoundNotification() {
+    fun showEventNotification(
+        title: String = "You found opponent's flag",
+        content: String = "Tap here to start searching for it with your camera"
+    ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             notificationManager.createNotificationChannel(createHighPriorityChannel())
         }
@@ -70,8 +73,8 @@ class NotificationHelper(private val context: Context) {
         val notificationBuilder =
             NotificationCompat.Builder(context, HIGH_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_flag)
-                .setContentTitle("You found opponent's flag")
-                .setContentText("Tap here to start searching for it with your camera")
+                .setContentTitle(title)
+                .setContentText(content)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))

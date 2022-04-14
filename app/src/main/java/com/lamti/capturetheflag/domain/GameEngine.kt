@@ -51,7 +51,6 @@ class GameEngine @Inject constructor(
     private val geofencingRepository: GeofencingRepository,
     private val coroutineScope: CoroutineScope
 ) {
-
     private val _livePosition: MutableStateFlow<LatLng> = MutableStateFlow(emptyPosition())
     val livePosition: StateFlow<LatLng> = _livePosition
 
@@ -355,7 +354,7 @@ class GameEngine @Inject constructor(
         }.launchIn(coroutineScope)
     }
 
-    private fun startLocationUpdates() = coroutineScope.launch {
+    fun startLocationUpdates() = coroutineScope.launch {
         locationRepository.locationFlow().onEach { newLocation ->
             newLocation.toLatLng().run {
                 _livePosition.value = this
@@ -518,8 +517,8 @@ class GameEngine @Inject constructor(
 
         private const val GAME_BOUNDARIES_GEOFENCE_ID = "GameBoundariesGeofence"
         private const val SAFEHOUSE_GEOFENCE_ID = "SafehouseGeofence"
-        private const val GREEN_FLAG_GEOFENCE_ID = "GreenFlagGeofence"
-        private const val RED_FLAG_GEOFENCE_ID = "RedFlagGeofence"
+        const val GREEN_FLAG_GEOFENCE_ID = "GreenFlagGeofence"
+        const val RED_FLAG_GEOFENCE_ID = "RedFlagGeofence"
         private const val GAME_CODE_LENGTH = 5
     }
 }

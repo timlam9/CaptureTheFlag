@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lamti.capturetheflag.data.authentication.AuthenticationRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
+import com.lamti.capturetheflag.domain.game.Game
+import com.lamti.capturetheflag.domain.game.Game.Companion.initialGame
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Player.Companion.emptyPlayer
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.FragmentScreen
@@ -29,6 +31,9 @@ class MainViewModel @Inject constructor(
     private val _player = MutableStateFlow(emptyPlayer())
     val player: StateFlow<Player> = _player.asStateFlow()
 
+    private val _game = MutableStateFlow(initialGame())
+    val game: StateFlow<Game> = _game.asStateFlow()
+
     fun onArBackPressed() {
         _currentScreen.value = FragmentScreen.Map
     }
@@ -41,10 +46,17 @@ class MainViewModel @Inject constructor(
         _currentScreen.value = FragmentScreen.Ar
     }
 
-    fun observePlayer() {
-        firestoreRepository.observePlayer().onEach {
+    fun observePlayer() = firestoreRepository
+        .observePlayer()
+        .onEach {
             _player.value = it
-        }.launchIn(viewModelScope)
-    }
+            if (it.gameDetails?.gameID?.isNotEmpty() == true) observeGame(it.gameDetails.gameID)
+        }
+        .launchIn(viewModelScope)
+
+    private fun observeGame(gameID: String) = firestoreRepository
+        .observeGame(gameID)
+        .onEach { _game.value = it }
+        .launchIn(viewModelScope)
 
 }

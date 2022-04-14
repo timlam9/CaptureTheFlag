@@ -3,16 +3,29 @@ package com.lamti.capturetheflag.data.location.service
 import android.content.Intent
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.maps.model.LatLng
 import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
+import com.lamti.capturetheflag.domain.game.Game
+import com.lamti.capturetheflag.domain.game.Game.Companion.initialGame
+import com.lamti.capturetheflag.domain.game.GamePlayer
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_BATTLE_RANGE
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_BOUNDARIES_RADIUS
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
 import com.lamti.capturetheflag.presentation.ui.toLatLng
 import com.lamti.capturetheflag.utils.SERVICE_LOCATION_LOGGER_TAG
+import com.lamti.capturetheflag.utils.emptyPosition
+import com.lamti.capturetheflag.utils.isInRangeOf
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -26,6 +39,10 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
     private var isServiceRunning = false
     private var locationUpdates: Job? = null
 
+    private val _livePosition: MutableStateFlow<LatLng> = MutableStateFlow(emptyPosition())
+    private val _game: MutableStateFlow<Game> = MutableStateFlow(initialGame())
+    private val _showBattleNotification: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
@@ -36,6 +53,8 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
                 LocationServiceCommand.Start -> {
                     startFlagForegroundService()
                     startLocationUpdates()
+                    observePlayer()
+                    showNotificationListener()
                 }
                 LocationServiceCommand.Pause -> {
                     isServiceRunning = false
@@ -49,6 +68,18 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
         }
 
         return START_STICKY
+    }
+
+    private fun observePlayer() = lifecycleScope.launch {
+        firestoreRepository.observePlayer().onEach {
+            it.run {
+                if (gameDetails?.gameID?.isNotEmpty() == true) {
+                    _game.update { firestoreRepository.getGame(gameDetails.gameID) ?: initialGame() }
+                    observeOtherPlayers(playerID = userID, gameID = gameDetails.gameID)
+                }
+            }
+        }.flowOn(Dispatchers.IO)
+            .launchIn(lifecycleScope)
     }
 
     override fun onCreate() {
@@ -71,12 +102,59 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
 
     private fun startLocationUpdates() {
         locationUpdates = locationRepository.locationFlow()
-            .onEach {
-                firestoreRepository.uploadGamePlayer(it.toLatLng())
+            .onEach { location ->
+                _livePosition.update { location.toLatLng() }
+                firestoreRepository.uploadGamePlayer(location.toLatLng())
             }
             .flowOn(Dispatchers.IO)
             .launchIn(lifecycleScope)
     }
+
+    private fun observeOtherPlayers(playerID: String, gameID: String) = lifecycleScope.launch {
+        firestoreRepository.observePlayersPosition(gameID)
+            .onEach { players -> foundOpponentToBattle(players, playerID) }
+            .flowOn(Dispatchers.IO)
+            .launchIn(lifecycleScope)
+    }
+
+    private fun foundOpponentToBattle(players: List<GamePlayer>, playerID: String) {
+        var foundOpponent = false
+        for (player in players) {
+            if (!isAppInForegrounded() &&
+                player.id != playerID &&
+                player.position.isInBattleableGameZone() &&
+                _livePosition.value.isInBattleableGameZone() &&
+                _livePosition.value.isInRangeOf(player.position, DEFAULT_BATTLE_RANGE)
+            ) {
+                _showBattleNotification.value = true
+                foundOpponent = true
+                break
+            }
+        }
+        if (!foundOpponent) {
+            _showBattleNotification.value = false
+        }
+    }
+
+    private fun showNotificationListener() = _showBattleNotification.onEach {
+        if (it) notificationHelper.showEventNotification(
+            title = "Opponent Found",
+            content = "Tap to battle him"
+        )
+    }.flowOn(Dispatchers.IO)
+        .launchIn(lifecycleScope)
+
+    // Position extensions
+    private fun LatLng.isInBattleableGameZone() =
+        isInsideGame() && !isInsideSafehouse() && !isInsideRedFlag() && !isInsideGreenFlag()
+
+    private fun LatLng.isInsideGame() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_GAME_BOUNDARIES_RADIUS)
+
+    private fun LatLng.isInsideSafehouse() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_SAFEHOUSE_RADIUS)
+
+    private fun LatLng.isInsideGreenFlag() = isInRangeOf(_game.value.gameState.greenFlag.position, DEFAULT_FLAG_RADIUS)
+
+    private fun LatLng.isInsideRedFlag() = isInRangeOf(_game.value.gameState.redFlag.position, DEFAULT_FLAG_RADIUS)
 
     companion object {
 
