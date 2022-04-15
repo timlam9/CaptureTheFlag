@@ -7,11 +7,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.lamti.capturetheflag.presentation.ui.login.screens.IntroScreen
 import com.lamti.capturetheflag.presentation.ui.login.screens.LoginScreen
+import com.lamti.capturetheflag.presentation.ui.login.screens.OnboardingScreen
 import com.lamti.capturetheflag.presentation.ui.login.screens.RegisterScreen
+
+const val INITIAL_SCREEN = "initial_screen"
 
 @Composable
 fun LoginAndRegistration(
     navController: NavHostController,
+    initialScreen: String,
+    onOnboardingStartButtonClicked: () -> Unit,
     isLoading: Boolean,
     onLogoClicked: () -> Unit,
     onLoginSuccess: (LoginData) -> Unit,
@@ -19,8 +24,20 @@ fun LoginAndRegistration(
 ) {
     NavHost(
         navController = navController,
-        startDestination = "intro_screen",
+        startDestination = initialScreen,
         builder = {
+            composable(
+                route = "onboarding_screen",
+                content = {
+                    OnboardingScreen(
+                        onStartButtonClicked = {
+                            navController.popBackStack()
+                            navController.navigateToScreen("intro_screen")
+                            onOnboardingStartButtonClicked()
+                        }
+                    )
+                }
+            )
             composable(
                 route = "intro_screen",
                 content = {

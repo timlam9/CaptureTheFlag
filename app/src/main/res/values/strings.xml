@@ -71,4 +71,9 @@
     <string name="sign_up">Sign up</string>
     <string name="start_game_description">Are you sure you want to start the game?</string>
     <string name="join_game_description">Are you sure you want to join game?</string>
+    <string name="fight_battles">Fight battles</string>
+    <string name="assemble_team">Assemble your team</string>
+    <string name="onboarding1">Find and capture opponent’s team flag, bring it to the safehouse (the center of the game) and win the game!</string>
+    <string name="onboarding2">\"Battle with opponent’s near you and eliminate them from the game. \"</string>
+    <string name="onboarding3">Call your friends and start playing!</string>
 </resources>

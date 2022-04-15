@@ -17,8 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
+import com.lamti.capturetheflag.presentation.ui.login.components.INITIAL_SCREEN
 import com.lamti.capturetheflag.presentation.ui.login.components.LoginAndRegistration
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
+import com.lamti.capturetheflag.utils.get
+import com.lamti.capturetheflag.utils.myAppPreferences
+import com.lamti.capturetheflag.utils.set
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -43,6 +47,8 @@ class LoginActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     LoginAndRegistration(
                         navController = navController,
+                        initialScreen = myAppPreferences[INITIAL_SCREEN, "onboarding_screen"],
+                        onOnboardingStartButtonClicked = { myAppPreferences[INITIAL_SCREEN] = "intro_screen" },
                         isLoading = isLoading,
                         onLogoClicked = {
                             Toast.makeText(

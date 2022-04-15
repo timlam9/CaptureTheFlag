@@ -16,7 +16,7 @@
                 android:gradientRadius="72.493164"
                 android:type="radial">
                 <item
-                    android:color="#FF1977F3"
+                    android:color="#FF4285F4"
                     android:offset="0" />
                 <item
                     android:color="#FF0D47A1"

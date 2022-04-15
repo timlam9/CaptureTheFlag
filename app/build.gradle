@@ -45,6 +45,7 @@ android {
         freeCompilerArgs += "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
         freeCompilerArgs += "-Xopt-in=kotlinx.coroutines.InternalCoroutinesApi"
         freeCompilerArgs += "-Xopt-in=androidx.compose.ui.ExperimentalComposeUiApi"
+        freeCompilerArgs += "-Xopt-in=com.google.accompanist.pager.ExperimentalPagerApi"
     }
     composeOptions {
         kotlinCompilerExtensionVersion "$compose_version"
@@ -138,7 +139,14 @@ dependencies {
     // Gson
     implementation 'com.google.code.gson:gson:2.8.7'
 
+    // Timber
     implementation 'com.jakewharton.timber:timber:5.0.1'
+
+    // Pager and Indicators - Accompanist
+    def accompanistVersion = "0.14.0"
+    implementation "com.google.accompanist:accompanist-pager:$accompanistVersion"
+    implementation "com.google.accompanist:accompanist-pager-indicators:$accompanistVersion"
+
 }
 
 secrets {
