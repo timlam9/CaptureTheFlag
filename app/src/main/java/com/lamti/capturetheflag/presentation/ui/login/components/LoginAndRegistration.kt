@@ -17,10 +17,11 @@ fun LoginAndRegistration(
     navController: NavHostController,
     initialScreen: String,
     onOnboardingStartButtonClicked: () -> Unit,
+    onPermissionsOkClicked: () -> Unit,
     isLoading: Boolean,
     onLogoClicked: () -> Unit,
-    onLoginSuccess: (LoginData) -> Unit,
-    onRegisterSuccess: (RegisterData) -> Unit
+    onLoginClicked: (LoginData) -> Unit,
+    onRegisterClicked: (RegisterData) -> Unit
 ) {
     NavHost(
         navController = navController,
@@ -30,11 +31,8 @@ fun LoginAndRegistration(
                 route = "onboarding_screen",
                 content = {
                     OnboardingScreen(
-                        onStartButtonClicked = {
-                            navController.popBackStack()
-                            navController.navigateToScreen("intro_screen")
-                            onOnboardingStartButtonClicked()
-                        }
+                        onStartButtonClicked = onOnboardingStartButtonClicked,
+                        onPermissionsOkClicked = onPermissionsOkClicked
                     )
                 }
             )
@@ -53,7 +51,7 @@ fun LoginAndRegistration(
                     LoginScreen(
                         isLoading = isLoading,
                         onLogoClicked = onLogoClicked,
-                        onSignInClicked = onLoginSuccess
+                        onSignInClicked = onLoginClicked
                     )
                 }
             )
@@ -63,7 +61,7 @@ fun LoginAndRegistration(
                     RegisterScreen(
                         isLoading = isLoading,
                         onLogoClicked = onLogoClicked,
-                        onSignUpClicked = onRegisterSuccess
+                        onSignUpClicked = onRegisterClicked
                     )
                 }
             )

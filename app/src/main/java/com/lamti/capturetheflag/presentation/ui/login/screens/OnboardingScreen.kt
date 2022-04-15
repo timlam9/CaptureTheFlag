@@ -32,6 +32,7 @@ import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.PermissionsCard
 import com.lamti.capturetheflag.presentation.ui.style.Blue
 import com.lamti.capturetheflag.presentation.ui.style.Green
 import com.lamti.capturetheflag.presentation.ui.style.Red
@@ -41,12 +42,13 @@ import com.lamti.capturetheflag.presentation.ui.style.WhiteOpacity
 data class Page(
     val color: Color,
     val title: String,
+    val subtitle: String? = null,
     val description: String,
     @DrawableRes val image: Int
 )
 
 @Composable
-fun OnboardingScreen(onStartButtonClicked: () -> Unit) {
+fun OnboardingScreen(onStartButtonClicked: () -> Unit, onPermissionsOkClicked: () -> Unit) {
     val pages = listOf(
         Page(
             color = Red,
@@ -62,13 +64,21 @@ fun OnboardingScreen(onStartButtonClicked: () -> Unit) {
         ),
         Page(
             color = Blue,
+            title = stringResource(R.string.capture_the_flag),
+            subtitle = stringResource(id = R.string.location_permissions),
+            description = stringResource(R.string.location_permissions_required),
+            image = R.drawable.intro_logo
+        ),
+        Page(
+            color = Blue,
             title = stringResource(R.string.assemble_team),
             description = stringResource(R.string.onboarding3),
             image = R.drawable.green_battle_image
         ),
     )
     val pagerState = rememberPagerState(pageCount = pages.size)
-    val imagePadding = animateFloatAsState(if (pagerState.currentPage == 2) 100f else 0f)
+    val imagePadding = animateFloatAsState(if (pagerState.currentPage == 3) 100f else 0f)
+    val indicatorOffset = animateFloatAsState(if (pagerState.currentPage == 2) 70f else 0f)
 
     Box(modifier = Modifier.fillMaxSize()) {
         HorizontalPager(
@@ -76,12 +86,16 @@ fun OnboardingScreen(onStartButtonClicked: () -> Unit) {
             state = pagerState,
             verticalAlignment = Alignment.Top
         ) { position ->
-            PagerScreen(page = pages[position], imagePadding = imagePadding.value.dp)
+            val page = pages[position]
+            if (page.subtitle == null)
+                PagerScreen(page = pages[position], imagePadding = imagePadding.value.dp)
+            else
+                PermissionPagerScreen(page = pages[position], onOkClicked = onPermissionsOkClicked)
         }
         HorizontalPagerIndicator(
             modifier = Modifier
                 .align(Alignment.Center)
-                .offset(y = 0.dp),
+                .offset(y = indicatorOffset.value.dp),
             activeColor = White,
             inactiveColor = WhiteOpacity,
             pagerState = pagerState
@@ -90,7 +104,7 @@ fun OnboardingScreen(onStartButtonClicked: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter),
-            visible = pagerState.currentPage == 2
+            visible = pagerState.currentPage == 3
         ) {
             DefaultButton(
                 modifier = Modifier
@@ -141,6 +155,41 @@ fun PagerScreen(page: Page, imagePadding: Dp) {
                 .padding(bottom = imagePadding),
             painter = painterResource(id = page.image),
             contentDescription = "Pager Image"
+        )
+    }
+}
+
+@Composable
+fun PermissionPagerScreen(page: Page, onOkClicked: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(page.color),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceAround
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = page.title,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.h4.copy(
+                color = White,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
+            )
+
+        )
+        Image(
+            modifier = Modifier
+                .height(330.dp)
+                .padding(),
+            painter = painterResource(id = page.image),
+            contentDescription = "Pager Image"
+        )
+        PermissionsCard(
+            title = page.subtitle!!,
+            description = page.description,
+            onOkClicked = onOkClicked
         )
     }
 }

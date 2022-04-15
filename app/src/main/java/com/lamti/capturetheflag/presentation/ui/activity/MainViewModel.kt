@@ -9,12 +9,16 @@ import com.lamti.capturetheflag.domain.game.Game.Companion.initialGame
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Player.Companion.emptyPlayer
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.FragmentScreen
+import com.lamti.capturetheflag.utils.LOGGER_TAG
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,7 +27,11 @@ class MainViewModel @Inject constructor(
     private val firestoreRepository: FirestoreRepository
 ) : ViewModel() {
 
-    fun isUserLoggedIn() = authenticationRepository.getCurrentUser()?.uid != null
+    val isUserLoggedIn
+        get() = authenticationRepository.getCurrentUser()?.uid != null
+
+    val userID: String?
+        get() = authenticationRepository.getCurrentUser()?.uid
 
     private val _currentScreen = MutableStateFlow(FragmentScreen.Map)
     val currentScreen: StateFlow<FragmentScreen> = _currentScreen.asStateFlow()
@@ -33,6 +41,9 @@ class MainViewModel @Inject constructor(
 
     private val _game = MutableStateFlow(initialGame())
     val game: StateFlow<Game> = _game.asStateFlow()
+
+    private val _startLocationService = MutableStateFlow(false)
+    val startLocationService: StateFlow<Boolean> = _startLocationService.asStateFlow()
 
     fun onArBackPressed() {
         _currentScreen.value = FragmentScreen.Map
@@ -49,14 +60,21 @@ class MainViewModel @Inject constructor(
     fun observePlayer() = firestoreRepository
         .observePlayer()
         .onEach {
+            Timber.d("[$LOGGER_TAG] Player updated: $it")
             _player.value = it
-            if (it.gameDetails?.gameID?.isNotEmpty() == true) observeGame(it.gameDetails.gameID)
+            if (it.userID.isNotEmpty()) _startLocationService.update { true }
+            if (it.gameDetails?.gameID?.isNotEmpty() == true) {
+                _startLocationService.update { true }
+                observeGame(it.gameDetails.gameID)
+            }
         }
         .launchIn(viewModelScope)
 
-    private fun observeGame(gameID: String) = firestoreRepository
-        .observeGame(gameID)
-        .onEach { _game.value = it }
-        .launchIn(viewModelScope)
+    private fun observeGame(gameID: String) = viewModelScope.launch {
+        firestoreRepository
+            .observeGame(gameID)
+            .onEach { _game.value = it }
+            .launchIn(viewModelScope)
+    }
 
 }

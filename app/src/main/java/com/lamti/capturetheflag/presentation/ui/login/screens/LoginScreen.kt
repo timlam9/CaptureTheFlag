@@ -47,10 +47,9 @@ import com.lamti.capturetheflag.presentation.ui.components.composables.common.Ro
 import com.lamti.capturetheflag.presentation.ui.login.components.LoginData
 import com.lamti.capturetheflag.utils.EMPTY
 
-
 @Composable
 fun LoginScreen(
-    isLoading: Boolean = false,
+    isLoading: Boolean,
     onLogoClicked: () -> Unit,
     onSignInClicked: (LoginData) -> Unit
 ) {
@@ -83,7 +82,11 @@ fun LoginScreen(
             onValueChange = { password = it.trim() }
         )
         ForgotPassword(modifier = Modifier.align(Alignment.End))
-        SingInButton(onSignInClicked, email, password)
+        SingInButton(
+            onSignInClicked = onSignInClicked,
+            email = email,
+            password = password
+        )
         OrSignUpRow()
         LoginButtonIcons(onLogoClicked)
         Loading(isLoading)

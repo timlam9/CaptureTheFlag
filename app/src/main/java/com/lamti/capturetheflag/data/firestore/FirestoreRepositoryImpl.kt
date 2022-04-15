@@ -8,7 +8,9 @@ import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.PlayerDetails
 import com.lamti.capturetheflag.utils.EMPTY
+import com.lamti.capturetheflag.utils.LOGGER_TAG
 import kotlinx.coroutines.flow.Flow
+import timber.log.Timber
 import javax.inject.Inject
 
 class FirestoreRepositoryImpl @Inject constructor(
@@ -19,7 +21,8 @@ class FirestoreRepositoryImpl @Inject constructor(
 ) : FirestoreRepository {
 
     // Authentication
-    private val userID = authenticationRepository.getCurrentUser()?.uid ?: EMPTY
+    private val userID
+        get() = authenticationRepository.getCurrentUser()?.uid ?: EMPTY
 
     override suspend fun registerUser(
         email: String,
@@ -42,7 +45,10 @@ class FirestoreRepositoryImpl @Inject constructor(
     override fun logout() = authenticationRepository.logout()
 
     // Players
-    override fun observePlayer(): Flow<Player> = playersRepository.observePlayer(userID)
+    override fun observePlayer(): Flow<Player> {
+        Timber.d("[$LOGGER_TAG] Observe player: $userID")
+        return playersRepository.observePlayer(userID)
+    }
 
     override suspend fun getPlayer(): Player? = playersRepository.getPlayer(userID)
 

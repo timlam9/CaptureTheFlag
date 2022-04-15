@@ -76,4 +76,6 @@
     <string name="onboarding1">Find and capture opponent’s team flag, bring it to the safehouse (the center of the game) and win the game!</string>
     <string name="onboarding2">\"Battle with opponent’s near you and eliminate them from the game. \"</string>
     <string name="onboarding3">Call your friends and start playing!</string>
+    <string name="location_permissions">Location Permissions</string>
+    <string name="location_permissions_required">Location permissions are required!</string>
 </resources>
