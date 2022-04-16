@@ -10,12 +10,12 @@ import com.lamti.capturetheflag.presentation.ui.login.screens.LoginScreen
 import com.lamti.capturetheflag.presentation.ui.login.screens.OnboardingScreen
 import com.lamti.capturetheflag.presentation.ui.login.screens.RegisterScreen
 
-const val INITIAL_SCREEN = "initial_screen"
-
 @Composable
 fun LoginAndRegistration(
     navController: NavHostController,
     initialScreen: String,
+    hasPermissions: Boolean,
+    next: Int,
     onOnboardingStartButtonClicked: () -> Unit,
     onPermissionsOkClicked: () -> Unit,
     isLoading: Boolean,
@@ -31,6 +31,8 @@ fun LoginAndRegistration(
                 route = "onboarding_screen",
                 content = {
                     OnboardingScreen(
+                        hasPermissions = hasPermissions,
+                        next = next,
                         onStartButtonClicked = onOnboardingStartButtonClicked,
                         onPermissionsOkClicked = onPermissionsOkClicked
                     )

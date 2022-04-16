@@ -11,12 +11,14 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.data.location.service.checkBackgroundLocationPermissionAPI30
@@ -26,14 +28,11 @@ import com.lamti.capturetheflag.data.location.service.isLocationEnabledOrNot
 import com.lamti.capturetheflag.data.location.service.showAlertLocation
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
-import com.lamti.capturetheflag.presentation.ui.login.components.INITIAL_SCREEN
 import com.lamti.capturetheflag.presentation.ui.login.components.LoginAndRegistration
 import com.lamti.capturetheflag.presentation.ui.login.components.navigateToScreen
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
+import com.lamti.capturetheflag.utils.DatastoreHelper
 import com.lamti.capturetheflag.utils.LOGGER_TAG
-import com.lamti.capturetheflag.utils.get
-import com.lamti.capturetheflag.utils.myAppPreferences
-import com.lamti.capturetheflag.utils.set
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -43,13 +42,20 @@ import javax.inject.Inject
 class LoginActivity : ComponentActivity() {
 
     @Inject lateinit var firestoreRepository: FirestoreRepository
+    private lateinit var dataStore: DatastoreHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        dataStore = DatastoreHelper(this@LoginActivity)
+
         setContent {
             val scope = rememberCoroutineScope()
             val navController = rememberNavController()
-            var isLoading by remember { mutableStateOf(false) }
+
+            val initialScreen by dataStore.initialScreen.collectAsState(initial = "onboarding_screen")
+            val isLoading by dataStore.isLoading.collectAsState(initial = false)
+            var next by remember { mutableStateOf(0) }
+            val hasPermissions by dataStore.hasPreferences.collectAsState(initial = false)
 
             CaptureTheFlagTheme {
                 Surface(
@@ -58,27 +64,29 @@ class LoginActivity : ComponentActivity() {
                 ) {
                     LoginAndRegistration(
                         navController = navController,
-                        initialScreen = myAppPreferences[INITIAL_SCREEN, "onboarding_screen"],
+                        initialScreen = initialScreen,
+                        next = next,
+                        hasPermissions = hasPermissions,
                         onOnboardingStartButtonClicked = {
-                            if (myAppPreferences[HAS_LOCATION_PERMISSIONS, false]) {
+                            if (hasPermissions) {
                                 navController.popBackStack()
                                 navController.navigateToScreen("intro_screen")
-                                myAppPreferences[INITIAL_SCREEN] = "intro_screen"
+                                scope.launch { dataStore.saveInitialScreen("intro_screen") }
                             } else
                                 showToast("Location permissions are required in order to continue.")
                         },
-                        onPermissionsOkClicked = { requestLocationPermissions() },
+                        onPermissionsOkClicked = { if (hasPermissions) next++ else requestLocationPermissions() },
                         isLoading = isLoading,
                         onLogoClicked = { showToast("Not available yet") },
                         onLoginClicked = { loginData ->
                             scope.launch {
-                                isLoading = true
+                                dataStore.saveIsLoading(true)
                                 if (firestoreRepository.loginUser(loginData.email, loginData.password)) {
-                                    isLoading = false
+                                    dataStore.saveIsLoading(false)
                                     startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                                     finish()
                                 } else {
-                                    isLoading = false
+                                    dataStore.saveIsLoading(false)
                                     showToast("Email and password doesn't match")
                                 }
                             }
@@ -86,13 +94,13 @@ class LoginActivity : ComponentActivity() {
                     ) { registerData ->
                         with(registerData) {
                             scope.launch {
-                                isLoading = true
+                                dataStore.saveIsLoading(true)
                                 if (firestoreRepository.registerUser(email, password, username)) {
-                                    isLoading = false
+                                    dataStore.saveIsLoading(false)
                                     startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                                     finish()
                                 } else {
-                                    isLoading = false
+                                    dataStore.saveIsLoading(false)
                                     showToast("Email and password doesn't match")
                                 }
                             }
@@ -120,11 +128,17 @@ class LoginActivity : ComponentActivity() {
                     when {
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> checkBackgroundLocationPermissionAPI30(requestCode)
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> checkLocationPermissionAPI29(requestCode)
-                        else -> myAppPreferences[HAS_LOCATION_PERMISSIONS] = true
+                        else -> {
+                            lifecycleScope.launch {
+                                dataStore.saveHasPreferences(true)
+                            }
+                        }
                     }
                 }
                 if (checkSinglePermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
-                    myAppPreferences[HAS_LOCATION_PERMISSIONS] = true
+                    lifecycleScope.launch {
+                        dataStore.saveHasPreferences(true)
+                    }
                     showToast("Location permissions are granted!")
                 }
             } else {

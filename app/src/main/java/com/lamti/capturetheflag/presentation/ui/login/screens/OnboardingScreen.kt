@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,7 +49,12 @@ data class Page(
 )
 
 @Composable
-fun OnboardingScreen(onStartButtonClicked: () -> Unit, onPermissionsOkClicked: () -> Unit) {
+fun OnboardingScreen(
+    hasPermissions: Boolean,
+    next: Int,
+    onStartButtonClicked: () -> Unit,
+    onPermissionsOkClicked: () -> Unit
+) {
     val pages = listOf(
         Page(
             color = Red,
@@ -80,6 +86,10 @@ fun OnboardingScreen(onStartButtonClicked: () -> Unit, onPermissionsOkClicked: (
     val imagePadding = animateFloatAsState(if (pagerState.currentPage == 3) 100f else 0f)
     val indicatorOffset = animateFloatAsState(if (pagerState.currentPage == 2) 70f else 0f)
 
+    LaunchedEffect(key1 = next) {
+        if(hasPermissions) pagerState.animateScrollToPage(3)
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         HorizontalPager(
             modifier = Modifier.fillMaxSize(),
@@ -90,7 +100,11 @@ fun OnboardingScreen(onStartButtonClicked: () -> Unit, onPermissionsOkClicked: (
             if (page.subtitle == null)
                 PagerScreen(page = pages[position], imagePadding = imagePadding.value.dp)
             else
-                PermissionPagerScreen(page = pages[position], onOkClicked = onPermissionsOkClicked)
+                PermissionPagerScreen(
+                    page = pages[position],
+                    hasPermissions = hasPermissions,
+                    onOkClicked = onPermissionsOkClicked
+                )
         }
         HorizontalPagerIndicator(
             modifier = Modifier
@@ -160,7 +174,11 @@ fun PagerScreen(page: Page, imagePadding: Dp) {
 }
 
 @Composable
-fun PermissionPagerScreen(page: Page, onOkClicked: () -> Unit) {
+fun PermissionPagerScreen(
+    page: Page,
+    hasPermissions: Boolean,
+    onOkClicked: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -189,6 +207,7 @@ fun PermissionPagerScreen(page: Page, onOkClicked: () -> Unit) {
         PermissionsCard(
             title = page.subtitle!!,
             description = page.description,
+            hasPermissions = hasPermissions,
             onOkClicked = onOkClicked
         )
     }
