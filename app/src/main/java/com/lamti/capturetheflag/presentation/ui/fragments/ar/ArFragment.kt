@@ -28,6 +28,7 @@ import com.lamti.capturetheflag.presentation.arcore.helpers.TapHelper
 import com.lamti.capturetheflag.presentation.arcore.helpers.TrackingStateHelper
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
+import com.lamti.capturetheflag.presentation.ui.components.collectAsStateLifecycleAware
 import com.lamti.capturetheflag.presentation.ui.components.composables.ar.ArComponents
 import com.lamti.capturetheflag.presentation.ui.style.Blue
 import com.lamti.capturetheflag.presentation.ui.style.Green
@@ -188,6 +189,7 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
     private fun setupUI() = binding?.run {
         composeView.setContent {
             val instructions by viewModel.instructions.collectAsState()
+            val time by viewModel.time.collectAsStateLifecycleAware()
             val message by viewModel.message.collectAsState()
             val showPlacerButtons by viewModel.showPlacerButtons.collectAsState()
             val showCaptureButton by viewModel.captureFlag.collectAsState()
@@ -205,6 +207,7 @@ class ArFragment : Fragment(R.layout.fragment_ar), GLSurfaceView.Renderer {
 
             ArComponents(
                 instructions = instructions,
+                time = time,
                 message = message,
                 arModeState = arModeState,
                 showPlacerButtons = showPlacerButtons,

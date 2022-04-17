@@ -22,6 +22,7 @@ import com.lamti.capturetheflag.presentation.ui.style.White
 @Composable
 fun ArComponents(
     instructions: String,
+    time: String,
     message: String,
     arModeState: ArMode,
     showPlacerButtons: Boolean,
@@ -58,6 +59,17 @@ fun ArComponents(
                 onCaptureClicked = onCaptureClicked
             )
         }
+        Text(
+            modifier = Modifier
+                .padding(75.dp)
+                .align(Alignment.BottomCenter),
+            text = time,
+            style = MaterialTheme.typography.h5.copy(
+                color = White,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        )
     }
 }
 

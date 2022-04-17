@@ -1,6 +1,7 @@
 package com.lamti.capturetheflag.presentation.ui.fragments.ar
 
 import android.location.Location
+import android.os.CountDownTimer
 import androidx.compose.runtime.State
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -34,6 +35,7 @@ import com.lamti.capturetheflag.presentation.ui.toLatLng
 import com.lamti.capturetheflag.utils.CLOUD_ANCHOR_LOGGER_TAG
 import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.LOGGER_TAG
+import com.lamti.capturetheflag.utils.startTimer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,6 +45,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.IOException
 import java.util.Date
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 private val GREEN_COLOR = floatArrayOf(139.0f, 195.0f, 74.0f, 255.0f)
@@ -60,6 +63,9 @@ class ArViewModel @Inject constructor(
 
     private val _message = MutableStateFlow(EMPTY)
     val message: StateFlow<String> = _message.asStateFlow()
+
+    private val _time = MutableStateFlow(EMPTY)
+    val time: StateFlow<String> = _time.asStateFlow()
 
     private val _instructions = MutableStateFlow(EMPTY)
     val instructions: StateFlow<String> = _instructions.asStateFlow()
@@ -86,8 +92,16 @@ class ArViewModel @Inject constructor(
     private var flagColor = GREEN_COLOR
     private var currentAnchor: Anchor? = null
 
+    private var isResolveObjectStarted = false
+    private var timer: CountDownTimer? = null
+
     init {
         flagColor = getFlagColor(player.value.gameDetails?.team)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        timer?.cancel()
     }
 
     fun createSession(session: Session?) {
@@ -135,6 +149,22 @@ class ArViewModel @Inject constructor(
                 if (!isResolveObjectStarted) {
                     isResolveObjectStarted = true
                     onResolveObjects()
+                }
+                if (timer == null) {
+                    timer = startTimer(
+                        timeInMillis = 60 * 1000,
+                        onTick = {
+                            val minutes = TimeUnit.MILLISECONDS.toMinutes(it)
+                            val seconds = TimeUnit.MILLISECONDS.toSeconds(it)
+                            _time.update { "$minutes:$seconds" }
+                            _time.replayCache
+                        },
+                        onFinish = {
+                            _time.update { EMPTY }
+                            _captureFlag.update { true }
+                            _message.update { "You discovered your opponent's flag by time's up. \'Capture\' it and run to the safehouse to win the game" }
+                        }
+                    )
                 }
             }
         } catch (e: CameraNotAvailableException) {
@@ -237,8 +267,6 @@ class ArViewModel @Inject constructor(
 
     fun isCurrentAnchorNull(): Boolean = currentAnchor != null
 
-    var isResolveObjectStarted = false
-
     fun setInstructions(text: String, isScanner: Boolean) {
         _instructions.update { text }
         _scannerMode.update { isScanner }
@@ -259,6 +287,7 @@ class ArViewModel @Inject constructor(
      * Checks if we detected at least one plane.
      */
     private fun hasTrackingPlane(): Boolean {
+        if (_session.value == null) return false
         for (plane in _session.value!!.getAllTrackables(Plane::class.java)) {
             if (plane.trackingState == TrackingState.TRACKING) {
                 return true
@@ -387,7 +416,7 @@ class ArViewModel @Inject constructor(
         val cloudState = anchor.cloudAnchorState
         if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
             _captureFlag.update { true }
-            _message.update { "You discovered your opponent's flag. \'Capture\' it and run to safehouse to win the game" }
+            _message.update { "You discovered your opponent's flag. \'Capture\' it and run to the safehouse to win the game" }
             currentAnchor = anchor
         } else {
             _message.update { ERROR_MESSAGE }
