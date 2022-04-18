@@ -3,6 +3,7 @@ package com.lamti.capturetheflag.presentation.ui.activity
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
@@ -12,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.data.location.geofences.GEOFENCE_BROADCAST_RECEIVER_FILTER
 import com.lamti.capturetheflag.data.location.geofences.GEOFENCE_KEY
 import com.lamti.capturetheflag.data.location.geofences.GeofenceBroadcastReceiver
@@ -32,6 +34,7 @@ import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.FragmentScreen
 import com.lamti.capturetheflag.presentation.ui.fragments.navigation.navigateToScreen
 import com.lamti.capturetheflag.presentation.ui.login.LoginActivity
+import com.lamti.capturetheflag.presentation.ui.playSound
 import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.GEOFENCE_LOGGER_TAG
 import com.lamti.capturetheflag.utils.LOGGER_TAG
@@ -47,6 +50,8 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    private val flagFoundSound: Uri = Uri.parse("android.resource://com.lamti.capturetheflag/" + R.raw.flag_found)
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
@@ -66,20 +71,20 @@ class MainActivity : AppCompatActivity() {
             geofenceIdFLow.value = intent?.getStringExtra(GEOFENCE_KEY) ?: EMPTY
 
             if ((greenPlayerEntersUncapturedRedFlag() || redPlayerEntersUncapturedGreenFlag()) && !isAppInForegrounded()) {
-                notificationHelper.showEventNotification()
+                notificationHelper.showEventNotification(sound = flagFoundSound)
             }
         }
-
-        private fun redPlayerEntersUncapturedGreenFlag() =
-            viewModel.player.value.gameDetails?.team == Team.Red &&
-                    geofenceIdFLow.value == GREEN_FLAG_GEOFENCE_ID &&
-                    viewModel.game.value.gameState.greenFlagCaptured == null
-
-        private fun greenPlayerEntersUncapturedRedFlag() =
-            viewModel.player.value.gameDetails?.team == Team.Green &&
-                    geofenceIdFLow.value == RED_FLAG_GEOFENCE_ID &&
-                    viewModel.game.value.gameState.redFlagCaptured == null
     }
+
+    private fun redPlayerEntersUncapturedGreenFlag() =
+        viewModel.player.value.gameDetails?.team == Team.Red &&
+                geofenceIdFLow.value == GREEN_FLAG_GEOFENCE_ID &&
+                viewModel.game.value.gameState.greenFlagCaptured == null
+
+    private fun greenPlayerEntersUncapturedRedFlag() =
+        viewModel.player.value.gameDetails?.team == Team.Green &&
+                geofenceIdFLow.value == RED_FLAG_GEOFENCE_ID &&
+                viewModel.game.value.gameState.redFlagCaptured == null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,6 +92,14 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        lifecycleScope.launchWhenResumed {
+            geofenceIdFLow.onEach {
+                if ((greenPlayerEntersUncapturedRedFlag() || redPlayerEntersUncapturedGreenFlag()) && isAppInForegrounded()) {
+                    playSound(sound = flagFoundSound)
+                }
+            }.launchIn(lifecycleScope)
+        }
     }
 
     override fun onResume() {

@@ -6,6 +6,7 @@ import com.google.android.gms.location.LocationServices
 import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.data.location.service.LocationServiceImpl
 import com.lamti.capturetheflag.data.location.service.NotificationHelper
+import com.lamti.capturetheflag.presentation.ui.DatastoreHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,6 +18,10 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+
+    @Provides
+    @Singleton
+    fun provideDataStoreHelper(@ApplicationContext context: Context): DatastoreHelper = DatastoreHelper(context)
 
     @Provides
     @Singleton

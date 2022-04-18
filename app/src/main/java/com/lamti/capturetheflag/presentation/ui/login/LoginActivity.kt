@@ -27,11 +27,11 @@ import com.lamti.capturetheflag.data.location.service.checkSinglePermission
 import com.lamti.capturetheflag.data.location.service.isLocationEnabledOrNot
 import com.lamti.capturetheflag.data.location.service.showAlertLocation
 import com.lamti.capturetheflag.domain.FirestoreRepository
+import com.lamti.capturetheflag.presentation.ui.DatastoreHelper
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
 import com.lamti.capturetheflag.presentation.ui.login.components.LoginAndRegistration
 import com.lamti.capturetheflag.presentation.ui.login.components.navigateToScreen
 import com.lamti.capturetheflag.presentation.ui.style.CaptureTheFlagTheme
-import com.lamti.capturetheflag.utils.DatastoreHelper
 import com.lamti.capturetheflag.utils.LOGGER_TAG
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -42,11 +42,10 @@ import javax.inject.Inject
 class LoginActivity : ComponentActivity() {
 
     @Inject lateinit var firestoreRepository: FirestoreRepository
-    private lateinit var dataStore: DatastoreHelper
+    @Inject lateinit var dataStore: DatastoreHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        dataStore = DatastoreHelper(this@LoginActivity)
 
         setContent {
             val scope = rememberCoroutineScope()
@@ -150,7 +149,6 @@ class LoginActivity : ComponentActivity() {
     companion object {
 
         private const val PERMISSION_REQUEST_CODE = 200
-        const val HAS_LOCATION_PERMISSIONS = "has_location_permissions"
     }
 
 }

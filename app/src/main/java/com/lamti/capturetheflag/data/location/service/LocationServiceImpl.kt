@@ -1,9 +1,11 @@
 package com.lamti.capturetheflag.data.location.service
 
 import android.content.Intent
+import android.net.Uri
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.model.LatLng
+import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Game
@@ -42,6 +44,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
     private val _livePosition: MutableStateFlow<LatLng> = MutableStateFlow(emptyPosition())
     private val _game: MutableStateFlow<Game> = MutableStateFlow(initialGame())
     private val _showBattleNotification: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val battleSound: Uri = Uri.parse("android.resource://com.lamti.capturetheflag/" + R.raw.battle_found)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
@@ -139,7 +142,8 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
     private fun showNotificationListener() = _showBattleNotification.onEach {
         if (it) notificationHelper.showEventNotification(
             title = "Opponent Found",
-            content = "Tap to battle him"
+            content = "Tap to battle him",
+            sound = battleSound
         )
     }.flowOn(Dispatchers.IO)
         .launchIn(lifecycleScope)

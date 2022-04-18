@@ -31,11 +31,11 @@ import com.lamti.capturetheflag.presentation.arcore.rendering.BackgroundRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.ObjectRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PlaneRenderer
 import com.lamti.capturetheflag.presentation.arcore.rendering.PointCloudRenderer
+import com.lamti.capturetheflag.presentation.ui.startTimer
 import com.lamti.capturetheflag.presentation.ui.toLatLng
 import com.lamti.capturetheflag.utils.CLOUD_ANCHOR_LOGGER_TAG
 import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.LOGGER_TAG
-import com.lamti.capturetheflag.utils.startTimer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

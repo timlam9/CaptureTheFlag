@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -57,10 +58,11 @@ class NotificationHelper(private val context: Context) {
     @SuppressLint("UnspecifiedImmutableFlag")
     fun showEventNotification(
         title: String = "You found opponent's flag",
-        content: String = "Tap here to start searching for it with your camera"
+        content: String = "Tap here to start searching for it with your camera",
+        sound: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            notificationManager.createNotificationChannel(createHighPriorityChannel())
+            notificationManager.createNotificationChannel(createHighPriorityChannel(sound))
         }
 
         val fullScreenPendingIntent = PendingIntent.getActivity(
@@ -77,7 +79,7 @@ class NotificationHelper(private val context: Context) {
                 .setContentText(content)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                .setSound(sound)
                 .setFullScreenIntent(fullScreenPendingIntent, true)
 
         notificationManager.notify(HIGH_NOTIFICATION_ID, notificationBuilder.build())
@@ -95,7 +97,7 @@ class NotificationHelper(private val context: Context) {
         }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun createHighPriorityChannel() =
+    private fun createHighPriorityChannel(sound: Uri) =
         NotificationChannel(
             HIGH_CHANNEL_ID,
             HIGH_CHANNEL_NAME,
@@ -109,7 +111,7 @@ class NotificationHelper(private val context: Context) {
             val soundAttributes = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION)
                 .build()
-            setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), soundAttributes)
+            setSound(sound, soundAttributes)
         }
 
     companion object {
