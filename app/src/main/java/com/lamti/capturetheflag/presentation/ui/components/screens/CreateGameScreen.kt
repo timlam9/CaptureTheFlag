@@ -51,7 +51,7 @@ fun CreateGameScreen(onCreateGameClicked: (String) -> Unit) {
                 capitalization = KeyboardCapitalization.Words
             )
         ) {
-            gameTitle = it.trimEnd()
+            gameTitle = it
         }
         Image(
             modifier = Modifier
