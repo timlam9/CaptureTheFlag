@@ -1,6 +1,7 @@
 package com.lamti.capturetheflag.presentation.ui.components.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -11,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.presentation.ui.DatastoreHelper
 import com.lamti.capturetheflag.presentation.ui.components.screens.BattleScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.ChooseTeamScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.CreateGameScreen
@@ -26,6 +28,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun GameNavigation(
     viewModel: MapViewModel,
+    dataStore: DatastoreHelper,
     onLogoutClicked: () -> Unit,
     onSettingFlagsButtonClicked: () -> Unit,
     onArScannerButtonClicked: () -> Unit,
@@ -46,6 +49,8 @@ fun GameNavigation(
     val enterBattleScreen by viewModel.enterBattleScreen.collectAsState()
     val enterGameOverScreen by viewModel.enterGameOverScreen.collectAsState()
 
+    LaunchedEffect(key1 = true) { dataStore.saveHasGameFound(false) }
+    val hasGameFound by dataStore.hasGameFound.collectAsState(initial = false)
 
     NavHost(
         navController = navController,
@@ -81,7 +86,8 @@ fun GameNavigation(
             JoinGameScreen { qrCode ->
                 coroutine.launch {
                     val gameToJoin = viewModel.getGame(qrCode)
-                    if (gameToJoin != null) {
+                    if (gameToJoin != null && !hasGameFound) {
+                        dataStore.saveHasGameFound(true)
                         viewModel.onGameCodeScanned(qrCode)
                         navController.navigate(Screen.ChooseTeam.route)
                     }
@@ -90,6 +96,7 @@ fun GameNavigation(
         }
         composable(route = Screen.ChooseTeam.route) {
             ChooseTeamScreen(
+                dataStore = dataStore,
                 onRedButtonClicked = { viewModel.onTeamButtonClicked(Team.Red) },
                 onGreenButtonClicked = { viewModel.onTeamButtonClicked(Team.Green) },
                 onOkButtonClicked = { viewModel.onTeamOkButtonClicked() }

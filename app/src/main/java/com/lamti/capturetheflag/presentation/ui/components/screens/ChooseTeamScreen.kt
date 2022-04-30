@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -34,8 +36,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.presentation.ui.DatastoreHelper
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.ConfirmationDialog
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.LoadingAnimation
@@ -45,6 +49,7 @@ import com.lamti.capturetheflag.presentation.ui.style.Red
 
 @Composable
 fun ChooseTeamScreen(
+    dataStore: DatastoreHelper,
     onRedButtonClicked: () -> Unit,
     onGreenButtonClicked: () -> Unit,
     onOkButtonClicked: () -> Unit,
@@ -52,6 +57,13 @@ fun ChooseTeamScreen(
     var hasChosenTeam by remember { mutableStateOf(false) }
     var selectedTeam by remember { mutableStateOf(Team.Unknown) }
     var showConfirmationDialog by remember { mutableStateOf(false) }
+
+    val lifecycleState: Lifecycle.State = LocalLifecycleOwner.current.lifecycle.currentState
+    val isResumed: Boolean = lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
+
+    LaunchedEffect(key1 = lifecycleState) {
+        if(isResumed) dataStore.saveHasGameFound(false)
+    }
 
     when (hasChosenTeam) {
         true -> WaitingContent(selectedTeam = selectedTeam)

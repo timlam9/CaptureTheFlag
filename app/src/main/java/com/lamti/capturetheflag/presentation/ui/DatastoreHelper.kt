@@ -18,6 +18,7 @@ class DatastoreHelper(private val context: Context) {
         val HAS_PREFERENCES = booleanPreferencesKey("has_preferences")
         val IS_LOADING = booleanPreferencesKey("is_loading")
         val INITIAL_SCREEN = stringPreferencesKey("initial_screen")
+        val HAS_GAME_FOUND = booleanPreferencesKey("has_game_found")
     }
 
     val hasPreferences: Flow<Boolean> = context.dataStore.data
@@ -50,6 +51,17 @@ class DatastoreHelper(private val context: Context) {
     suspend fun saveInitialScreen(value: String) {
         context.dataStore.edit { preferences ->
             preferences[INITIAL_SCREEN] = value
+        }
+    }
+
+    val hasGameFound: Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[HAS_GAME_FOUND] ?: false
+        }
+
+    suspend fun saveHasGameFound(value: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[HAS_GAME_FOUND] = value
         }
     }
 

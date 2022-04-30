@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.MapsInitializer
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.FragmentMapBinding
+import com.lamti.capturetheflag.presentation.ui.DatastoreHelper
 import com.lamti.capturetheflag.presentation.ui.activity.MainActivity
 import com.lamti.capturetheflag.presentation.ui.components.navigation.GameNavigation
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.AR_MODE_KEY
@@ -23,6 +24,7 @@ import com.lamti.capturetheflag.utils.set
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import javax.inject.Inject
 
 @AndroidEntryPoint
 @SuppressLint("UnspecifiedImmutableFlag")
@@ -30,6 +32,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     private var binding: FragmentMapBinding? = null
     private val viewModel: MapViewModel by viewModels()
+    @Inject lateinit var dataStore: DatastoreHelper
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -70,6 +73,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
                     GameNavigation(
                         viewModel = viewModel,
+                        dataStore = dataStore,
                         onLogoutClicked = { mainActivity.onLogoutClicked() },
                         onSettingFlagsButtonClicked = { mainActivity.onSettingFlagsClicked() },
                         onArScannerButtonClicked = { mainActivity.onArScannerButtonClicked() }
