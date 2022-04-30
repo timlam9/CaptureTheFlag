@@ -302,7 +302,7 @@ class ArViewModel @Inject constructor(
     }
 
     private fun getStartingMessage() = when (_scannerMode.value) {
-        true -> "Move your camera around to find your opponent's flag"
+        true -> "Move your camera around to find your opponent's flag (or wait until the counter hit zero)"
         false -> "Tap to a discovered area to place your flag"
     }
 

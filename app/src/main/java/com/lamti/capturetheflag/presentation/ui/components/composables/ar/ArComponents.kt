@@ -44,7 +44,8 @@ fun ArComponents(
         ) {
             Instructions(
                 instructions = instructions,
-                message = message
+                message = message,
+                time = time
             )
             ActionButtons(
                 arModeState = arModeState,
@@ -59,22 +60,15 @@ fun ArComponents(
                 onCaptureClicked = onCaptureClicked
             )
         }
-        Text(
-            modifier = Modifier
-                .padding(75.dp)
-                .align(Alignment.BottomCenter),
-            text = time,
-            style = MaterialTheme.typography.h5.copy(
-                color = White,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-        )
     }
 }
 
 @Composable
-private fun Instructions(instructions: String, message: String) {
+private fun Instructions(
+    instructions: String,
+    message: String,
+    time: String
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -90,6 +84,15 @@ private fun Instructions(instructions: String, message: String) {
             )
         )
         InstructionsCard(text = message)
+        Text(
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            text = time,
+            style = MaterialTheme.typography.h5.copy(
+                color = White,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        )
     }
 }
 
