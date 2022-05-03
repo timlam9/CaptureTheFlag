@@ -77,5 +77,5 @@
     <string name="onboarding2">\"Battle with opponent’s near you and eliminate them from the game. \"</string>
     <string name="onboarding3">Call your friends and start playing!</string>
     <string name="location_permissions">Location Permissions</string>
-    <string name="location_permissions_required">Location permissions are required!</string>
+    <string name="location_permissions_required">Location permissions are required so you can be able to see your teammates and your teammates can see you in real time!</string>
 </resources>

@@ -1,7 +1,6 @@
 package com.lamti.capturetheflag.data.location.service
 
 import android.Manifest
-import android.annotation.TargetApi
 import android.app.Activity
 import android.app.ActivityManager
 import android.app.AlertDialog
@@ -14,8 +13,8 @@ import android.provider.Settings
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 
-fun isAppInForegrounded() : Boolean {
-    val appProcessInfo =  ActivityManager.RunningAppProcessInfo()
+fun isAppInForegrounded(): Boolean {
+    val appProcessInfo = ActivityManager.RunningAppProcessInfo()
     ActivityManager.getMyMemoryState(appProcessInfo)
     return (appProcessInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND ||
             appProcessInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE)
@@ -52,32 +51,13 @@ fun Activity.showAlertLocation(title: String, message: String, btnText: String) 
 @RequiresApi(Build.VERSION_CODES.Q)
 fun Activity.checkLocationPermissionAPI29(locationRequestCode: Int) {
     if (checkSinglePermission(Manifest.permission.ACCESS_FINE_LOCATION) &&
-        checkSinglePermission(Manifest.permission.ACCESS_COARSE_LOCATION) &&
-        checkSinglePermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        checkSinglePermission(Manifest.permission.ACCESS_COARSE_LOCATION)
     ) return
     val permList = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        Manifest.permission.ACCESS_COARSE_LOCATION
     )
     requestPermissions(permList, locationRequestCode)
-}
-
-@TargetApi(Build.VERSION_CODES.R)
-fun Activity.checkBackgroundLocationPermissionAPI30(backgroundLocationRequestCode: Int) {
-    if (checkSinglePermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) return
-    androidx.appcompat.app.AlertDialog.Builder(this)
-        .setTitle("Background Permission")
-        .setMessage("\'All the time\' background location permission is needed")
-        .setPositiveButton("Yes") { _, _ ->
-            requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), backgroundLocationRequestCode)
-        }
-        .setNegativeButton("No") { dialog, _ ->
-            dialog.dismiss()
-        }
-        .create()
-        .show()
-
 }
 
 fun Context.checkSinglePermission(permission: String): Boolean {
