@@ -4,11 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Team
@@ -23,19 +22,20 @@ import com.lamti.capturetheflag.presentation.ui.components.screens.MenuScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.StartingGameScreen
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
 import com.lamti.capturetheflag.presentation.ui.popNavigate
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
 fun GameNavigation(
     viewModel: MapViewModel,
+    navController: NavHostController,
+    coroutineScope: CoroutineScope,
     dataStore: DatastoreHelper,
     onLogoutClicked: () -> Unit,
     onSettingFlagsButtonClicked: () -> Unit,
     onArScannerButtonClicked: () -> Unit,
+    onSettingsClicked: () -> Unit
 ) {
-    val navController = rememberNavController()
-    val coroutine = rememberCoroutineScope()
-
     val qrCodeImage by viewModel.qrCodeBitmap.collectAsState()
     val initialScreen by viewModel.initialScreen.collectAsState()
     val player by viewModel.player.collectAsState()
@@ -84,7 +84,7 @@ fun GameNavigation(
         }
         composable(route = Screen.JoinGame.route) {
             JoinGameScreen { qrCode ->
-                coroutine.launch {
+                coroutineScope.launch {
                     val gameToJoin = viewModel.getGame(qrCode)
                     if (gameToJoin != null && !hasGameFound) {
                         dataStore.saveHasGameFound(true)
@@ -125,7 +125,8 @@ fun GameNavigation(
                 onArScannerButtonClicked = onArScannerButtonClicked,
                 onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
                 onReadyButtonClicked = { viewModel.onReadyButtonClicked(it) },
-                onBattleButtonClicked = { viewModel.onBattleButtonClicked() }
+                onBattleButtonClicked = { viewModel.onBattleButtonClicked() },
+                onSettingsClicked = onSettingsClicked
             )
         }
         composable(route = Screen.Battle.route) {

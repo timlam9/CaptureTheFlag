@@ -11,7 +11,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,9 +53,10 @@ fun MapScreen(
     onSettingFlagsButtonClicked: () -> Unit,
     onReadyButtonClicked: (LatLng) -> Unit,
     onBattleButtonClicked: () -> Unit,
+    onSettingsClicked: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var zoom by remember { mutableStateOf(15f) }
+    val zoom by remember { mutableStateOf(15f) }
     val cameraPositionState: CameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(initialPosition, zoom)
     }
@@ -97,12 +97,7 @@ fun MapScreen(
             greenPlayersCount = greenPlayersCount,
             gameState = gameState,
             canPlaceFlag = canPlaceFlag,
-            onCompassClicked = {
-                zoom = if (zoom == 15f) 18f else 15f
-                coroutineScope.launch {
-                    cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(livePosition, zoom))
-                }
-            },
+            onSettingsClicked = onSettingsClicked,
             onGpsClicked = {
                 coroutineScope.launch {
                     cameraPositionState.animate(CameraUpdateFactory.newLatLng(livePosition))
@@ -138,7 +133,7 @@ private fun TopBar(
     greenPlayersCount: Int,
     gameState: GameState,
     canPlaceFlag: Boolean,
-    onCompassClicked: () -> Unit,
+    onSettingsClicked: () -> Unit,
     onGpsClicked: () -> Unit,
 ) {
     Column(
@@ -150,7 +145,7 @@ private fun TopBar(
             team = gameDetails.team,
             redPlayersCount = redPlayersCount,
             greenPlayersCount = greenPlayersCount,
-            onCompassClicked = onCompassClicked,
+            onSettingsClicked = onSettingsClicked,
             onGpsClicked = onGpsClicked
         )
         InstructionsCard(
