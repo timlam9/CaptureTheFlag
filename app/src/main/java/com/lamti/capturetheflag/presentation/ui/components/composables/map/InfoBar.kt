@@ -29,7 +29,7 @@ fun InfoBar(
     team: Team,
     redPlayersCount: Int,
     greenPlayersCount: Int,
-    onCompassClicked: () -> Unit,
+    onSettingsClicked: () -> Unit,
     onGpsClicked: () -> Unit
 ) {
     val teamColor: Color = remember(team) {
@@ -72,8 +72,8 @@ fun InfoBar(
             onclick = {}
         )
         IconButton(
-            icon = R.drawable.ic_compass,
-            onclick = onCompassClicked
+            icon = R.drawable.ic_settings,
+            onclick = onSettingsClicked
         )
         IconButton(
             icon = R.drawable.ic_gps,

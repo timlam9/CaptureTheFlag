@@ -46,6 +46,7 @@ android {
         freeCompilerArgs += "-Xopt-in=kotlinx.coroutines.InternalCoroutinesApi"
         freeCompilerArgs += "-Xopt-in=androidx.compose.ui.ExperimentalComposeUiApi"
         freeCompilerArgs += "-Xopt-in=com.google.accompanist.pager.ExperimentalPagerApi"
+        freeCompilerArgs += "-Xopt-in=androidx.compose.material.ExperimentalMaterialApi"
     }
     composeOptions {
         kotlinCompilerExtensionVersion "$compose_version"
