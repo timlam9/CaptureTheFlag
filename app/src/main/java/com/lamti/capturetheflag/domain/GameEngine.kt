@@ -22,7 +22,6 @@ import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_BATTLE_RANGE
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
-import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_BOUNDARIES_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
 import com.lamti.capturetheflag.presentation.ui.components.navigation.Screen
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
@@ -51,6 +50,7 @@ class GameEngine @Inject constructor(
     private val geofencingRepository: GeofencingRepository,
     private val coroutineScope: CoroutineScope
 ) {
+
     private val _livePosition: MutableStateFlow<LatLng> = MutableStateFlow(emptyPosition())
     val livePosition: StateFlow<LatLng> = _livePosition
 
@@ -229,9 +229,10 @@ class GameEngine @Inject constructor(
         firestoreRepository.updatePlayer(_player.value.copy(status = Player.Status.Playing))
     }
 
-    suspend fun updateSafehouseAndForwardGameState(position: LatLng) = coroutineScope.launch {
+    suspend fun updateSafehouseAndForwardGameState(position: LatLng, gameRadius: Float) = coroutineScope.launch {
         firestoreRepository.updateGame(
             _game.value.copy(
+                gameRadius = gameRadius,
                 gameState = _game.value.gameState.copy(
                     state = ProgressState.SettingFlags,
                     safehouse = _game.value.gameState.safehouse.copy(position = position)
@@ -368,7 +369,7 @@ class GameEngine @Inject constructor(
     private fun LatLng.isPlayerInsideGame(): Boolean {
         val safehousePosition = _game.value.gameState.safehouse.position
         val isNotInsideSafehouse = !isInRangeOf(safehousePosition, DEFAULT_SAFEHOUSE_RADIUS)
-        val isInsideGame = isInRangeOf(safehousePosition, DEFAULT_GAME_BOUNDARIES_RADIUS)
+        val isInsideGame = isInRangeOf(safehousePosition, _game.value.gameRadius)
 
         return isNotInsideSafehouse && isInsideGame
     }
@@ -474,7 +475,7 @@ class GameEngine @Inject constructor(
     }
 
     private fun GameState.startGeofencesListener() {
-        geofencingRepository.addGeofence(safehouse.position, GAME_BOUNDARIES_GEOFENCE_ID, DEFAULT_GAME_BOUNDARIES_RADIUS)
+        geofencingRepository.addGeofence(safehouse.position, GAME_BOUNDARIES_GEOFENCE_ID, _game.value.gameRadius)
         geofencingRepository.addGeofence(safehouse.position, SAFEHOUSE_GEOFENCE_ID, DEFAULT_SAFEHOUSE_RADIUS)
         geofencingRepository.addGeofence(greenFlag.position, GREEN_FLAG_GEOFENCE_ID, DEFAULT_FLAG_RADIUS)
         geofencingRepository.addGeofence(redFlag.position, RED_FLAG_GEOFENCE_ID, DEFAULT_FLAG_RADIUS)
@@ -505,7 +506,7 @@ class GameEngine @Inject constructor(
     private fun LatLng.isInBattleableGameZone() =
         isInsideGame() && !isInsideSafehouse() && !isInsideRedFlag() && !isInsideGreenFlag()
 
-    private fun LatLng.isInsideGame() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_GAME_BOUNDARIES_RADIUS)
+    private fun LatLng.isInsideGame() = isInRangeOf(_game.value.gameState.safehouse.position, _game.value.gameRadius)
 
     private fun LatLng.isInsideSafehouse() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_SAFEHOUSE_RADIUS)
 

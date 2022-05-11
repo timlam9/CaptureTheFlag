@@ -34,6 +34,7 @@ fun MapScreen(
     userID: String,
     gameDetails: GameDetails,
     gameState: GameState,
+    gameRadius: Float,
     canPlaceFlag: Boolean,
     safehousePosition: LatLng,
     initialPosition: LatLng,
@@ -51,7 +52,7 @@ fun MapScreen(
     onEnterGameOverScreen: () -> Unit,
     onArScannerButtonClicked: () -> Unit,
     onSettingFlagsButtonClicked: () -> Unit,
-    onReadyButtonClicked: (LatLng) -> Unit,
+    onReadyButtonClicked: (LatLng, Float) -> Unit,
     onBattleButtonClicked: () -> Unit,
     onSettingsClicked: () -> Unit
 ) {
@@ -81,6 +82,7 @@ fun MapScreen(
             safehousePosition = safehousePosition,
             isSafeHouseDraggable = isSafehouseDraggable,
             team = gameDetails.team,
+            gameRadius = gameRadius,
             userID = userID,
             redFlag = gameState.redFlag,
             gameState = gameState.state,

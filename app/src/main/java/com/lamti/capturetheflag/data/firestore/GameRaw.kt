@@ -16,12 +16,14 @@ import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.GeofenceObject
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_RADIUS
 import com.lamti.capturetheflag.utils.EMPTY
 import java.util.Date
 
 data class GameRaw(
     val gameID: String = EMPTY,
     val title: String = EMPTY,
+    val gameRadius: Float = DEFAULT_GAME_RADIUS,
     val gameState: GameStateRaw = GameStateRaw(),
     val redPlayers: List<ActivePlayerRaw> = emptyList(),
     val greenPlayers: List<ActivePlayerRaw> = emptyList(),
@@ -31,6 +33,7 @@ data class GameRaw(
     fun toGame() = Game(
         gameID = gameID,
         title = title,
+        gameRadius = gameRadius,
         gameState = gameState.toGameState(),
         redPlayers = redPlayers.map { it.toActivePlayer() },
         greenPlayers = greenPlayers.map { it.toActivePlayer() },
@@ -42,6 +45,7 @@ data class GameRaw(
         fun Game.toRaw() = GameRaw(
             gameID = gameID,
             title = title,
+            gameRadius = gameRadius,
             gameState = gameState.toRaw(),
             redPlayers = redPlayers.map { it.toRaw() },
             greenPlayers = greenPlayers.map { it.toRaw() },

@@ -13,7 +13,6 @@ import com.lamti.capturetheflag.domain.game.Game.Companion.initialGame
 import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_BATTLE_RANGE
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
-import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_BOUNDARIES_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
 import com.lamti.capturetheflag.presentation.ui.toLatLng
 import com.lamti.capturetheflag.utils.SERVICE_LOCATION_LOGGER_TAG
@@ -152,7 +151,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
     private fun LatLng.isInBattleableGameZone() =
         isInsideGame() && !isInsideSafehouse() && !isInsideRedFlag() && !isInsideGreenFlag()
 
-    private fun LatLng.isInsideGame() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_GAME_BOUNDARIES_RADIUS)
+    private fun LatLng.isInsideGame() = isInRangeOf(_game.value.gameState.safehouse.position, _game.value.gameRadius)
 
     private fun LatLng.isInsideSafehouse() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_SAFEHOUSE_RADIUS)
 

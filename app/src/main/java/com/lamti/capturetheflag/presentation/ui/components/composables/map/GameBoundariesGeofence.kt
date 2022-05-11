@@ -5,7 +5,6 @@ import androidx.compose.ui.graphics.Color
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.MarkerState
-import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_BOUNDARIES_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
 
 @Composable
@@ -13,6 +12,7 @@ import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
     safeHouseIcon: BitmapDescriptor?,
     safeHouseTitle: String,
     isSafeHouseDraggable: Boolean,
+    gameRadius: Float,
     markerState: MarkerState
 ) {
     MapMarker(
@@ -25,7 +25,7 @@ import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
     )
     Circle(
         center = markerState.position,
-        radius = DEFAULT_GAME_BOUNDARIES_RADIUS.toDouble(),
+        radius = gameRadius.toDouble(),
         strokeColor = Color.Blue,
         strokeWidth = 10f,
     )

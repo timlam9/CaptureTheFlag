@@ -28,6 +28,7 @@ import com.lamti.capturetheflag.domain.game.GeofenceObject
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_RADIUS
 import com.lamti.capturetheflag.presentation.ui.MapStyle
 import com.lamti.capturetheflag.presentation.ui.bitmapDescriptorFromVector
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.ConfirmationDialog
@@ -39,6 +40,7 @@ fun GoogleMapsView(
     safehousePosition: LatLng,
     team: Team,
     userID: String,
+    gameRadius: Float,
     gameState: ProgressState,
     gameDetails: GameDetails,
     redFlag: GeofenceObject,
@@ -46,18 +48,19 @@ fun GoogleMapsView(
     redFlagPlayer: String?,
     greenFlagPlayer: String?,
     otherPlayers: List<GamePlayer>,
-    onReadyButtonClicked: (LatLng) -> Unit,
+    onReadyButtonClicked: (LatLng, Float) -> Unit,
 ) {
     val (mapProperties, uiSettings) = setupMap()
 
     GoogleMapsView(
+        safehousePosition = safehousePosition,
         mapProperties = mapProperties,
         uiSettings = uiSettings,
-        safehousePosition = safehousePosition,
         cameraPositionState = cameraPositionState,
         isSafeHouseDraggable = isSafeHouseDraggable,
         onReadyButtonClicked = onReadyButtonClicked,
         team = team,
+        gameRadius = gameRadius,
         gameState = gameState,
         gameDetails = gameDetails,
         userID = userID,
@@ -80,8 +83,9 @@ fun GoogleMapsView(
     safeHouseTitle: String = stringResource(R.string.safehouse),
     cameraPositionState: CameraPositionState,
     isSafeHouseDraggable: Boolean,
-    onReadyButtonClicked: (LatLng) -> Unit,
+    onReadyButtonClicked: (LatLng, Float) -> Unit,
     team: Team,
+    gameRadius: Float,
     gameState: ProgressState,
     gameDetails: GameDetails,
     userID: String,
@@ -97,6 +101,14 @@ fun GoogleMapsView(
     val greenFlagIcon = remember { context.bitmapDescriptorFromVector(R.drawable.ic_flag, R.color.green) }
     val redFlagIcon = remember { context.bitmapDescriptorFromVector(R.drawable.ic_flag, R.color.red) }
     val safeHouseIcon = remember { context.bitmapDescriptorFromVector(R.drawable.ic_safety, R.color.blue) }
+
+    var initialGameRadius: Float by remember {
+        mutableStateOf(
+            if (gameState == ProgressState.Created && gameDetails.rank == GameDetails.Rank.Captain) gameRadius else DEFAULT_GAME_RADIUS
+        )
+    }
+
+    LaunchedEffect(key1 = gameRadius) { initialGameRadius = gameRadius }
 
     var showConfirmationDialog by remember { mutableStateOf(false) }
     val safehouseMarkerState = rememberMarkerState(position = safehousePosition)
@@ -115,6 +127,7 @@ fun GoogleMapsView(
                 safeHouseIcon = safeHouseIcon,
                 safeHouseTitle = safeHouseTitle,
                 markerState = safehouseMarkerState,
+                gameRadius = initialGameRadius,
                 isSafeHouseDraggable = isSafeHouseDraggable
             )
             FlagMarkers(
@@ -140,12 +153,13 @@ fun GoogleMapsView(
                 greenFlagPlayer = greenFlagPlayer
             )
         }
-        ReadyButton(
+        GameConfiguration(
             modifier = Modifier
                 .padding(20.dp)
                 .align(Alignment.BottomCenter),
             gameState = gameState,
             playerGameDetails = gameDetails,
+            onValueChange = { initialGameRadius = it },
             onReadyButtonClicked = { showConfirmationDialog = true }
         )
         ConfirmationDialog(
@@ -155,7 +169,7 @@ fun GoogleMapsView(
             onNegativeDialogClicked = { showConfirmationDialog = false },
             onPositiveButtonClicked = {
                 showConfirmationDialog = false
-                onReadyButtonClicked(safehouseMarkerState.position)
+                onReadyButtonClicked(safehouseMarkerState.position, initialGameRadius)
             }
         )
     }
