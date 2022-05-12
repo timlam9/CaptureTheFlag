@@ -151,7 +151,7 @@ class GameEngine @Inject constructor(
             status = Player.Status.Connecting
         )
 
-        firestoreRepository.updatePlayer(player = _player.value)
+        firestoreRepository.updatePlayer(player = _player.value, clearCache = false)
         firestoreRepository.createGame(
             id = gameID,
             title = title,
@@ -164,14 +164,15 @@ class GameEngine @Inject constructor(
 
     suspend fun addPlayerToGame(gameID: String) = coroutineScope.launch {
         firestoreRepository.updatePlayer(
-            _player.value.copy(
+            player = _player.value.copy(
                 gameDetails = GameDetails(
                     gameID = gameID,
                     team = Team.Unknown,
                     rank = GameDetails.Rank.Soldier
                 ),
                 status = Player.Status.Connecting
-            )
+            ),
+            clearCache = false
         )
         observeGame()
     }
@@ -204,7 +205,8 @@ class GameEngine @Inject constructor(
                     team = team,
                     rank = rank
                 )
-            )
+            ),
+            clearCache = false
         )
 
         val updatedGame = when (team) {
@@ -226,7 +228,7 @@ class GameEngine @Inject constructor(
     }
 
     suspend fun startGame() = coroutineScope.launch {
-        firestoreRepository.updatePlayer(_player.value.copy(status = Player.Status.Playing))
+        firestoreRepository.updatePlayer(_player.value.copy(status = Player.Status.Playing), false)
     }
 
     suspend fun updateSafehouseAndForwardGameState(position: LatLng, gameRadius: Float) = coroutineScope.launch {
@@ -264,8 +266,9 @@ class GameEngine @Inject constructor(
 
         val (redPlayers, greenPlayers) = when (_player.value.gameDetails?.team) {
             Team.Red -> {
-                val redPlayers =
-                    _game.value.redPlayers.map { if (it.id == _player.value.userID) it.copy(hasLost = true) else it }
+                val redPlayers = _game.value.redPlayers.map {
+                    if (it.id == _player.value.userID) it.copy(hasLost = true) else it
+                }
                 Pair(redPlayers, _game.value.greenPlayers)
             }
             Team.Green -> {
@@ -285,17 +288,18 @@ class GameEngine @Inject constructor(
                 greenPlayers = greenPlayers
             )
         )
-        firestoreRepository.updatePlayer(player = _player.value.copy(status = Player.Status.Lost))
+        firestoreRepository.updatePlayer(player = _player.value.copy(status = Player.Status.Lost), clearCache = false)
         firestoreRepository.deleteGamePlayer(gameID = _game.value.gameID, playerID = _player.value.userID)
     }
 
     suspend fun gameOver(onResult: (Boolean) -> Unit) {
         onResult(
             firestoreRepository.updatePlayer(
-                _player.value.copy(
+                player = _player.value.copy(
                     status = Player.Status.Online,
                     gameDetails = null
-                )
+                ),
+                clearCache = true
             )
         )
     }
@@ -418,6 +422,8 @@ class GameEngine @Inject constructor(
         var foundOpponent = false
         for (player in players) {
             if (player.id != _player.value.userID &&
+                !_game.value.battles.flatMap { it.playersIDs }.contains(player.id) &&
+                player.team != _player.value.gameDetails?.team &&
                 player.position.isInBattleableGameZone() &&
                 _livePosition.value.isInBattleableGameZone() &&
                 _livePosition.value.isInRangeOf(player.position, DEFAULT_BATTLE_RANGE)
@@ -438,7 +444,8 @@ class GameEngine @Inject constructor(
         firestoreRepository.updatePlayer(
             _player.value.copy(
                 status = Player.Status.Playing
-            )
+            ),
+            false
         )
     }
 

@@ -55,7 +55,10 @@ class PlayersRepository @Inject constructor(
         }
     }
 
-    suspend fun updatePlayer(player: Player) = player.toRaw().update()
+    suspend fun updatePlayer(player: Player, clearCache: Boolean): Boolean {
+        if (clearCache) firestore.clearPersistence()
+        return player.toRaw().update()
+    }
 
     private suspend fun PlayerRaw.update(): Boolean = withContext(ioDispatcher) {
         try {
@@ -75,5 +78,4 @@ class PlayersRepository @Inject constructor(
 
         private const val COLLECTION_PLAYERS = "players"
     }
-
 }

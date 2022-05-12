@@ -11,6 +11,8 @@ import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.Game.Companion.initialGame
 import com.lamti.capturetheflag.domain.game.GamePlayer
+import com.lamti.capturetheflag.domain.player.Player
+import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_BATTLE_RANGE
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
@@ -42,6 +44,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
 
     private val _livePosition: MutableStateFlow<LatLng> = MutableStateFlow(emptyPosition())
     private val _game: MutableStateFlow<Game> = MutableStateFlow(initialGame())
+    private val _player: MutableStateFlow<Player> = MutableStateFlow(Player.emptyPlayer())
     private val _showBattleNotification: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private val battleSound: Uri = Uri.parse("android.resource://com.lamti.capturetheflag/" + R.raw.battle_found)
 
@@ -73,11 +76,16 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
     }
 
     private fun observePlayer() = lifecycleScope.launch {
-        firestoreRepository.observePlayer().onEach {
-            it.run {
+        firestoreRepository.observePlayer().onEach { player ->
+            _player.update { player }
+            player.run {
                 if (gameDetails?.gameID?.isNotEmpty() == true) {
                     _game.update { firestoreRepository.getGame(gameDetails.gameID) ?: initialGame() }
-                    observeOtherPlayers(playerID = userID, gameID = gameDetails.gameID)
+                    observeOtherPlayers(
+                        playerID = userID,
+                        gameID = gameDetails.gameID,
+                        playerTeam = gameDetails.team
+                    )
                 }
             }
         }.flowOn(Dispatchers.IO)
@@ -112,17 +120,24 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
             .launchIn(lifecycleScope)
     }
 
-    private fun observeOtherPlayers(playerID: String, gameID: String) = lifecycleScope.launch {
-        firestoreRepository.observePlayersPosition(gameID)
-            .onEach { players -> foundOpponentToBattle(players, playerID) }
-            .flowOn(Dispatchers.IO)
-            .launchIn(lifecycleScope)
-    }
+    private fun observeOtherPlayers(playerID: String, gameID: String, playerTeam: Team) =
+        lifecycleScope.launch {
+            firestoreRepository.observePlayersPosition(gameID)
+                .onEach { players -> foundOpponentToBattle(players, playerID, playerTeam) }
+                .flowOn(Dispatchers.IO)
+                .launchIn(lifecycleScope)
+        }
 
-    private fun foundOpponentToBattle(players: List<GamePlayer>, playerID: String) {
+    private fun foundOpponentToBattle(
+        players: List<GamePlayer>,
+        playerID: String,
+        playerTeam: Team
+    ) {
         var foundOpponent = false
         for (player in players) {
             if (!isAppInForegrounded() &&
+                !_game.value.battles.flatMap { it.playersIDs }.contains(player.id) &&
+                player.team != playerTeam &&
                 player.id != playerID &&
                 player.position.isInBattleableGameZone() &&
                 _livePosition.value.isInBattleableGameZone() &&
