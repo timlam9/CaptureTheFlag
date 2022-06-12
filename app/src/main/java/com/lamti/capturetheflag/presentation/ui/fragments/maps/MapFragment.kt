@@ -3,6 +3,7 @@ package com.lamti.capturetheflag.presentation.ui.fragments.maps
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.maps.MapsInitializer
+import com.google.ar.core.ArCoreApk
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.databinding.FragmentMapBinding
 import com.lamti.capturetheflag.presentation.ui.DatastoreHelper
@@ -121,7 +123,16 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                                 dataStore = dataStore,
                                 onLogoutClicked = { mainActivity.onLogoutClicked() },
                                 onSettingFlagsButtonClicked = { mainActivity.onSettingFlagsClicked() },
-                                onArScannerButtonClicked = { mainActivity.onArScannerButtonClicked() },
+                                onArScannerButtonClicked = {
+                                    if (ArCoreApk.getInstance().checkAvailability(requireContext()).isSupported) {
+                                        mainActivity.onArScannerButtonClicked()
+                                    } else {
+                                        Toast.makeText(requireContext(), "Ar is not supported. So the flag is just yours!", Toast.LENGTH_SHORT).show()
+                                        viewModel.onArCorelessCaptured {
+                                            if (it) (requireActivity() as MainActivity).onBackPressed()
+                                        }
+                                    }
+                                },
                                 onSettingsClicked = {
                                     coroutineScope.launch {
                                         if (bottomSheetScaffoldState.bottomSheetState.isCollapsed) {
