@@ -82,4 +82,9 @@ class MapViewModel @Inject constructor(private val gameEngine: GameEngine) : Vie
     fun onGameOverOkClicked(onResult: (Boolean) -> Unit) = viewModelScope.launch(Dispatchers.Main) {
         gameEngine.gameOver(onResult)
     }
+
+    fun onArCorelessCaptured(onResult: (Boolean) -> Unit) = viewModelScope.launch {
+        //TODO: Add Timer!
+        gameEngine.captureFlag(onResult)
+    }
 }

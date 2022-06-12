@@ -20,6 +20,7 @@ import javax.inject.Singleton
 object GeofenceModule {
 
     @Provides
+    @Singleton
     fun provideGeofencingClient(@ApplicationContext context: Context) = LocationServices.getGeofencingClient(context)
 
     @SuppressLint("UnspecifiedImmutableFlag")
@@ -31,6 +32,7 @@ object GeofenceModule {
     }
 
     @Provides
+    @Singleton
     fun provideGeofencingRepository(
         geofencingClient: GeofencingClient,
         geofencePendingIntent: PendingIntent

@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.lamti.capturetheflag.R
+import com.lamti.capturetheflag.data.location.service.checkBackgroundLocationPermissionAPI30
 import com.lamti.capturetheflag.data.location.service.checkLocationPermissionAPI29
 import com.lamti.capturetheflag.data.location.service.checkSinglePermission
 import com.lamti.capturetheflag.data.location.service.isLocationEnabledOrNot
@@ -124,7 +125,7 @@ class LoginActivity : ComponentActivity() {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 if (checkSinglePermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
                     when {
-                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> checkLocationPermissionAPI29(requestCode)
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> checkBackgroundLocationPermissionAPI30(requestCode)
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> checkLocationPermissionAPI29(requestCode)
                         else -> {
                             lifecycleScope.launch {
@@ -133,7 +134,7 @@ class LoginActivity : ComponentActivity() {
                         }
                     }
                 }
-                if (checkSinglePermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                if (checkSinglePermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
                     lifecycleScope.launch {
                         dataStore.saveHasPreferences(true)
                     }
