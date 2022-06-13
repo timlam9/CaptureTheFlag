@@ -77,6 +77,6 @@
     <string name="onboarding2">\"Battle with opponent’s near you and eliminate them from the game. \"</string>
     <string name="onboarding3">Call your friends and start playing!</string>
     <string name="location_permissions">Location Permissions</string>
-    <string name="location_permissions_required">Location permissions are required so you can be able to see your teammates and your teammates can see you in real time!</string>
+    <string name="location_permissions_required">Capture the Flag shares location data to identify nearby players and areas used in the game even when the app is closed or not in use.</string>
     <string name="are_you_sure">Are you sure you want to quit game?</string>
 </resources>
