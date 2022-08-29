@@ -34,11 +34,16 @@ class NotificationHelper(private val context: Context) {
     }
 
     private val contentIntent by lazy {
+        val flag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            PendingIntent.FLAG_MUTABLE
+        else
+            PendingIntent.FLAG_UPDATE_CURRENT
+
         PendingIntent.getActivity(
             context,
             0,
             Intent(context, MainActivity::class.java),
-            PendingIntent.FLAG_UPDATE_CURRENT
+            flag
         )
     }
 
@@ -65,11 +70,16 @@ class NotificationHelper(private val context: Context) {
             notificationManager.createNotificationChannel(createHighPriorityChannel(sound))
         }
 
+        val flag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            PendingIntent.FLAG_MUTABLE
+        else
+            PendingIntent.FLAG_UPDATE_CURRENT
+
         val fullScreenPendingIntent = PendingIntent.getActivity(
             context,
             0,
             Intent(context, MainActivity::class.java),
-            PendingIntent.FLAG_UPDATE_CURRENT
+            flag
         )
 
         val notificationBuilder =
