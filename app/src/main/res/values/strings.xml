@@ -9,7 +9,7 @@
     <string name="title_activity_login">LoginActivity</string>
     <string name="logout">logout</string>
     <string name="capture_the_flag">Capture The Flag</string>
-    <string name="play_ultimate_game">Play the ultimate street game!Gather your best team. Pick some worthy opponents.Fight for the victory, capturing opponent’s flag.</string>
+    <string name="play_ultimate_game">Play the ultimate street game! Gather your best team. Pick some worthy opponents. Fight for the victory, capturing opponent’s flag.</string>
     <string name="new_game">New Game</string>
     <string name="type_password">type password</string>
     <string name="password">password</string>
