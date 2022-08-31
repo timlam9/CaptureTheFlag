@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,9 +55,9 @@ fun ChooseTeamScreen(
     onGreenButtonClicked: () -> Unit,
     onOkButtonClicked: () -> Unit,
 ) {
-    var hasChosenTeam by remember { mutableStateOf(false) }
-    var selectedTeam by remember { mutableStateOf(Team.Unknown) }
-    var showConfirmationDialog by remember { mutableStateOf(false) }
+    var hasChosenTeam by rememberSaveable { mutableStateOf(false) }
+    var selectedTeam by rememberSaveable { mutableStateOf(Team.Unknown) }
+    var showConfirmationDialog by rememberSaveable { mutableStateOf(false) }
 
     val lifecycleState: Lifecycle.State = LocalLifecycleOwner.current.lifecycle.currentState
     val isResumed: Boolean = lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
