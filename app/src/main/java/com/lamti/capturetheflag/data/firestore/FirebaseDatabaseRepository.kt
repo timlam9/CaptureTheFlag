@@ -67,6 +67,19 @@ class FirebaseDatabaseRepository @Inject constructor(
         }
     }
 
+    suspend fun deleteGame(gameID: String): Boolean = withContext(ioDispatcher) {
+        try {
+            database.getReference(DATABASE_REFERENCE)
+                .child(gameID)
+                .removeValue()
+                .await()
+            true
+        } catch (e: Exception) {
+            Timber.e("Delete game error: ${e.message}")
+            false
+        }
+    }
+
     companion object {
 
         private const val DATABASE_REFERENCE = "root"

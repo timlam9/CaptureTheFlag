@@ -129,7 +129,19 @@ class GamesRepository @Inject constructor(
         }
     }
 
-    fun clearCache(): Boolean = firestore.clearPersistence().isSuccessful
+    suspend fun deleteGame(gameID: String): Boolean = withContext(ioDispatcher) {
+        try {
+            firestore
+                .collection(COLLECTION_GAMES)
+                .document(gameID)
+                .delete()
+                .await()
+            true
+        } catch (e: Exception) {
+            Timber.e("[$FIRESTORE_LOGGER_TAG] ${e.message}")
+            false
+        }
+    }
 
     companion object {
 

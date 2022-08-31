@@ -293,15 +293,16 @@ class GameEngine @Inject constructor(
     }
 
     suspend fun gameOver(onResult: (Boolean) -> Unit) {
-        onResult(
-            firestoreRepository.updatePlayer(
-                player = _player.value.copy(
-                    status = Player.Status.Online,
-                    gameDetails = null
-                ),
-                clearCache = true
-            )
+        val updatePlayer = firestoreRepository.updatePlayer(
+            player = _player.value.copy(
+                status = Player.Status.Online,
+                gameDetails = null
+            ),
+            clearCache = true
         )
+        val deleteGame = firestoreRepository.deleteFirebaseGame(_game.value.gameID)
+
+        onResult(updatePlayer && deleteGame)
     }
 
     suspend fun captureFlag(onResult: (Boolean) -> Unit) = coroutineScope.launch {
@@ -337,7 +338,7 @@ class GameEngine @Inject constructor(
         ProgressState.Ended -> {
             _enterGameOverScreen.value = true
             _isSafehouseDraggable.value = false
-            firestoreRepository.clearCache()
+            firestoreRepository.deleteGame(_game.value.gameID)
             removeGeofencesListener()
         }
         ProgressState.Idle -> {

@@ -38,5 +38,7 @@ interface FirestoreRepository {
 
     suspend fun deleteGamePlayer(gameID: String, playerID: String): Boolean
 
-    fun clearCache(): Boolean
+    suspend fun deleteGame(gameID: String): Boolean
+
+    suspend fun deleteFirebaseGame(gameID: String): Boolean
 }

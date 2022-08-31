@@ -97,5 +97,7 @@ class FirestoreRepositoryImpl @Inject constructor(
     override suspend fun deleteGamePlayer(gameID: String, playerID: String): Boolean =
         databaseRepository.deleteGamePlayer(gameID, userID)
 
-    override fun clearCache(): Boolean = gamesRepository.clearCache()
+    override suspend fun deleteGame(gameID: String): Boolean = gamesRepository.deleteGame(gameID)
+
+    override suspend fun deleteFirebaseGame(gameID: String): Boolean = databaseRepository.deleteGame(gameID)
 }
