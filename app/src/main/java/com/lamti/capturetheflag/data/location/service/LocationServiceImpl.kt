@@ -41,6 +41,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
 
     private var isServiceRunning = false
     private var locationUpdates: Job? = null
+    private var observePlayerJob: Job? = null
 
     private val _livePosition: MutableStateFlow<LatLng> = MutableStateFlow(emptyPosition())
     private val _game: MutableStateFlow<Game> = MutableStateFlow(initialGame())
@@ -61,11 +62,10 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
                     observePlayer()
                     showNotificationListener()
                 }
-                LocationServiceCommand.Pause -> {
+                LocationServiceCommand.Stop -> {
                     isServiceRunning = false
                     locationUpdates?.cancel()
-                }
-                LocationServiceCommand.Stop -> {
+                    observePlayerJob?.cancel()
                     stopSelf()
                     return START_NOT_STICKY
                 }
@@ -75,21 +75,23 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
         return START_STICKY
     }
 
-    private fun observePlayer() = lifecycleScope.launch {
-        firestoreRepository.observePlayer().onEach { player ->
-            _player.update { player }
-            player.run {
-                if (gameDetails?.gameID?.isNotEmpty() == true) {
-                    _game.update { firestoreRepository.getGame(gameDetails.gameID) ?: initialGame() }
-                    observeOtherPlayers(
-                        playerID = userID,
-                        gameID = gameDetails.gameID,
-                        playerTeam = gameDetails.team
-                    )
+    private fun observePlayer() {
+        observePlayerJob = lifecycleScope.launch {
+            firestoreRepository.observePlayer().onEach { player ->
+                _player.update { player }
+                player.run {
+                    if (gameDetails?.gameID?.isNotEmpty() == true) {
+                        _game.update { firestoreRepository.getGame(gameDetails.gameID) ?: initialGame() }
+                        observeOtherPlayers(
+                            playerID = userID,
+                            gameID = gameDetails.gameID,
+                            playerTeam = gameDetails.team
+                        )
+                    }
                 }
-            }
-        }.flowOn(Dispatchers.IO)
-            .launchIn(lifecycleScope)
+            }.flowOn(Dispatchers.IO)
+                .launchIn(lifecycleScope)
+        }
     }
 
     override fun onCreate() {

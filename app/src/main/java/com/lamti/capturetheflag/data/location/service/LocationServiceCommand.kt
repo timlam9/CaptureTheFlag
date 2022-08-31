@@ -8,6 +8,5 @@ import kotlinx.parcelize.Parcelize
 enum class LocationServiceCommand : Parcelable {
 
     Start,
-    Pause,
     Stop
 }

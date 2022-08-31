@@ -344,6 +344,7 @@ class GameEngine @Inject constructor(
         ProgressState.Idle -> {
             _enterGameOverScreen.value = false
             _isSafehouseDraggable.value = false
+            removeGeofencesListener()
         }
         ProgressState.SettingGame -> {
             _enterGameOverScreen.value = false

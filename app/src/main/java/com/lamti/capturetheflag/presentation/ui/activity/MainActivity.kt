@@ -26,6 +26,7 @@ import com.lamti.capturetheflag.data.location.service.isMyServiceRunning
 import com.lamti.capturetheflag.databinding.ActivityMainBinding
 import com.lamti.capturetheflag.domain.GameEngine.Companion.GREEN_FLAG_GEOFENCE_ID
 import com.lamti.capturetheflag.domain.GameEngine.Companion.RED_FLAG_GEOFENCE_ID
+import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.arcore.helpers.FullScreenHelper
@@ -70,8 +71,18 @@ class MainActivity : AppCompatActivity() {
             myAppPreferences[GEOFENCE_KEY] = intent?.getStringExtra(GEOFENCE_KEY) ?: EMPTY
             geofenceIdFLow.value = intent?.getStringExtra(GEOFENCE_KEY) ?: EMPTY
 
-            if ((greenPlayerEntersUncapturedRedFlag() || redPlayerEntersUncapturedGreenFlag()) && !isAppInForegrounded()) {
-                notificationHelper.showEventNotification(sound = flagFoundSound)
+            if ((greenPlayerEntersUncapturedRedFlag()) && !isAppInForegrounded()) {
+                notificationHelper.showEventNotification(
+                    title = "You found the Red flag",
+                    sound = flagFoundSound
+                )
+            }
+
+            if ((redPlayerEntersUncapturedGreenFlag()) && !isAppInForegrounded()) {
+                notificationHelper.showEventNotification(
+                    title = "You found the Green flag",
+                    sound = flagFoundSound
+                )
             }
         }
     }
@@ -97,6 +108,21 @@ class MainActivity : AppCompatActivity() {
             geofenceIdFLow.onEach {
                 if ((greenPlayerEntersUncapturedRedFlag() || redPlayerEntersUncapturedGreenFlag()) && isAppInForegrounded()) {
                     playSound(sound = flagFoundSound)
+                }
+            }.launchIn(lifecycleScope)
+        }
+
+        lifecycleScope.launchWhenCreated {
+            viewModel.game.onEach { game ->
+                if (game.gameState.state == ProgressState.Started) {
+                    Timber.d("[$LOGGER_TAG] Game started")
+                    sendCommandToForegroundService(LocationServiceCommand.Start)
+                    registerReceiver(broadcastReceiver, IntentFilter(GEOFENCE_BROADCAST_RECEIVER_FILTER))
+                } else if (game.gameState.state == ProgressState.Ended) {
+                    Timber.d("[$LOGGER_TAG] Game ended")
+                    if (isMyServiceRunning(LocationServiceImpl::class.java))
+                        sendCommandToForegroundService(LocationServiceCommand.Stop)
+                    unregisterReceiver(broadcastReceiver)
                 }
             }.launchIn(lifecycleScope)
         }
@@ -169,8 +195,6 @@ class MainActivity : AppCompatActivity() {
                                 Timber.d("[$LOGGER_TAG] Start location service for user: ${viewModel.player.value.userID}")
 
                                 collectScreenFlow()
-                                registerReceiver(broadcastReceiver, IntentFilter(GEOFENCE_BROADCAST_RECEIVER_FILTER))
-                                sendCommandToForegroundService(LocationServiceCommand.Start)
                             }
                         }.launchIn(lifecycleScope)
                     }
