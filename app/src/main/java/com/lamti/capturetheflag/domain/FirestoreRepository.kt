@@ -20,7 +20,7 @@ interface FirestoreRepository {
 
     suspend fun getPlayer(): Player?
 
-    suspend fun updatePlayer(player: Player, clearCache: Boolean) :Boolean
+    suspend fun updatePlayer(player: Player) :Boolean
 
     // Games
     fun observeGame(gameID: String): Flow<Game>

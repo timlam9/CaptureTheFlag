@@ -151,7 +151,7 @@ class GameEngine @Inject constructor(
             status = Player.Status.Connecting
         )
 
-        firestoreRepository.updatePlayer(player = _player.value, clearCache = false)
+        firestoreRepository.updatePlayer(player = _player.value)
         firestoreRepository.createGame(
             id = gameID,
             title = title,
@@ -171,8 +171,7 @@ class GameEngine @Inject constructor(
                     rank = GameDetails.Rank.Soldier
                 ),
                 status = Player.Status.Connecting
-            ),
-            clearCache = false
+            )
         )
         observeGame()
     }
@@ -205,8 +204,7 @@ class GameEngine @Inject constructor(
                     team = team,
                     rank = rank
                 )
-            ),
-            clearCache = false
+            )
         )
 
         val updatedGame = when (team) {
@@ -228,7 +226,7 @@ class GameEngine @Inject constructor(
     }
 
     suspend fun startGame() = coroutineScope.launch {
-        firestoreRepository.updatePlayer(_player.value.copy(status = Player.Status.Playing), false)
+        firestoreRepository.updatePlayer(_player.value.copy(status = Player.Status.Playing))
     }
 
     suspend fun updateSafehouseAndForwardGameState(position: LatLng, gameRadius: Float) = coroutineScope.launch {
@@ -288,7 +286,7 @@ class GameEngine @Inject constructor(
                 greenPlayers = greenPlayers
             )
         )
-        firestoreRepository.updatePlayer(player = _player.value.copy(status = Player.Status.Lost), clearCache = false)
+        firestoreRepository.updatePlayer(player = _player.value.copy(status = Player.Status.Lost))
         firestoreRepository.deleteGamePlayer(gameID = _game.value.gameID, playerID = _player.value.userID)
     }
 
@@ -297,8 +295,7 @@ class GameEngine @Inject constructor(
             player = _player.value.copy(
                 status = Player.Status.Online,
                 gameDetails = null
-            ),
-            clearCache = true
+            )
         )
         val deleteGame = firestoreRepository.deleteFirebaseGame(_game.value.gameID)
 
@@ -446,8 +443,7 @@ class GameEngine @Inject constructor(
         firestoreRepository.updatePlayer(
             _player.value.copy(
                 status = Player.Status.Playing
-            ),
-            false
+            )
         )
     }
 

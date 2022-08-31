@@ -55,10 +55,7 @@ class PlayersRepository @Inject constructor(
         }
     }
 
-    suspend fun updatePlayer(player: Player, clearCache: Boolean): Boolean {
-        if (clearCache) firestore.clearPersistence()
-        return player.toRaw().update()
-    }
+    suspend fun updatePlayer(player: Player): Boolean = player.toRaw().update()
 
     private suspend fun PlayerRaw.update(): Boolean = withContext(ioDispatcher) {
         try {

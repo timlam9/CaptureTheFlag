@@ -35,8 +35,7 @@ class FirestoreRepositoryImpl @Inject constructor(
                 status = Player.Status.Online,
                 details = PlayerDetails(username = username, email = email),
                 gameDetails = null
-            ),
-            clearCache = false
+            )
         )
         true
     } ?: false
@@ -53,8 +52,7 @@ class FirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun getPlayer(): Player? = playersRepository.getPlayer(userID)
 
-    override suspend fun updatePlayer(player: Player, clearCache: Boolean) =
-        playersRepository.updatePlayer(player, clearCache)
+    override suspend fun updatePlayer(player: Player) = playersRepository.updatePlayer(player)
 
     // Games
     override fun observeGame(gameID: String): Flow<Game> = gamesRepository.observeGame(gameID)
