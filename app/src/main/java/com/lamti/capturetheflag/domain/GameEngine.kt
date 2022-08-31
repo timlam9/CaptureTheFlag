@@ -118,6 +118,7 @@ class GameEngine @Inject constructor(
                 _game.value = game
                 game.gameState.handleGameStateEvents()
                 game.battles.searchOpponent()
+                game.addGameOverByPlayersCountListener()
             }.catch {
                 Timber.e("[$LOGGER_TAG] Catch observe game error")
             }.launchIn(coroutineScope)
@@ -346,6 +347,26 @@ class GameEngine @Inject constructor(
         ProgressState.SettingGame -> {
             _enterGameOverScreen.value = false
             _isSafehouseDraggable.value = false
+        }
+    }
+
+    private fun Game.addGameOverByPlayersCountListener() {
+        if (greenPlayers.filterNot { it.hasLost }.isEmpty()) {
+            _game.value = copy(
+                gameState = gameState.copy(
+                    state = ProgressState.Ended,
+                    winners = Team.Red
+                )
+            )
+            _enterGameOverScreen.value = true
+        } else if (redPlayers.filterNot { it.hasLost }.isEmpty()) {
+            _game.value = copy(
+                gameState = gameState.copy(
+                    state = ProgressState.Ended,
+                    winners = Team.Green
+                )
+            )
+            _enterGameOverScreen.value = true
         }
     }
 
