@@ -118,7 +118,6 @@ class GameEngine @Inject constructor(
                 _game.value = game
                 game.gameState.handleGameStateEvents()
                 game.battles.searchOpponent()
-                game.addGameOverByPlayersCountListener()
             }.catch {
                 Timber.e("[$LOGGER_TAG] Catch observe game error")
             }.launchIn(coroutineScope)
@@ -332,6 +331,7 @@ class GameEngine @Inject constructor(
             hideCaptureFlagButton()
             observeOtherPlayers()
             startGeofencesListenerIfGameIsReady()
+            addGameOverByPlayersCountListener()
         }
         ProgressState.Ended -> {
             _enterGameOverScreen.value = true
@@ -350,24 +350,24 @@ class GameEngine @Inject constructor(
         }
     }
 
-    private fun Game.addGameOverByPlayersCountListener() {
-        if (greenPlayers.filterNot { it.hasLost }.isEmpty()) {
-            _game.value = copy(
-                gameState = gameState.copy(
+    private suspend fun addGameOverByPlayersCountListener() {
+        val updatedGame = when {
+            _game.value.greenPlayers.filterNot { it.hasLost }.isEmpty() -> _game.value.copy(
+                gameState = _game.value.gameState.copy(
                     state = ProgressState.Ended,
                     winners = Team.Red
                 )
             )
-            _enterGameOverScreen.value = true
-        } else if (redPlayers.filterNot { it.hasLost }.isEmpty()) {
-            _game.value = copy(
-                gameState = gameState.copy(
+            _game.value.redPlayers.filterNot { it.hasLost }.isEmpty() -> _game.value.copy(
+                gameState = _game.value.gameState.copy(
                     state = ProgressState.Ended,
                     winners = Team.Green
                 )
             )
-            _enterGameOverScreen.value = true
+            else -> _game.value
         }
+
+        firestoreRepository.updateGame(updatedGame)
     }
 
     private fun observeOtherPlayers() = coroutineScope.launch {

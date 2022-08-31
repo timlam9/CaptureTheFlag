@@ -114,18 +114,27 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launchWhenCreated {
             viewModel.game.onEach { game ->
-                if (game.gameState.state == ProgressState.Started) {
-                    Timber.d("[$LOGGER_TAG] Game started")
-                    sendCommandToForegroundService(LocationServiceCommand.Start)
-                    registerReceiver(broadcastReceiver, IntentFilter(GEOFENCE_BROADCAST_RECEIVER_FILTER))
-                } else if (game.gameState.state == ProgressState.Ended) {
-                    Timber.d("[$LOGGER_TAG] Game ended")
-                    if (isMyServiceRunning(LocationServiceImpl::class.java))
-                        sendCommandToForegroundService(LocationServiceCommand.Stop)
-                    unregisterReceiver(broadcastReceiver)
-                }
+                if (game.gameState.state == ProgressState.Started)
+                    startBackgroundServices()
+                else if (game.gameState.state == ProgressState.Ended)
+                    removeBackgroundServices()
             }.launchIn(lifecycleScope)
         }
+    }
+
+    private fun startBackgroundServices() {
+        Timber.d("[$LOGGER_TAG] Game started")
+        if (!isMyServiceRunning(LocationServiceImpl::class.java)) {
+            sendCommandToForegroundService(LocationServiceCommand.Start)
+            registerReceiver(broadcastReceiver, IntentFilter(GEOFENCE_BROADCAST_RECEIVER_FILTER))
+        }
+    }
+
+    private fun removeBackgroundServices() {
+        Timber.d("[$LOGGER_TAG] Game ended")
+        if (isMyServiceRunning(LocationServiceImpl::class.java))
+            sendCommandToForegroundService(LocationServiceCommand.Stop)
+        unregisterReceiver(broadcastReceiver)
     }
 
     override fun onResume() {

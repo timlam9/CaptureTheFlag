@@ -127,7 +127,11 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                                     if (ArCoreApk.getInstance().checkAvailability(requireContext()).isSupported) {
                                         mainActivity.onArScannerButtonClicked()
                                     } else {
-                                        Toast.makeText(requireContext(), "Ar is not supported. So the flag is just yours!", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Ar is not supported. So the flag is just yours!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         viewModel.onArCorelessCaptured {
                                             if (it) (requireActivity() as MainActivity).onBackPressed()
                                         }
