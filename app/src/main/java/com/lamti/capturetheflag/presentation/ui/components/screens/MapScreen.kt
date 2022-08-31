@@ -41,7 +41,7 @@ fun MapScreen(
     livePosition: LatLng,
     isSafehouseDraggable: Boolean,
     otherPlayers: List<GamePlayer>,
-    showBattleButton: Boolean,
+    showBattleButton: String,
     showArFlagButton: Boolean,
     lost: Boolean,
     greenPlayersCount: Int,

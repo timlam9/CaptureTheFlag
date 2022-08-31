@@ -34,7 +34,7 @@ class MapViewModel @Inject constructor(private val gameEngine: GameEngine) : Vie
     val enterGameOverScreen: StateFlow<Boolean> = gameEngine.enterGameOverScreen
 
     val showArFlagButton: StateFlow<Boolean> = gameEngine.showArFlagButton
-    val showBattleButton: StateFlow<Boolean> = gameEngine.showBattleButton
+    val showBattleButton: StateFlow<String> = gameEngine.showBattleButton
     val isSafehouseDraggable: StateFlow<Boolean> = gameEngine.isSafehouseDraggable
     val canPlaceFlag: StateFlow<Boolean> = gameEngine.canPlaceFlag
 

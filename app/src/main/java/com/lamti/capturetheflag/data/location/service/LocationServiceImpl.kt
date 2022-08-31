@@ -17,6 +17,7 @@ import com.lamti.capturetheflag.presentation.ui.DEFAULT_BATTLE_RANGE
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
 import com.lamti.capturetheflag.presentation.ui.toLatLng
+import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.SERVICE_LOCATION_LOGGER_TAG
 import com.lamti.capturetheflag.utils.emptyPosition
 import com.lamti.capturetheflag.utils.isInRangeOf
@@ -46,7 +47,8 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
     private val _livePosition: MutableStateFlow<LatLng> = MutableStateFlow(emptyPosition())
     private val _game: MutableStateFlow<Game> = MutableStateFlow(initialGame())
     private val _player: MutableStateFlow<Player> = MutableStateFlow(Player.emptyPlayer())
-    private val _showBattleNotification: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _showBattleNotification: MutableStateFlow<String> = MutableStateFlow(EMPTY)
+
     private val battleSound: Uri = Uri.parse("android.resource://com.lamti.capturetheflag/" + R.raw.battle_found)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -145,19 +147,19 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
                 _livePosition.value.isInBattleableGameZone() &&
                 _livePosition.value.isInRangeOf(player.position, DEFAULT_BATTLE_RANGE)
             ) {
-                _showBattleNotification.value = true
+                _showBattleNotification.value = "${player.username}"
                 foundOpponent = true
                 break
             }
         }
         if (!foundOpponent) {
-            _showBattleNotification.value = false
+            _showBattleNotification.value = EMPTY
         }
     }
 
     private fun showNotificationListener() = _showBattleNotification.onEach {
-        if (it) notificationHelper.showEventNotification(
-            title = "Opponent Found",
+        if (it != EMPTY) notificationHelper.showEventNotification(
+            title = "Opponent Found: $it",
             content = "Tap to battle him",
             sound = battleSound
         )

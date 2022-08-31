@@ -14,15 +14,16 @@ import com.lamti.capturetheflag.presentation.ui.components.composables.common.Pu
 import com.lamti.capturetheflag.presentation.ui.style.Black
 import com.lamti.capturetheflag.presentation.ui.style.Green
 import com.lamti.capturetheflag.presentation.ui.style.Red
+import com.lamti.capturetheflag.utils.EMPTY
 
 @Composable
 fun BattleButton(
     modifier: Modifier = Modifier,
     team: Team,
-    show: Boolean,
+    opponentName: String,
     onBattleButtonClicked: () -> Unit
 ) {
-    if (show) {
+    if (opponentName != EMPTY) {
         val teamColor: Color = remember(team) {
             when (team) {
                 Team.Red -> Red
@@ -33,7 +34,7 @@ fun BattleButton(
         PulseAnimation(color = teamColor)
         DefaultButton(
             modifier = modifier.padding(bottom = 64.dp),
-            text = stringResource(id = R.string.battle),
+            text = "${stringResource(id = R.string.battle)}: $opponentName",
             color = teamColor,
             onclick = onBattleButtonClicked
         )

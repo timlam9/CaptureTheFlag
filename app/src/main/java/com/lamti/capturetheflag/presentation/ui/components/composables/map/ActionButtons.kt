@@ -11,7 +11,7 @@ fun ActionButtons(
     buttonModifier: Modifier = Modifier,
     lost: Boolean,
     team: Team,
-    showBattleButton: Boolean,
+    showBattleButton: String,
     showArFlagButton: Boolean,
     onArScannerButtonClicked: () -> Unit,
     onBattleButtonClicked: () -> Unit
@@ -27,7 +27,7 @@ fun ActionButtons(
             )
             BattleButton(
                 modifier = buttonModifier,
-                show = showBattleButton,
+                opponentName = showBattleButton,
                 team = team,
                 onBattleButtonClicked = onBattleButtonClicked
             )

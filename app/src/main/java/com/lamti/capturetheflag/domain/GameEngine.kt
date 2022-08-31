@@ -75,8 +75,8 @@ class GameEngine @Inject constructor(
     private val _showArFlagButton: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showArFlagButton: StateFlow<Boolean> = _showArFlagButton
 
-    private val _showBattleButton: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showBattleButton: StateFlow<Boolean> = _showBattleButton
+    private val _showBattleButton: MutableStateFlow<String> = MutableStateFlow(EMPTY)
+    val showBattleButton: StateFlow<String> = _showBattleButton
 
     private val _enterGameOverScreen: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val enterGameOverScreen: StateFlow<Boolean> = _enterGameOverScreen
@@ -431,14 +431,14 @@ class GameEngine @Inject constructor(
                 _livePosition.value.isInRangeOf(player.position, DEFAULT_BATTLE_RANGE)
             ) {
                 _battleID.value = player.id
-                _showBattleButton.value = true
+                _showBattleButton.value = player.username
                 foundOpponent = true
                 break
             }
         }
         if (!foundOpponent) {
             _battleID.value = EMPTY
-            _showBattleButton.value = false
+            _showBattleButton.value = EMPTY
         }
     }
 
