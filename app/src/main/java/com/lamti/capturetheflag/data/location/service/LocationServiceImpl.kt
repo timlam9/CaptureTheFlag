@@ -2,6 +2,7 @@ package com.lamti.capturetheflag.data.location.service
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.model.LatLng
@@ -16,6 +17,7 @@ import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_BATTLE_RANGE
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
+import com.lamti.capturetheflag.presentation.ui.playSound
 import com.lamti.capturetheflag.presentation.ui.toLatLng
 import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.SERVICE_LOCATION_LOGGER_TAG
@@ -50,6 +52,8 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
     private val _showBattleNotification: MutableStateFlow<String> = MutableStateFlow(EMPTY)
 
     private val battleSound: Uri = Uri.parse("android.resource://com.lamti.capturetheflag/" + R.raw.battle_found)
+    private val startGameSound: Uri = Uri.parse("android.resource://com.lamti.capturetheflag/" + R.raw.start_game)
+    private val gameOverSound: Uri = Uri.parse("android.resource://com.lamti.capturetheflag/" + R.raw.game_over)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
@@ -59,16 +63,29 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
 
             when (getSerializable(SERVICE_COMMAND) as LocationServiceCommand) {
                 LocationServiceCommand.Start -> {
+                    playSound(startGameSound)
+                    Toast.makeText(this@LocationServiceImpl, "Game started", Toast.LENGTH_LONG).show()
+
                     startFlagForegroundService()
                     startLocationUpdates()
                     observePlayer()
                     showNotificationListener()
                 }
                 LocationServiceCommand.Stop -> {
+                    if (isAppInForeground())
+                        playSound(gameOverSound)
+                    else
+                        notificationHelper.showEventNotification(
+                            title = "Game over!",
+                            content = "The game is over",
+                            sound = gameOverSound
+                        )
+
                     isServiceRunning = false
                     locationUpdates?.cancel()
                     observePlayerJob?.cancel()
                     stopSelf()
+
                     return START_NOT_STICKY
                 }
             }
@@ -139,7 +156,7 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
     ) {
         var foundOpponent = false
         for (player in players) {
-            if (!isAppInForegrounded() &&
+            if (!isAppInForeground() &&
                 !_game.value.battles.flatMap { it.playersIDs }.contains(player.id) &&
                 player.team != playerTeam &&
                 player.id != playerID &&

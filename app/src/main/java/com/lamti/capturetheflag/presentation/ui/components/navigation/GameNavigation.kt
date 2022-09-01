@@ -1,13 +1,16 @@
 package com.lamti.capturetheflag.presentation.ui.components.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Team
@@ -21,9 +24,12 @@ import com.lamti.capturetheflag.presentation.ui.components.screens.MapScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.MenuScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.StartingGameScreen
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
+import com.lamti.capturetheflag.presentation.ui.playSound
 import com.lamti.capturetheflag.presentation.ui.popNavigate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
+private val battleFoundSound: Uri = Uri.parse("android.resource://com.lamti.capturetheflag/" + R.raw.battle_found)
 
 @Composable
 fun GameNavigation(
@@ -48,8 +54,14 @@ fun GameNavigation(
     val showArFlagButton by viewModel.showArFlagButton.collectAsState()
     val enterBattleScreen by viewModel.enterBattleScreen.collectAsState()
     val enterGameOverScreen by viewModel.enterGameOverScreen.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(key1 = true) { dataStore.saveHasGameFound(false) }
+    LaunchedEffect(key1 = showBattleButton) {
+        if (showBattleButton.isNotEmpty()) {
+            context.playSound(battleFoundSound)
+        }
+    }
     val hasGameFound by dataStore.hasGameFound.collectAsState(initial = false)
 
     NavHost(

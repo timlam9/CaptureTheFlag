@@ -14,7 +14,7 @@ import android.provider.Settings
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 
-fun isAppInForegrounded(): Boolean {
+fun isAppInForeground(): Boolean {
     val appProcessInfo = ActivityManager.RunningAppProcessInfo()
     ActivityManager.getMyMemoryState(appProcessInfo)
     return (appProcessInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND ||

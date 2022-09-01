@@ -21,7 +21,7 @@ import com.lamti.capturetheflag.data.location.service.LocationServiceCommand
 import com.lamti.capturetheflag.data.location.service.LocationServiceImpl
 import com.lamti.capturetheflag.data.location.service.LocationServiceImpl.Companion.SERVICE_COMMAND
 import com.lamti.capturetheflag.data.location.service.NotificationHelper
-import com.lamti.capturetheflag.data.location.service.isAppInForegrounded
+import com.lamti.capturetheflag.data.location.service.isAppInForeground
 import com.lamti.capturetheflag.data.location.service.isMyServiceRunning
 import com.lamti.capturetheflag.databinding.ActivityMainBinding
 import com.lamti.capturetheflag.domain.GameEngine.Companion.GREEN_FLAG_GEOFENCE_ID
@@ -71,14 +71,14 @@ class MainActivity : AppCompatActivity() {
             myAppPreferences[GEOFENCE_KEY] = intent?.getStringExtra(GEOFENCE_KEY) ?: EMPTY
             geofenceIdFLow.value = intent?.getStringExtra(GEOFENCE_KEY) ?: EMPTY
 
-            if ((greenPlayerEntersUncapturedRedFlag()) && !isAppInForegrounded()) {
+            if ((greenPlayerEntersUncapturedRedFlag()) && !isAppInForeground()) {
                 notificationHelper.showEventNotification(
                     title = "You found the Red flag",
                     sound = flagFoundSound
                 )
             }
 
-            if ((redPlayerEntersUncapturedGreenFlag()) && !isAppInForegrounded()) {
+            if ((redPlayerEntersUncapturedGreenFlag()) && !isAppInForeground()) {
                 notificationHelper.showEventNotification(
                     title = "You found the Green flag",
                     sound = flagFoundSound
@@ -106,7 +106,7 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launchWhenResumed {
             geofenceIdFLow.onEach {
-                if ((greenPlayerEntersUncapturedRedFlag() || redPlayerEntersUncapturedGreenFlag()) && isAppInForegrounded()) {
+                if ((greenPlayerEntersUncapturedRedFlag() || redPlayerEntersUncapturedGreenFlag()) && isAppInForeground()) {
                     playSound(sound = flagFoundSound)
                 }
             }.launchIn(lifecycleScope)
@@ -134,7 +134,11 @@ class MainActivity : AppCompatActivity() {
         Timber.d("[$LOGGER_TAG] Game ended")
         if (isMyServiceRunning(LocationServiceImpl::class.java))
             sendCommandToForegroundService(LocationServiceCommand.Stop)
-        unregisterReceiver(broadcastReceiver)
+        try {
+            unregisterReceiver(broadcastReceiver)
+        } catch (e: Exception) {
+            Timber.d("Unregister receiver error: ${e.message}")
+        }
     }
 
     override fun onResume() {

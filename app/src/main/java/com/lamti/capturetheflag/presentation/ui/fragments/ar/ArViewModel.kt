@@ -95,10 +95,6 @@ class ArViewModel @Inject constructor(
     private var isResolveObjectStarted = false
     private var timer: CountDownTimer? = null
 
-    init {
-        flagColor = getFlagColor(player.value.gameDetails?.team)
-    }
-
     override fun onCleared() {
         super.onCleared()
         timer?.cancel()
@@ -249,6 +245,7 @@ class ArViewModel @Inject constructor(
             )
 
             if (currentAnchor != null && currentAnchor?.trackingState == TrackingState.TRACKING) {
+                flagColor = getFlagColor(player.value.gameDetails?.team)
                 currentAnchor?.pose?.toMatrix(anchorMatrix, 0)
                 // Update and draw the model and its shadow.
                 virtualObject.updateModelMatrix(anchorMatrix, 1f)
