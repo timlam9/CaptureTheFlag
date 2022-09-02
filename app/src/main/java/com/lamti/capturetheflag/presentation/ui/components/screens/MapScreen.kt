@@ -22,6 +22,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.player.GameDetails
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_ZOOM_LEVEL
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.InstructionsCard
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.ActionButtons
 import com.lamti.capturetheflag.presentation.ui.components.composables.map.GoogleMapsView
@@ -102,7 +103,7 @@ fun MapScreen(
             onSettingsClicked = onSettingsClicked,
             onGpsClicked = {
                 coroutineScope.launch {
-                    cameraPositionState.animate(CameraUpdateFactory.newLatLng(livePosition))
+                    cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(livePosition, DEFAULT_ZOOM_LEVEL))
                 }
             }
         )
