@@ -127,9 +127,8 @@ class GameEngine @Inject constructor(
 
     suspend fun getGame(id: String): Game? = firestoreRepository.getGame(id)
 
-    suspend fun getLastLocation(): Location {
-        _initialPosition.value = locationRepository.awaitLastLocation().toLatLng()
-        return locationRepository.awaitLastLocation()
+    suspend fun getLastLocation(): Location = locationRepository.awaitLastLocation().apply {
+        _initialPosition.value = toLatLng()
     }
 
     fun setEnteredGeofenceId(id: String) {

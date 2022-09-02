@@ -1,8 +1,10 @@
 package com.lamti.capturetheflag.presentation.ui.activity
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -21,8 +23,13 @@ import com.lamti.capturetheflag.data.location.service.LocationServiceCommand
 import com.lamti.capturetheflag.data.location.service.LocationServiceImpl
 import com.lamti.capturetheflag.data.location.service.LocationServiceImpl.Companion.SERVICE_COMMAND
 import com.lamti.capturetheflag.data.location.service.NotificationHelper
+import com.lamti.capturetheflag.data.location.service.checkBackgroundLocationPermissionAPI30
+import com.lamti.capturetheflag.data.location.service.checkLocationPermissionAPI29
+import com.lamti.capturetheflag.data.location.service.checkSinglePermission
 import com.lamti.capturetheflag.data.location.service.isAppInForeground
+import com.lamti.capturetheflag.data.location.service.isLocationEnabledOrNot
 import com.lamti.capturetheflag.data.location.service.isMyServiceRunning
+import com.lamti.capturetheflag.data.location.service.showAlertLocation
 import com.lamti.capturetheflag.databinding.ActivityMainBinding
 import com.lamti.capturetheflag.domain.GameEngine.Companion.GREEN_FLAG_GEOFENCE_ID
 import com.lamti.capturetheflag.domain.GameEngine.Companion.RED_FLAG_GEOFENCE_ID
@@ -120,10 +127,21 @@ class MainActivity : AppCompatActivity() {
                     removeBackgroundServices()
             }.launchIn(lifecycleScope)
         }
+
+        lifecycleScope.launchWhenResumed {
+            viewModel.isGpsEnabled.onEach {
+                if (!it) {
+                    supportFragmentManager.navigateToScreen(FragmentScreen.NoGps)
+                    requestLocationPermissions()
+                } else
+                    collectScreenFlow()
+            }.launchIn(lifecycleScope)
+        }
     }
 
     private fun startBackgroundServices() {
         Timber.d("[$LOGGER_TAG] Game started")
+        Timber.d("[$LOGGER_TAG] Start location service for user: ${viewModel.player.value.userID}")
         if (!isMyServiceRunning(LocationServiceImpl::class.java)) {
             sendCommandToForegroundService(LocationServiceCommand.Start)
             registerReceiver(broadcastReceiver, IntentFilter(GEOFENCE_BROADCAST_RECEIVER_FILTER))
@@ -148,6 +166,41 @@ class MainActivity : AppCompatActivity() {
         if (myAppPreferences[GEOFENCE_KEY, EMPTY].isNotEmpty()) {
             geofenceIdFLow.value = myAppPreferences[GEOFENCE_KEY, EMPTY]
         }
+
+        viewModel.updateGpsEnabledStatus(isLocationEnabledOrNot(this))
+    }
+
+    fun checkIfGpsIsEnabledAndRefreshScreen() {
+        viewModel.updateGpsEnabledStatus(isLocationEnabledOrNot(this))
+    }
+
+    private fun requestLocationPermissions() {
+        if (!isLocationEnabledOrNot(this)) {
+            showAlertLocation(getString(R.string.gps_enable), getString(R.string.please_turn_on_gps), getString(R.string.ok))
+        }
+        requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), PERMISSION_REQUEST_CODE)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (checkSinglePermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    when {
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> checkBackgroundLocationPermissionAPI30(requestCode)
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> checkLocationPermissionAPI29(requestCode)
+                        else -> Unit
+                    }
+                }
+            } else {
+                Timber.d("[$LOGGER_TAG] Permission denied: ${grantResults[0]}")
+            }
+        }
+    }
+
+    companion object {
+
+        private const val PERMISSION_REQUEST_CODE = 200
     }
 
     private fun showWhenLockedAndTurnScreenOn() {
@@ -178,6 +231,7 @@ class MainActivity : AppCompatActivity() {
         when (viewModel.currentScreen.value) {
             FragmentScreen.Map -> super.onBackPressed()
             FragmentScreen.Ar -> viewModel.onArBackPressed()
+            FragmentScreen.NoGps -> super.onBackPressed()
         }
     }
 
@@ -203,13 +257,6 @@ class MainActivity : AppCompatActivity() {
                         Timber.d("[$LOGGER_TAG] Start observing player with id: ${viewModel.userID}")
 
                         viewModel.observePlayer()
-                        viewModel.startLocationService.onEach {
-                            if (it) {
-                                Timber.d("[$LOGGER_TAG] Start location service for user: ${viewModel.player.value.userID}")
-
-                                collectScreenFlow()
-                            }
-                        }.launchIn(lifecycleScope)
                     }
                 }
                 return@setKeepOnScreenCondition false

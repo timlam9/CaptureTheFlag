@@ -79,4 +79,6 @@
     <string name="location_permissions">Location Permissions</string>
     <string name="location_permissions_required">Capture the Flag shares location data to identify nearby players and areas used in the game even when the app is closed or not in use.</string>
     <string name="are_you_sure">Are you sure you want to quit game?</string>
+    <string name="enable_gps">Enable gps in order to start the game</string>
+    <string name="refresh">Refresh</string>
 </resources>

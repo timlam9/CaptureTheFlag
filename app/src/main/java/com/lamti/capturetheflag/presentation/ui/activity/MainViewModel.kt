@@ -42,8 +42,12 @@ class MainViewModel @Inject constructor(
     private val _game = MutableStateFlow(initialGame())
     val game: StateFlow<Game> = _game.asStateFlow()
 
-    private val _startLocationService = MutableStateFlow(false)
-    val startLocationService: StateFlow<Boolean> = _startLocationService.asStateFlow()
+    private val _isGpsEnabled = MutableStateFlow(false)
+    val isGpsEnabled: StateFlow<Boolean> = _isGpsEnabled.asStateFlow()
+
+    fun updateGpsEnabledStatus(value: Boolean) {
+        _isGpsEnabled.update { value }
+    }
 
     fun onArBackPressed() {
         _currentScreen.value = FragmentScreen.Map
@@ -62,9 +66,7 @@ class MainViewModel @Inject constructor(
         .onEach {
             Timber.d("[$LOGGER_TAG] Player updated: $it")
             _player.value = it
-            if (it.userID.isNotEmpty()) _startLocationService.update { true }
             if (it.gameDetails?.gameID?.isNotEmpty() == true) {
-                _startLocationService.update { true }
                 observeGame(it.gameDetails.gameID)
             }
         }
