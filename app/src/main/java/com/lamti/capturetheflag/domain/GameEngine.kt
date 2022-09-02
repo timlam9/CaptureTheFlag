@@ -111,17 +111,14 @@ class GameEngine @Inject constructor(
         Timber.e("[$LOGGER_TAG] Catch observe player error")
     }.launchIn(coroutineScope)
 
-    private fun observeGame(): Job = coroutineScope.launch {
+    fun observeGame(): Job = coroutineScope.launch {
         firestoreRepository.getPlayer()?.let { _player.value = it }
         _player.value.gameDetails?.gameID?.let { id ->
             firestoreRepository.observeGame(id).onEach { game ->
                 _stayInSplashScreen.value = false
                 _game.value = game
-                // If player has left the game then don't observe game events
-                if (_player.value.gameDetails?.gameID != null && _player.value.gameDetails?.gameID!!.isNotEmpty()) {
-                    game.gameState.handleGameStateEvents()
-                    game.battles.searchOpponent()
-                }
+                game.gameState.handleGameStateEvents()
+                game.battles.searchOpponent()
             }.catch {
                 Timber.e("[$LOGGER_TAG] Catch observe game error")
             }.launchIn(coroutineScope)
@@ -358,11 +355,15 @@ class GameEngine @Inject constructor(
             removeGeofencesListener()
         }
         ProgressState.SettingFlags -> {
-            _enterGameOverScreen.value = false
-            _isSafehouseDraggable.value = false
-            connectPlayer()
-            startLocationUpdates()
-            _arMode.value = ArMode.Placer
+            // If player has left the game then don't observe SettingFlags event
+            if (_player.value.gameDetails?.gameID != null && _player.value.gameDetails?.gameID!!.isNotEmpty()) {
+                _enterGameOverScreen.value = false
+                _isSafehouseDraggable.value = false
+                connectPlayer()
+                startLocationUpdates()
+                _arMode.value = ArMode.Placer
+                addGameOverByPlayersCountListener()
+            } else Unit
         }
         ProgressState.Started -> {
             _enterGameOverScreen.value = false
@@ -370,8 +371,8 @@ class GameEngine @Inject constructor(
             _arMode.value = ArMode.Scanner
             hideCaptureFlagButton()
             observeOtherPlayers()
-            startGeofencesListenerIfGameIsReady()
             addGameOverByPlayersCountListener()
+            startGeofencesListenerIfGameIsReady()
         }
         ProgressState.Ended -> {
             _enterGameOverScreen.value = true

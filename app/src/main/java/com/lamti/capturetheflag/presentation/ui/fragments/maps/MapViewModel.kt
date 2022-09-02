@@ -45,12 +45,14 @@ class MapViewModel @Inject constructor(private val gameEngine: GameEngine) : Vie
     init {
         getLastLocation()
         observePlayer()
+        observeGame()
         gameEngine.startLocationUpdates()
     }
 
     private fun getLastLocation() = viewModelScope.launch(Dispatchers.IO) { gameEngine.getLastLocation() }
 
     private fun observePlayer() = gameEngine.observePlayer()
+    private fun observeGame() = gameEngine.observeGame()
 
     suspend fun getGame(id: String): Game? = gameEngine.getGame(id)
 
