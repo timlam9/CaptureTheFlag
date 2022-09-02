@@ -45,15 +45,12 @@ class MapViewModel @Inject constructor(private val gameEngine: GameEngine) : Vie
     init {
         getLastLocation()
         observePlayer()
-        observeGame()
         gameEngine.startLocationUpdates()
     }
 
     private fun getLastLocation() = viewModelScope.launch(Dispatchers.IO) { gameEngine.getLastLocation() }
 
     private fun observePlayer() = gameEngine.observePlayer()
-
-    private fun observeGame() = gameEngine.observeGame()
 
     suspend fun getGame(id: String): Game? = gameEngine.getGame(id)
 
@@ -80,7 +77,7 @@ class MapViewModel @Inject constructor(private val gameEngine: GameEngine) : Vie
     fun onLostBattleButtonClicked() = viewModelScope.launch { gameEngine.looseBattle() }
 
     fun onGameOverOkClicked(onResult: (Boolean) -> Unit) = viewModelScope.launch(Dispatchers.Main) {
-        gameEngine.gameOver(onResult)
+        gameEngine.removePlayer(onResult)
     }
 
     fun onArCorelessCaptured(onResult: (Boolean) -> Unit) = viewModelScope.launch {

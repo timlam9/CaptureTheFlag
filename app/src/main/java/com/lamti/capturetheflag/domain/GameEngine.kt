@@ -34,6 +34,7 @@ import com.lamti.capturetheflag.utils.emptyPosition
 import com.lamti.capturetheflag.utils.isInRangeOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -100,7 +101,7 @@ class GameEngine @Inject constructor(
     private val _battleID = mutableStateOf(EMPTY)
     private var hasGeofenceListenerStarted = false
 
-    fun observePlayer() = firestoreRepository.observePlayer().onEach { updatedPlayer ->
+    fun observePlayer(): Job = firestoreRepository.observePlayer().onEach { updatedPlayer ->
         updatedPlayer.run {
             _player.value = this
             _stayInSplashScreen.value = false
@@ -110,14 +111,17 @@ class GameEngine @Inject constructor(
         Timber.e("[$LOGGER_TAG] Catch observe player error")
     }.launchIn(coroutineScope)
 
-    fun observeGame() = coroutineScope.launch {
+    private fun observeGame(): Job = coroutineScope.launch {
         firestoreRepository.getPlayer()?.let { _player.value = it }
         _player.value.gameDetails?.gameID?.let { id ->
             firestoreRepository.observeGame(id).onEach { game ->
                 _stayInSplashScreen.value = false
                 _game.value = game
-                game.gameState.handleGameStateEvents()
-                game.battles.searchOpponent()
+                // If player has left the game then don't observe game events
+                if (_player.value.gameDetails?.gameID != null && _player.value.gameDetails?.gameID!!.isNotEmpty()) {
+                    game.gameState.handleGameStateEvents()
+                    game.battles.searchOpponent()
+                }
             }.catch {
                 Timber.e("[$LOGGER_TAG] Catch observe game error")
             }.launchIn(coroutineScope)
@@ -173,6 +177,7 @@ class GameEngine @Inject constructor(
                 status = Player.Status.Connecting
             )
         )
+
         observeGame()
     }
 
@@ -221,8 +226,6 @@ class GameEngine @Inject constructor(
             else -> _game.value
         }
         firestoreRepository.updateGame(updatedGame)
-
-        observeGame()
     }
 
     suspend fun startGame() = coroutineScope.launch {
@@ -290,16 +293,53 @@ class GameEngine @Inject constructor(
         firestoreRepository.deleteGamePlayer(gameID = _game.value.gameID, playerID = _player.value.userID)
     }
 
-    suspend fun gameOver(onResult: (Boolean) -> Unit) {
+    suspend fun removePlayer(onResult: (Boolean) -> Unit) {
+        val updateGame = when (_player.value.gameDetails?.team) {
+            Team.Red -> {
+                val redPlayers = _game.value.redPlayers.toMutableList()
+                redPlayers.removeIf {
+                    it.id == _player.value.userID
+                }
+                firestoreRepository.updateGame(
+                    game = _game.value.copy(
+                        redPlayers = redPlayers
+                    )
+                )
+            }
+            Team.Green -> {
+                val greenPlayers = _game.value.greenPlayers.toMutableList()
+                greenPlayers.removeIf {
+                    it.id == _player.value.userID
+                }
+                firestoreRepository.updateGame(
+                    game = _game.value.copy(
+                        greenPlayers = greenPlayers
+                    )
+                )
+            }
+            else -> true
+        }
+
         val updatePlayer = firestoreRepository.updatePlayer(
             player = _player.value.copy(
                 status = Player.Status.Online,
                 gameDetails = null
             )
         )
-        val deleteGame = firestoreRepository.deleteFirebaseGame(_game.value.gameID)
 
-        onResult(updatePlayer && deleteGame)
+        val deleteGamePlayer = firestoreRepository.deleteGamePlayer(_game.value.gameID, _player.value.userID)
+
+        observeGame().cancel()
+        checkForGameDeletion()
+
+        onResult(updatePlayer && updateGame && deleteGamePlayer)
+    }
+
+    private suspend fun checkForGameDeletion() {
+        if (_game.value.redPlayers.isEmpty() && _game.value.greenPlayers.isEmpty()) {
+            firestoreRepository.deleteFirebaseGame(_game.value.gameID)
+            firestoreRepository.deleteGame(_game.value.gameID)
+        }
     }
 
     suspend fun captureFlag(onResult: (Boolean) -> Unit) = coroutineScope.launch {
@@ -336,7 +376,6 @@ class GameEngine @Inject constructor(
         ProgressState.Ended -> {
             _enterGameOverScreen.value = true
             _isSafehouseDraggable.value = false
-            firestoreRepository.deleteGame(_game.value.gameID)
             removeGeofencesListener()
         }
         ProgressState.Idle -> {

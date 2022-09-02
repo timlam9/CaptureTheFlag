@@ -31,14 +31,14 @@ interface FirestoreRepository {
 
     suspend fun createGame(id: String, title: String, position: LatLng, player: Player): Boolean
 
+    suspend fun deleteGame(gameID: String): Boolean
+
     // Database repository
     fun observePlayersPosition(gameID: String): Flow<List<GamePlayer>>
 
     suspend fun uploadGamePlayer(position: LatLng)
 
     suspend fun deleteGamePlayer(gameID: String, playerID: String): Boolean
-
-    suspend fun deleteGame(gameID: String): Boolean
 
     suspend fun deleteFirebaseGame(gameID: String): Boolean
 }
