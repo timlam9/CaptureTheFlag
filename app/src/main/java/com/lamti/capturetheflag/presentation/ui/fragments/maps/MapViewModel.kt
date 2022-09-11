@@ -70,8 +70,8 @@ class MapViewModel @Inject constructor(private val gameEngine: GameEngine) : Vie
 
     fun onStartGameClicked() = viewModelScope.launch { gameEngine.startGame() }
 
-    fun onReadyButtonClicked(position: LatLng, gameRadius: Float) = viewModelScope.launch {
-        gameEngine.updateSafehouseAndForwardGameState(position, gameRadius)
+    fun onReadyButtonClicked(position: LatLng, gameRadius: Float, flagRadius: Float) = viewModelScope.launch {
+        gameEngine.updateSafehouseAndForwardGameState(position, gameRadius, flagRadius)
     }
 
     fun onBattleButtonClicked() = viewModelScope.launch { gameEngine.createBattle() }

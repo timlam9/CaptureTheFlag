@@ -1,6 +1,7 @@
 package com.lamti.capturetheflag.presentation.ui.components.composables.map
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Slider
 import androidx.compose.material.Text
@@ -11,9 +12,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.GameDetails
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_RADIUS
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
 
@@ -21,13 +24,20 @@ import com.lamti.capturetheflag.presentation.ui.components.composables.common.De
 fun GameConfiguration(
     modifier: Modifier,
     gameState: ProgressState,
-    playerGameDetails: GameDetails?,
+    playerRank: GameDetails.Rank?,
     onReadyButtonClicked: () -> Unit,
-    onValueChange: (Float) -> Unit,
+    onFlagRadiusValueChange: (Float) -> Unit,
+    onGameRadiusValueChange: (Float) -> Unit,
 ) {
-    if (gameState == ProgressState.Created && playerGameDetails?.rank == GameDetails.Rank.Captain) {
+    if (gameState == ProgressState.Created && playerRank == GameDetails.Rank.Captain) {
         Column(modifier = modifier.fillMaxWidth()) {
-            RadiusSlider(onValueChange = onValueChange)
+            RadiusSlider(onValueChange = onGameRadiusValueChange)
+            RadiusSlider(
+                title = "Configure safehouse size",
+                valueRange = 10f..50f,
+                initialValue = DEFAULT_FLAG_RADIUS,
+                onValueChange = onFlagRadiusValueChange
+            )
             DefaultButton(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(id = R.string.ready)
@@ -39,15 +49,33 @@ fun GameConfiguration(
 }
 
 @Composable
-fun RadiusSlider(title: String = "Configure game's boundaries", onValueChange: (Float) -> Unit) {
-    var sliderPosition by remember { mutableStateOf(DEFAULT_GAME_RADIUS) }
+private fun RadiusSlider(
+    title: String = "Configure game's boundaries",
+    valueRange: ClosedFloatingPointRange<Float> = 250f..750f,
+    initialValue: Float = DEFAULT_GAME_RADIUS,
+    onValueChange: (Float) -> Unit
+) {
+    var sliderPosition by remember { mutableStateOf(initialValue) }
     Text(text = title)
     Slider(
         value = sliderPosition,
-        valueRange = 250f..750f,
+        valueRange = valueRange,
         onValueChange = {
             sliderPosition = it
             onValueChange(it)
         }
+    )
+}
+
+@Preview
+@Composable
+fun MenuScreenPreview() {
+    GameConfiguration(
+        modifier = Modifier.fillMaxSize(),
+        gameState = ProgressState.Created,
+        playerRank = GameDetails.Rank.Captain,
+        onReadyButtonClicked = {},
+        onGameRadiusValueChange = {},
+        onFlagRadiusValueChange = {}
     )
 }

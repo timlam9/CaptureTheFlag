@@ -15,8 +15,6 @@ import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_BATTLE_RANGE
-import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
-import com.lamti.capturetheflag.presentation.ui.DEFAULT_SAFEHOUSE_RADIUS
 import com.lamti.capturetheflag.presentation.ui.playSound
 import com.lamti.capturetheflag.presentation.ui.toLatLng
 import com.lamti.capturetheflag.utils.EMPTY
@@ -189,11 +187,11 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
 
     private fun LatLng.isInsideGame() = isInRangeOf(_game.value.gameState.safehouse.position, _game.value.gameRadius)
 
-    private fun LatLng.isInsideSafehouse() = isInRangeOf(_game.value.gameState.safehouse.position, DEFAULT_SAFEHOUSE_RADIUS)
+    private fun LatLng.isInsideSafehouse() = isInRangeOf(_game.value.gameState.safehouse.position, _game.value.flagRadius)
 
-    private fun LatLng.isInsideGreenFlag() = isInRangeOf(_game.value.gameState.greenFlag.position, DEFAULT_FLAG_RADIUS)
+    private fun LatLng.isInsideGreenFlag() = isInRangeOf(_game.value.gameState.greenFlag.position, _game.value.flagRadius)
 
-    private fun LatLng.isInsideRedFlag() = isInRangeOf(_game.value.gameState.redFlag.position, DEFAULT_FLAG_RADIUS)
+    private fun LatLng.isInsideRedFlag() = isInRangeOf(_game.value.gameState.redFlag.position, _game.value.flagRadius)
 
     companion object {
 

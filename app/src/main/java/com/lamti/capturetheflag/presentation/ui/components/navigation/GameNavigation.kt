@@ -119,6 +119,7 @@ fun GameNavigation(
                 userID = player.userID,
                 gameDetails = player.gameDetails ?: GameDetails.initialGameDetails(),
                 gameState = viewModel.game.value.gameState,
+                flagRadius = viewModel.game.value.flagRadius,
                 gameRadius = viewModel.game.value.gameRadius,
                 canPlaceFlag = canPlaceFlag,
                 safehousePosition = viewModel.game.value.gameState.safehouse.position,
@@ -137,8 +138,8 @@ fun GameNavigation(
                 onEnterGameOverScreen = { navController.popNavigate(Screen.GameOver.route) },
                 onArScannerButtonClicked = onArScannerButtonClicked,
                 onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
-                onReadyButtonClicked = { safehousePosition, gameRadius ->
-                    viewModel.onReadyButtonClicked(safehousePosition, gameRadius)
+                onReadyButtonClicked = { safehousePosition, gameRadius, flagRadius ->
+                    viewModel.onReadyButtonClicked(safehousePosition, gameRadius, flagRadius)
                 },
                 onBattleButtonClicked = { viewModel.onBattleButtonClicked() },
                 onSettingsClicked = onSettingsClicked

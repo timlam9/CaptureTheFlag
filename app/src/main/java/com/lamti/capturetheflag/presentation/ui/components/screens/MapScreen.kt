@@ -35,6 +35,7 @@ fun MapScreen(
     userID: String,
     gameDetails: GameDetails,
     gameState: GameState,
+    flagRadius: Float,
     gameRadius: Float,
     canPlaceFlag: Boolean,
     safehousePosition: LatLng,
@@ -53,12 +54,12 @@ fun MapScreen(
     onEnterGameOverScreen: () -> Unit,
     onArScannerButtonClicked: () -> Unit,
     onSettingFlagsButtonClicked: () -> Unit,
-    onReadyButtonClicked: (LatLng, Float) -> Unit,
+    onReadyButtonClicked: (LatLng, Float, Float) -> Unit,
     onBattleButtonClicked: () -> Unit,
     onSettingsClicked: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val zoom by remember { mutableStateOf(15f) }
+    val zoom by remember { mutableStateOf(DEFAULT_ZOOM_LEVEL) }
     val cameraPositionState: CameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(initialPosition, zoom)
     }
@@ -83,6 +84,7 @@ fun MapScreen(
             safehousePosition = safehousePosition,
             isSafeHouseDraggable = isSafehouseDraggable,
             team = gameDetails.team,
+            flagRadius = flagRadius,
             gameRadius = gameRadius,
             userID = userID,
             redFlag = gameState.redFlag,

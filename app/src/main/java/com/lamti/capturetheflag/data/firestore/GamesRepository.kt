@@ -11,6 +11,7 @@ import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.GeofenceObject
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_RADIUS
 import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.FIRESTORE_LOGGER_TAG
@@ -76,12 +77,14 @@ class GamesRepository @Inject constructor(
     private fun initialGame(
         id: String,
         title: String,
+        flagRadius: Float = DEFAULT_FLAG_RADIUS,
         gameRadius: Float = DEFAULT_GAME_RADIUS,
         position: LatLng,
         userID: String
     ) = Game(
         gameID = id,
         title = title,
+        flagRadius = flagRadius,
         gameRadius = gameRadius,
         gameState = GameState(
             safehouse = GeofenceObject(

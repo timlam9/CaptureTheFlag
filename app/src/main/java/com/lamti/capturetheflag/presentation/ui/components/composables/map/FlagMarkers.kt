@@ -14,6 +14,7 @@ import com.lamti.capturetheflag.utils.emptyPosition
 @Composable
 fun FlagMarkers(
     team: Team,
+    flagRadius: Float,
     redFlag: GeofenceObject,
     greenFlag: GeofenceObject,
     redFlagIcon: BitmapDescriptor?,
@@ -42,6 +43,7 @@ fun FlagMarkers(
             icon = redFlagIcon,
             title = redFlagMarkerTitle,
             hasGeofence = true,
+            radius = flagRadius.toDouble(),
             fillColor = RedOpacity,
             strokeColor = Color.Red,
             showMarker = redFlagPlayer == null
@@ -56,6 +58,7 @@ fun FlagMarkers(
             icon = greenFlagIcon,
             title = greenFlagMarkerTitle,
             hasGeofence = true,
+            radius = flagRadius.toDouble(),
             fillColor = GreenOpacity,
             strokeColor = Color.Green,
             showMarker = greenFlagPlayer == null

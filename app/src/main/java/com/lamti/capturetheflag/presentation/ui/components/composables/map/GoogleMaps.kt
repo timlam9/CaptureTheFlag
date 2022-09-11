@@ -28,6 +28,7 @@ import com.lamti.capturetheflag.domain.game.GeofenceObject
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_RADIUS
 import com.lamti.capturetheflag.presentation.ui.MapStyle
 import com.lamti.capturetheflag.presentation.ui.bitmapDescriptorFromVector
@@ -40,6 +41,7 @@ fun GoogleMapsView(
     safehousePosition: LatLng,
     team: Team,
     userID: String,
+    flagRadius: Float,
     gameRadius: Float,
     gameState: ProgressState,
     gameDetails: GameDetails,
@@ -48,7 +50,7 @@ fun GoogleMapsView(
     redFlagPlayer: String?,
     greenFlagPlayer: String?,
     otherPlayers: List<GamePlayer>,
-    onReadyButtonClicked: (LatLng, Float) -> Unit,
+    onReadyButtonClicked: (LatLng, Float, Float) -> Unit,
 ) {
     val (mapProperties, uiSettings) = setupMap()
 
@@ -60,6 +62,7 @@ fun GoogleMapsView(
         isSafeHouseDraggable = isSafeHouseDraggable,
         onReadyButtonClicked = onReadyButtonClicked,
         team = team,
+        flagRadius = flagRadius,
         gameRadius = gameRadius,
         gameState = gameState,
         gameDetails = gameDetails,
@@ -83,8 +86,9 @@ fun GoogleMapsView(
     safeHouseTitle: String = stringResource(R.string.safehouse),
     cameraPositionState: CameraPositionState,
     isSafeHouseDraggable: Boolean,
-    onReadyButtonClicked: (LatLng, Float) -> Unit,
+    onReadyButtonClicked: (LatLng, Float, Float) -> Unit,
     team: Team,
+    flagRadius: Float,
     gameRadius: Float,
     gameState: ProgressState,
     gameDetails: GameDetails,
@@ -107,8 +111,14 @@ fun GoogleMapsView(
             if (gameState == ProgressState.Created && gameDetails.rank == GameDetails.Rank.Captain) gameRadius else DEFAULT_GAME_RADIUS
         )
     }
+    var initialFlagRadius: Float by remember {
+        mutableStateOf(
+            if (gameState == ProgressState.Created && gameDetails.rank == GameDetails.Rank.Captain) flagRadius else DEFAULT_FLAG_RADIUS
+        )
+    }
 
     LaunchedEffect(key1 = gameRadius) { initialGameRadius = gameRadius }
+    LaunchedEffect(key1 = flagRadius) { initialFlagRadius = flagRadius }
 
     var showConfirmationDialog by remember { mutableStateOf(false) }
     val safehouseMarkerState = rememberMarkerState(position = safehousePosition)
@@ -126,12 +136,14 @@ fun GoogleMapsView(
             GameBoundariesGeofence(
                 safeHouseIcon = safeHouseIcon,
                 safeHouseTitle = safeHouseTitle,
+                safeHouseRadius = initialFlagRadius,
                 markerState = safehouseMarkerState,
                 gameRadius = initialGameRadius,
                 isSafeHouseDraggable = isSafeHouseDraggable
             )
             FlagMarkers(
                 team = team,
+                flagRadius = initialFlagRadius,
                 redFlag = redFlag,
                 greenFlag = greenFlag,
                 redFlagIcon = redFlagIcon,
@@ -158,8 +170,9 @@ fun GoogleMapsView(
                 .padding(20.dp)
                 .align(Alignment.BottomCenter),
             gameState = gameState,
-            playerGameDetails = gameDetails,
-            onValueChange = { initialGameRadius = it },
+            playerRank = gameDetails.rank,
+            onFlagRadiusValueChange = { initialFlagRadius = it },
+            onGameRadiusValueChange = { initialGameRadius = it },
             onReadyButtonClicked = { showConfirmationDialog = true }
         )
         ConfirmationDialog(
@@ -169,7 +182,7 @@ fun GoogleMapsView(
             onNegativeDialogClicked = { showConfirmationDialog = false },
             onPositiveButtonClicked = {
                 showConfirmationDialog = false
-                onReadyButtonClicked(safehouseMarkerState.position, initialGameRadius)
+                onReadyButtonClicked(safehouseMarkerState.position, initialGameRadius, initialFlagRadius)
             }
         )
     }

@@ -2,6 +2,7 @@ package com.lamti.capturetheflag.domain.game
 
 import com.google.android.gms.maps.model.LatLng
 import com.lamti.capturetheflag.domain.player.Team
+import com.lamti.capturetheflag.presentation.ui.DEFAULT_FLAG_RADIUS
 import com.lamti.capturetheflag.presentation.ui.DEFAULT_GAME_RADIUS
 import com.lamti.capturetheflag.utils.EMPTY
 import com.lamti.capturetheflag.utils.emptyPosition
@@ -10,6 +11,7 @@ import java.util.Date
 data class Game(
     val gameID: String,
     val title: String,
+    val flagRadius: Float,
     val gameRadius: Float,
     val gameState: GameState,
     val redPlayers: List<ActivePlayer>,
@@ -23,10 +25,12 @@ data class Game(
             position: LatLng = emptyPosition(),
             gameID: String = EMPTY,
             title: String = EMPTY,
-            gameRadius: Float = DEFAULT_GAME_RADIUS
+            flagRadius: Float = DEFAULT_FLAG_RADIUS,
+            gameRadius: Float = DEFAULT_GAME_RADIUS,
         ) = Game(
             gameID = gameID,
             title = title,
+            flagRadius = flagRadius,
             gameRadius = gameRadius,
             gameState = GameState.initialGameState(position = position),
             redPlayers = emptyList(),

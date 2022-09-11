@@ -50,8 +50,7 @@ fun getRandomString(length: Int): String {
 fun Location.toLatLng() = LatLng(latitude, longitude)
 
 const val DEFAULT_GAME_RADIUS = 500f
-const val DEFAULT_SAFEHOUSE_RADIUS = 70f
-const val DEFAULT_FLAG_RADIUS = 40f
+const val DEFAULT_FLAG_RADIUS = 30f
 const val DEFAULT_BATTLE_RANGE = 20f
 const val DEFAULT_ZOOM_LEVEL = 16f
 
