@@ -27,10 +27,13 @@ import com.lamti.capturetheflag.presentation.ui.components.composables.common.De
 import com.lamti.capturetheflag.presentation.ui.style.Black
 import com.lamti.capturetheflag.presentation.ui.style.Green
 import com.lamti.capturetheflag.presentation.ui.style.Red
+import com.lamti.capturetheflag.utils.EMPTY
 
 @Composable
-fun BattleScreen(
+fun BattleWonScreen(
     team: Team,
+    winner: String,
+    playerName: String,
     enterBattleScreen: Boolean,
     onEnterBattleScreen: () -> Unit,
     onLostButtonClicked: () -> Unit
@@ -68,7 +71,7 @@ fun BattleScreen(
         )
         Text(
             modifier = Modifier.offset(y = (-120).dp),
-            text = stringResource(R.string.fight_for_your_team),
+            text = if (winner == EMPTY) stringResource(R.string.fight_for_your_team) else "$winner won the battle!",
             style = MaterialTheme.typography.h5.copy(
                 color = teamColor,
                 fontWeight = FontWeight.Bold
@@ -86,7 +89,7 @@ fun BattleScreen(
             modifier = Modifier
                 .height(60.dp)
                 .fillMaxWidth(),
-            text = stringResource(R.string.i_lost),
+            text = if (winner != playerName) stringResource(R.string.i_lost) else stringResource(id = R.string.back_to_map),
         ) {
             onLostButtonClicked()
         }

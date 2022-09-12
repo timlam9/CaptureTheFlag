@@ -6,10 +6,14 @@ import com.google.firebase.firestore.ServerTimestamp
 import com.lamti.capturetheflag.data.authentication.toTeam
 import com.lamti.capturetheflag.data.firestore.ActivePlayerRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.BattleRaw.Companion.toRaw
+import com.lamti.capturetheflag.data.firestore.BattlingPlayerRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.GameStateRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.GeofenceObjectRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.game.ActivePlayer
 import com.lamti.capturetheflag.domain.game.Battle
+import com.lamti.capturetheflag.domain.game.BattleMiniGame
+import com.lamti.capturetheflag.domain.game.BattleState
+import com.lamti.capturetheflag.domain.game.BattlingPlayer
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.game.GameState
@@ -27,6 +31,7 @@ data class GameRaw(
     val flagRadius: Float = DEFAULT_FLAG_RADIUS,
     val gameRadius: Float = DEFAULT_GAME_RADIUS,
     val gameState: GameStateRaw = GameStateRaw(),
+    val battleMiniGame: String = BattleMiniGame.None.name,
     val redPlayers: List<ActivePlayerRaw> = emptyList(),
     val greenPlayers: List<ActivePlayerRaw> = emptyList(),
     val battles: List<BattleRaw> = emptyList()
@@ -38,6 +43,7 @@ data class GameRaw(
         flagRadius = flagRadius,
         gameRadius = gameRadius,
         gameState = gameState.toGameState(),
+        battleMiniGame = battleMiniGame.toMiniGame(),
         redPlayers = redPlayers.map { it.toActivePlayer() },
         greenPlayers = greenPlayers.map { it.toActivePlayer() },
         battles = battles.toBattles()
@@ -50,6 +56,7 @@ data class GameRaw(
             title = title,
             flagRadius = flagRadius,
             gameRadius = gameRadius,
+            battleMiniGame = battleMiniGame.name,
             gameState = gameState.toRaw(),
             redPlayers = redPlayers.map { it.toRaw() },
             greenPlayers = greenPlayers.map { it.toRaw() },
@@ -83,20 +90,39 @@ private fun List<BattleRaw>.toBattles() = map { it.toBattle() }
 
 data class BattleRaw(
     val battleID: String = EMPTY,
-    val playersIDs: List<String> = emptyList()
+    val state: String = BattleState.StandBy.name,
+    val winner: String = EMPTY,
+    val players: List<BattlingPlayerRaw> = emptyList()
 ) {
 
     fun toBattle() = Battle(
         battleID = battleID,
-        playersIDs = playersIDs
+        state = state.toBattleState(),
+        winner = winner,
+        players = players.map { it.toBattlingPlayer() }
     )
 
     companion object {
 
         fun Battle.toRaw() = BattleRaw(
             battleID = battleID,
-            playersIDs = playersIDs
+            state = state.name,
+            winner = winner,
+            players = players.map { it.toRaw() }
         )
+    }
+}
+
+data class BattlingPlayerRaw(
+    val id: String = EMPTY,
+    val ready: Boolean = false
+) {
+
+    fun toBattlingPlayer() = BattlingPlayer(id = id, ready = ready)
+
+    companion object {
+
+        fun BattlingPlayer.toRaw() = BattlingPlayerRaw(id = id, ready = ready)
     }
 }
 
@@ -212,4 +238,17 @@ private fun String.toState(): ProgressState = when (this) {
     "Started" -> ProgressState.Started
     "Ended" -> ProgressState.Ended
     else -> ProgressState.Idle
+}
+
+private fun String.toBattleState(): BattleState = when (this) {
+    "StandBy" -> BattleState.StandBy
+    "Started" -> BattleState.Started
+    "Over" -> BattleState.Over
+    else -> BattleState.StandBy
+}
+
+private fun String.toMiniGame(): BattleMiniGame = when (this) {
+    "None" -> BattleMiniGame.None
+    "TapTheFlag" -> BattleMiniGame.TapTheFlag
+    else -> BattleMiniGame.None
 }

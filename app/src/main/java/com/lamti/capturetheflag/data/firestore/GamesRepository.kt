@@ -6,6 +6,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import com.lamti.capturetheflag.data.firestore.GameRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.game.ActivePlayer
+import com.lamti.capturetheflag.domain.game.BattleMiniGame
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.GeofenceObject
@@ -65,9 +66,10 @@ class GamesRepository @Inject constructor(
         }
     }
 
-    suspend fun createGame(id: String, title: String, position: LatLng, userID: String): Boolean = initialGame(
+    suspend fun createGame(id: String, title: String, miniGame: BattleMiniGame, position: LatLng, userID: String): Boolean = initialGame(
         id = id,
         title = title,
+        miniGame = miniGame,
         position = position,
         userID = userID
     ).toRaw().update()
@@ -77,6 +79,7 @@ class GamesRepository @Inject constructor(
     private fun initialGame(
         id: String,
         title: String,
+        miniGame: BattleMiniGame = BattleMiniGame.None,
         flagRadius: Float = DEFAULT_FLAG_RADIUS,
         gameRadius: Float = DEFAULT_GAME_RADIUS,
         position: LatLng,
@@ -113,6 +116,7 @@ class GamesRepository @Inject constructor(
             state = ProgressState.Created,
             winners = Team.Unknown
         ),
+        battleMiniGame = miniGame,
         redPlayers = listOf(ActivePlayer(id = userID, hasLost = false)),
         greenPlayers = emptyList(),
         battles = emptyList()

@@ -155,14 +155,14 @@ class LocationServiceImpl @Inject constructor() : LifecycleService() {
         var foundOpponent = false
         for (player in players) {
             if (!isAppInForeground() &&
-                !_game.value.battles.flatMap { it.playersIDs }.contains(player.id) &&
+                !_game.value.battles.flatMap { it.players }.map { it.id }.contains(player.id) &&
                 player.team != playerTeam &&
                 player.id != playerID &&
                 player.position.isInBattleableGameZone() &&
                 _livePosition.value.isInBattleableGameZone() &&
                 _livePosition.value.isInRangeOf(player.position, DEFAULT_BATTLE_RANGE)
             ) {
-                _showBattleNotification.value = "${player.username}"
+                _showBattleNotification.value = player.username
                 foundOpponent = true
                 break
             }

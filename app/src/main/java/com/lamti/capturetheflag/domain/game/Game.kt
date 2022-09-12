@@ -14,6 +14,7 @@ data class Game(
     val flagRadius: Float,
     val gameRadius: Float,
     val gameState: GameState,
+    val battleMiniGame: BattleMiniGame,
     val redPlayers: List<ActivePlayer>,
     val greenPlayers: List<ActivePlayer>,
     val battles: List<Battle>,
@@ -25,6 +26,7 @@ data class Game(
             position: LatLng = emptyPosition(),
             gameID: String = EMPTY,
             title: String = EMPTY,
+            battleMiniGame: BattleMiniGame = BattleMiniGame.None,
             flagRadius: Float = DEFAULT_FLAG_RADIUS,
             gameRadius: Float = DEFAULT_GAME_RADIUS,
         ) = Game(
@@ -33,6 +35,7 @@ data class Game(
             flagRadius = flagRadius,
             gameRadius = gameRadius,
             gameState = GameState.initialGameState(position = position),
+            battleMiniGame = battleMiniGame,
             redPlayers = emptyList(),
             greenPlayers = emptyList(),
             battles = emptyList()
@@ -47,7 +50,14 @@ data class ActivePlayer(
 
 data class Battle(
     val battleID: String,
-    val playersIDs: List<String>
+    val state: BattleState,
+    val winner: String,
+    val players: List<BattlingPlayer>
+)
+
+data class BattlingPlayer(
+    val id: String,
+    val ready: Boolean
 )
 
 data class GameState(

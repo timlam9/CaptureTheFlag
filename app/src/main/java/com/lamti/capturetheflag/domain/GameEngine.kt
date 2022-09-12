@@ -13,6 +13,9 @@ import com.lamti.capturetheflag.data.location.LocationRepository
 import com.lamti.capturetheflag.data.location.geofences.GeofencingRepository
 import com.lamti.capturetheflag.domain.game.ActivePlayer
 import com.lamti.capturetheflag.domain.game.Battle
+import com.lamti.capturetheflag.domain.game.BattleMiniGame
+import com.lamti.capturetheflag.domain.game.BattleState
+import com.lamti.capturetheflag.domain.game.BattlingPlayer
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.game.GameState
@@ -38,6 +41,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -76,6 +80,15 @@ class GameEngine @Inject constructor(
 
     private val _showBattleButton: MutableStateFlow<String> = MutableStateFlow(EMPTY)
     val showBattleButton: StateFlow<String> = _showBattleButton
+
+    private val _battleState: MutableStateFlow<BattleState> = MutableStateFlow(BattleState.StandBy)
+    val battleState: StateFlow<BattleState> = _battleState
+
+    private val _battleWinner: MutableStateFlow<String> = MutableStateFlow(EMPTY)
+    val battleWinner: StateFlow<String> = _battleWinner
+
+    private val _isPlayerReadyToBattle: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isPlayerReadyToBattle: StateFlow<Boolean> = _isPlayerReadyToBattle
 
     private val _enterGameOverScreen: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val enterGameOverScreen: StateFlow<Boolean> = _enterGameOverScreen
@@ -117,9 +130,19 @@ class GameEngine @Inject constructor(
                 _game.value = game
                 game.gameState.handleGameStateEvents()
                 game.battles.searchOpponent()
+                updateBattle()
             }.catch {
                 Timber.e("[$LOGGER_TAG] Catch observe game error")
             }.launchIn(coroutineScope)
+        }
+    }
+
+    private fun updateBattle() {
+        val playerBattle = findPlayerBattle() ?: return
+        _battleState.update { playerBattle.state }
+        _battleWinner.update { playerBattle.winner }
+        _isPlayerReadyToBattle.update {
+            playerBattle.players.firstOrNull { it.id == _player.value.userID }?.ready ?: false
         }
     }
 
@@ -136,7 +159,7 @@ class GameEngine @Inject constructor(
 
     fun logout() = firestoreRepository.logout()
 
-    suspend fun createNewGameWithRedCaptain(title: String) = coroutineScope.launch {
+    suspend fun createNewGameWithRedCaptain(title: String, miniGame: BattleMiniGame) = coroutineScope.launch {
         val gameID = getRandomString(GAME_CODE_LENGTH)
         generateQrCode(gameID)
 
@@ -153,6 +176,7 @@ class GameEngine @Inject constructor(
         firestoreRepository.createGame(
             id = gameID,
             title = title,
+            miniGame = miniGame,
             position = _initialPosition.value,
             player = _player.value
         )
@@ -226,33 +250,131 @@ class GameEngine @Inject constructor(
         firestoreRepository.updatePlayer(_player.value.copy(status = Player.Status.Playing))
     }
 
-    suspend fun updateSafehouseAndForwardGameState(position: LatLng, gameRadius: Float, flagRadius: Float) = coroutineScope.launch {
-        firestoreRepository.updateGame(
-            _game.value.copy(
-                gameRadius = gameRadius,
-                flagRadius = flagRadius,
-                gameState = _game.value.gameState.copy(
-                    state = ProgressState.SettingFlags,
-                    safehouse = _game.value.gameState.safehouse.copy(position = position)
+    suspend fun updateSafehouseAndForwardGameState(position: LatLng, gameRadius: Float, flagRadius: Float) =
+        coroutineScope.launch {
+            firestoreRepository.updateGame(
+                _game.value.copy(
+                    gameRadius = gameRadius,
+                    flagRadius = flagRadius,
+                    gameState = _game.value.gameState.copy(
+                        state = ProgressState.SettingFlags,
+                        safehouse = _game.value.gameState.safehouse.copy(position = position)
+                    )
                 )
             )
-        )
-    }
+        }
 
     suspend fun createBattle() = coroutineScope.launch {
         firestoreRepository.updateGame(
             _game.value.copy(
                 battles = _game.value.battles + Battle(
                     battleID = _player.value.userID,
-                    playersIDs = listOf(_player.value.userID, _battleID.value)
+                    state = BattleState.StandBy,
+                    winner = EMPTY,
+                    players = listOf(BattlingPlayer(_player.value.userID, false), BattlingPlayer(_battleID.value, false))
                 )
             )
         )
     }
 
-    suspend fun looseBattle() = coroutineScope.launch {
+    suspend fun readyToBattle() = coroutineScope.launch {
+        val playerBattle = findPlayerBattle() ?: return@launch
+        val updatedPlayers = playerBattle.players.map { if (it.id == _player.value.userID) it.copy(ready = true) else it }
+        val updatedState = if (updatedPlayers.all { it.ready }) BattleState.Started else BattleState.StandBy
+        val updatedBattles = _game.value.battles.map { battle ->
+            if (battle.players.map { it.id }.contains(_player.value.userID))
+                battle.copy(
+                    players = updatedPlayers,
+                    state = updatedState
+                )
+            else battle
+        }
+
+        firestoreRepository.updateGame(
+            _game.value.copy(
+                battles = updatedBattles
+            )
+        )
+    }
+
+    private fun findPlayerBattle(): Battle? = _game.value.battles.firstOrNull { battle ->
+        battle.players.map { it.id }.contains(_player.value.userID)
+    }
+
+    suspend fun onBattleWinnerFound() = coroutineScope.launch {
+        val updatedBattles = _game.value.battles.map { battle ->
+            if (battle.players.map { it.id }.contains(_player.value.userID))
+                battle.copy(
+                    winner = if (battle.winner == EMPTY) _player.value.details.username else battle.winner,
+                    state = BattleState.Over
+                )
+            else battle
+        }
+
+        firestoreRepository.updateGame(
+            _game.value.copy(
+                battles = updatedBattles
+            )
+        )
+    }
+
+    suspend fun looseBattle() = if (_game.value.battleMiniGame == BattleMiniGame.None) withoutMiniGame() else withMiniGame()
+
+    private suspend fun withMiniGame() = coroutineScope.launch {
+        var updatedBattles: MutableList<Battle> = _game.value.battles.toMutableList()
+
+        updatedBattles = updatedBattles.map { battle ->
+            val updatedPlayers = battle.players.toMutableList()
+            updatedPlayers.removeIf { player -> player.id == _player.value.userID }
+
+            val updatedBattle = battle.copy(players = updatedPlayers)
+            updatedBattle
+        }.toMutableList()
+
+        updatedBattles.removeIf { battle -> battle.players.isEmpty() }
+
+        val updatedGameState = when (_player.value.userID) {
+            _game.value.gameState.redFlagCaptured -> _game.value.gameState.copy(redFlagCaptured = null)
+            _game.value.gameState.greenFlagCaptured -> _game.value.gameState.copy(greenFlagCaptured = null)
+            else -> _game.value.gameState
+        }
+
+        val (redPlayers, greenPlayers) = when (_player.value.gameDetails?.team) {
+            Team.Red -> {
+                val redPlayers = _game.value.redPlayers.map {
+                    if (it.id == _player.value.userID && _battleWinner.value != _player.value.details.username) it.copy(
+                        hasLost = true
+                    ) else it
+                }
+                Pair(redPlayers, _game.value.greenPlayers)
+            }
+            Team.Green -> {
+                val greenPlayers = _game.value.greenPlayers.map {
+                    if (it.id == _player.value.userID && _battleWinner.value != _player.value.details.username) it.copy(
+                        hasLost = true
+                    ) else it
+                }
+                Pair(_game.value.redPlayers, greenPlayers)
+            }
+            else -> Pair(_game.value.redPlayers, _game.value.greenPlayers)
+        }
+
+        firestoreRepository.updateGame(
+            game = _game.value.copy(
+                battles = updatedBattles,
+                gameState = updatedGameState,
+                redPlayers = redPlayers,
+                greenPlayers = greenPlayers
+            )
+        )
+        if (_battleWinner.value != _player.value.details.username)
+            firestoreRepository.updatePlayer(player = _player.value.copy(status = Player.Status.Lost))
+        firestoreRepository.deleteGamePlayer(gameID = _game.value.gameID, playerID = _player.value.userID)
+    }
+
+    private suspend fun withoutMiniGame() = coroutineScope.launch {
         val updatedBattles: MutableList<Battle> = _game.value.battles.toMutableList()
-        updatedBattles.removeIf { it.playersIDs.contains(_player.value.userID) }
+        updatedBattles.removeIf { battle -> battle.players.map { it.id }.contains(_player.value.userID) }
 
         val updatedGameState = when (_player.value.userID) {
             _game.value.gameState.redFlagCaptured -> _game.value.gameState.copy(redFlagCaptured = null)
@@ -284,6 +406,7 @@ class GameEngine @Inject constructor(
                 greenPlayers = greenPlayers
             )
         )
+
         firestoreRepository.updatePlayer(player = _player.value.copy(status = Player.Status.Lost))
         firestoreRepository.deleteGamePlayer(gameID = _game.value.gameID, playerID = _player.value.userID)
     }
@@ -446,7 +569,7 @@ class GameEngine @Inject constructor(
 
         var isInBattle = false
         for (battle in this) {
-            if (battle.playersIDs.contains(_player.value.userID)) {
+            if (battle.players.map { it.id }.contains(_player.value.userID)) {
                 _enterBattleScreen.value = true
                 isInBattle = true
                 break
@@ -480,7 +603,7 @@ class GameEngine @Inject constructor(
         var foundOpponent = false
         for (player in players) {
             if (player.id != _player.value.userID &&
-                !_game.value.battles.flatMap { it.playersIDs }.contains(player.id) &&
+                !_game.value.battles.flatMap { it.players }.map { it.id }.contains(player.id) &&
                 player.team != _player.value.gameDetails?.team &&
                 player.position.isInBattleableGameZone() &&
                 _livePosition.value.isInBattleableGameZone() &&

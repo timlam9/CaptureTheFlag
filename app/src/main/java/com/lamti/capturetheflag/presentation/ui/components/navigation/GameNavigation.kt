@@ -11,11 +11,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.lamti.capturetheflag.R
+import com.lamti.capturetheflag.domain.game.BattleMiniGame
+import com.lamti.capturetheflag.domain.game.BattleState
 import com.lamti.capturetheflag.domain.player.GameDetails
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.DatastoreHelper
-import com.lamti.capturetheflag.presentation.ui.components.screens.BattleScreen
+import com.lamti.capturetheflag.presentation.ui.components.screens.BattleGameScreen
+import com.lamti.capturetheflag.presentation.ui.components.screens.BattleWonScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.ChooseTeamScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.CreateGameScreen
 import com.lamti.capturetheflag.presentation.ui.components.screens.GameOverScreen
@@ -26,6 +29,9 @@ import com.lamti.capturetheflag.presentation.ui.components.screens.StartingGameS
 import com.lamti.capturetheflag.presentation.ui.fragments.maps.MapViewModel
 import com.lamti.capturetheflag.presentation.ui.playSound
 import com.lamti.capturetheflag.presentation.ui.popNavigate
+import com.lamti.capturetheflag.presentation.ui.style.Green
+import com.lamti.capturetheflag.presentation.ui.style.Red
+import com.lamti.capturetheflag.utils.EMPTY
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -53,6 +59,9 @@ fun GameNavigation(
     val showBattleButton by viewModel.showBattleButton.collectAsState()
     val showArFlagButton by viewModel.showArFlagButton.collectAsState()
     val enterBattleScreen by viewModel.enterBattleScreen.collectAsState()
+    val battleWinner by viewModel.battleWinner.collectAsState()
+    val battleState by viewModel.battleState.collectAsState()
+    val isPlayerReadyToBattle by viewModel.isPlayerReadyToBattle.collectAsState()
     val enterGameOverScreen by viewModel.enterGameOverScreen.collectAsState()
     val context = LocalContext.current
 
@@ -79,8 +88,8 @@ fun GameNavigation(
             )
         }
         composable(route = Screen.CreateGame.route) {
-            CreateGameScreen {
-                viewModel.onCreateGameClicked(it)
+            CreateGameScreen { title, miniGame ->
+                viewModel.onCreateGameClicked(title, miniGame)
                 navController.navigate(Screen.StartingGame.route)
             }
         }
@@ -134,7 +143,12 @@ fun GameNavigation(
                 greenPlayersCount = viewModel.game.value.greenPlayers.filterNot { it.hasLost }.size,
                 enterBattleScreen = enterBattleScreen,
                 enterGameOverScreen = enterGameOverScreen,
-                onEnterBattleScreen = { navController.popNavigate(Screen.Battle.route) },
+                onEnterBattleScreen = {
+                    when (viewModel.game.value.battleMiniGame) {
+                        BattleMiniGame.None -> navController.popNavigate(Screen.BattleWon.route)
+                        BattleMiniGame.TapTheFlag -> navController.popNavigate(Screen.Battle.route)
+                    }
+                },
                 onEnterGameOverScreen = { navController.popNavigate(Screen.GameOver.route) },
                 onArScannerButtonClicked = onArScannerButtonClicked,
                 onSettingFlagsButtonClicked = onSettingFlagsButtonClicked,
@@ -146,12 +160,26 @@ fun GameNavigation(
             )
         }
         composable(route = Screen.Battle.route) {
-            BattleScreen(
-                team = player.gameDetails?.team ?: Team.Unknown,
-                enterBattleScreen = enterBattleScreen,
-                onEnterBattleScreen = { navController.popNavigate(Screen.Map.route) },
-                onLostButtonClicked = { viewModel.onLostBattleButtonClicked() }
+            BattleGameScreen(
+                color = if (player.gameDetails?.team == Team.Green) Green else Red,
+                winner = battleWinner,
+                isPlayerReady = isPlayerReadyToBattle,
+                battleStarted = battleState == BattleState.Started,
+                onReadyClicked = { viewModel.readyToBattle() },
+                onWinnerFound = {
+                    if (battleWinner == EMPTY) viewModel.onBattleWinnerFound()
+                    navController.navigate(Screen.BattleWon.route)
+                }
             )
+        }
+        composable(route = Screen.BattleWon.route) {
+            BattleWonScreen(
+                team = player.gameDetails?.team ?: Team.Unknown,
+                winner = battleWinner,
+                playerName = player.details.username,
+                enterBattleScreen = enterBattleScreen,
+                onEnterBattleScreen = { navController.popNavigate(Screen.Map.route) }
+            ) { viewModel.onLostBattleButtonClicked() }
         }
         composable(route = Screen.GameOver.route) {
             GameOverScreen(

@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
 import com.lamti.capturetheflag.domain.GameEngine
+import com.lamti.capturetheflag.domain.game.BattleMiniGame
+import com.lamti.capturetheflag.domain.game.BattleState
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.player.Player
@@ -35,6 +37,10 @@ class MapViewModel @Inject constructor(private val gameEngine: GameEngine) : Vie
 
     val showArFlagButton: StateFlow<Boolean> = gameEngine.showArFlagButton
     val showBattleButton: StateFlow<String> = gameEngine.showBattleButton
+    val isPlayerReadyToBattle: StateFlow<Boolean> = gameEngine.isPlayerReadyToBattle
+    val battleState: StateFlow<BattleState> = gameEngine.battleState
+    val battleWinner: StateFlow<String> = gameEngine.battleWinner
+
     val isSafehouseDraggable: StateFlow<Boolean> = gameEngine.isSafehouseDraggable
     val canPlaceFlag: StateFlow<Boolean> = gameEngine.canPlaceFlag
 
@@ -60,7 +66,8 @@ class MapViewModel @Inject constructor(private val gameEngine: GameEngine) : Vie
 
     fun logout() = gameEngine.logout()
 
-    fun onCreateGameClicked(title: String) = viewModelScope.launch { gameEngine.createNewGameWithRedCaptain(title) }
+    fun onCreateGameClicked(title: String, miniGame: BattleMiniGame) =
+        viewModelScope.launch { gameEngine.createNewGameWithRedCaptain(title, miniGame) }
 
     fun onGameCodeScanned(gameID: String) = viewModelScope.launch { gameEngine.addPlayerToGame(gameID) }
 
@@ -83,7 +90,14 @@ class MapViewModel @Inject constructor(private val gameEngine: GameEngine) : Vie
     }
 
     fun onArCorelessCaptured(onResult: (Boolean) -> Unit) = viewModelScope.launch {
-        //TODO: Add Timer!
         gameEngine.captureFlag(onResult)
+    }
+
+    fun readyToBattle() = viewModelScope.launch {
+        gameEngine.readyToBattle()
+    }
+
+    fun onBattleWinnerFound() = viewModelScope.launch {
+        gameEngine.onBattleWinnerFound()
     }
 }

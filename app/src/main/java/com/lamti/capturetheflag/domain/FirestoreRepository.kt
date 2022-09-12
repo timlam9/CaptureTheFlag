@@ -1,6 +1,7 @@
 package com.lamti.capturetheflag.domain
 
 import com.google.android.gms.maps.model.LatLng
+import com.lamti.capturetheflag.domain.game.BattleMiniGame
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GamePlayer
 import com.lamti.capturetheflag.domain.player.Player
@@ -29,7 +30,7 @@ interface FirestoreRepository {
 
     suspend fun updateGame(game: Game): Boolean
 
-    suspend fun createGame(id: String, title: String, position: LatLng, player: Player): Boolean
+    suspend fun createGame(id: String, title: String, miniGame: BattleMiniGame, position: LatLng, player: Player): Boolean
 
     suspend fun deleteGame(gameID: String): Boolean
 
