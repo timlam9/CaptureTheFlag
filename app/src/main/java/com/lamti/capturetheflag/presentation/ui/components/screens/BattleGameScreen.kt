@@ -34,6 +34,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.presentation.ui.components.composables.common.DefaultButton
+import com.lamti.capturetheflag.presentation.ui.components.composables.common.PulseInteractor
 import com.lamti.capturetheflag.presentation.ui.playSound
 import com.lamti.capturetheflag.presentation.ui.style.Red
 import com.lamti.capturetheflag.utils.EMPTY
@@ -55,7 +56,7 @@ fun BattleGameScreen(
     LaunchedEffect(winner) { if (winner != EMPTY) onWinnerFound() }
     TapTheFlag(
         modifier = modifier,
-        color= color,
+        color = color,
         isPlayerReady = isPlayerReady,
         battleStarted = battleStarted,
         onReadyClicked = onReadyClicked,
@@ -78,6 +79,7 @@ fun TapTheFlag(
     val context = LocalContext.current
     var timesTaped by remember { mutableStateOf(0) }
     var visible by remember { mutableStateOf(false) }
+    var startPulseAnimation by remember { mutableStateOf(false) }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         var initialOffset by remember { mutableStateOf(Offset(maxWidth.value / 2 - 10, maxHeight.value / 2 - 10)) }
@@ -103,6 +105,15 @@ fun TapTheFlag(
             }
         }
 
+        PulseInteractor(
+            modifier = Modifier.offset(iconLocation.x.dp - maxWidth / 5, iconLocation.y.dp - maxHeight / 10),
+            color = color,
+            startAnimation = startPulseAnimation,
+            onAnimationEnd = {
+                startPulseAnimation = false
+            }
+        )
+
         FlagIcon(
             modifier = Modifier.offset(iconLocation.x.dp, iconLocation.y.dp),
             tint = color,
@@ -110,6 +121,7 @@ fun TapTheFlag(
             onIconClicked = {
                 timesTaped += 1
                 context.playSound(punchSound)
+                startPulseAnimation = true
                 if (timesTaped == winnerTaps) onWinnerFound()
             }
         )
