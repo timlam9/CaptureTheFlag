@@ -111,6 +111,12 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        if (viewModel.isUserLoggedIn) {
+            startGameListeners()
+        }
+    }
+
+    private fun startGameListeners() {
         lifecycleScope.launchWhenResumed {
             geofenceIdFLow.onEach {
                 if ((greenPlayerEntersUncapturedRedFlag() || redPlayerEntersUncapturedGreenFlag()) && isAppInForeground()) {
@@ -255,7 +261,6 @@ class MainActivity : AppCompatActivity() {
                         finish()
                     } else {
                         Timber.d("[$LOGGER_TAG] Start observing player with id: ${viewModel.userID}")
-
                         viewModel.observePlayer()
                     }
                 }

@@ -128,7 +128,7 @@ fun TapTheFlag(
         Text(
             modifier = Modifier.padding(20.dp),
             text = buildAnnotatedString {
-                append("Tap on the flag 10 times to win the battle: ")
+                append("Tap on the flag $winnerTaps times to win the battle: ")
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = color)) {
                     append(timesTaped.toString())
                 }
