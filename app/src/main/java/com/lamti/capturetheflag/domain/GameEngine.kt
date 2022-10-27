@@ -265,16 +265,24 @@ class GameEngine @Inject constructor(
         }
 
     suspend fun createBattle() = coroutineScope.launch {
-        firestoreRepository.updateGame(
-            _game.value.copy(
-                battles = _game.value.battles + Battle(
-                    battleID = _player.value.userID,
-                    state = BattleState.StandBy,
-                    winner = EMPTY,
-                    players = listOf(BattlingPlayer(_player.value.userID, false), BattlingPlayer(_battleID.value, false))
+        val check1: Battle? = _game.value.battles.firstOrNull { it.battleID == _player.value.userID }
+        val check2: Battle? = _game.value.battles.firstOrNull { battle ->
+            val player: BattlingPlayer? = battle.players.firstOrNull { player -> player.id == _player.value.userID }
+            player != null
+        }
+
+        if (check1 == null && check2 == null) {
+            firestoreRepository.updateGame(
+                _game.value.copy(
+                    battles = _game.value.battles + Battle(
+                        battleID = _player.value.userID,
+                        state = BattleState.StandBy,
+                        winner = EMPTY,
+                        players = listOf(BattlingPlayer(_player.value.userID, false), BattlingPlayer(_battleID.value, false))
+                    )
                 )
             )
-        )
+        }
     }
 
     suspend fun readyToBattle() = coroutineScope.launch {
