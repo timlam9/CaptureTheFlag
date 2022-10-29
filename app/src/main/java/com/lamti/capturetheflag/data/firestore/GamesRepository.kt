@@ -1,11 +1,16 @@
 package com.lamti.capturetheflag.data.firestore
 
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.ktx.toObject
+import com.lamti.capturetheflag.data.firestore.BattleRaw.Companion.toRaw
 import com.lamti.capturetheflag.data.firestore.GameRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.game.ActivePlayer
+import com.lamti.capturetheflag.domain.game.Battle
 import com.lamti.capturetheflag.domain.game.BattleMiniGame
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GameState
@@ -43,7 +48,7 @@ class GamesRepository @Inject constructor(
                     trySend(state)
                 }
         } catch (e: Exception) {
-            Timber.e("Observe game error: ${e.message}")
+            Timber.e("[$FIRESTORE_LOGGER_TAG] Observe game error: ${e.message}")
         }
 
         awaitClose {
@@ -66,13 +71,14 @@ class GamesRepository @Inject constructor(
         }
     }
 
-    suspend fun createGame(id: String, title: String, miniGame: BattleMiniGame, position: LatLng, userID: String): Boolean = initialGame(
-        id = id,
-        title = title,
-        miniGame = miniGame,
-        position = position,
-        userID = userID
-    ).toRaw().update()
+    suspend fun createGame(id: String, title: String, miniGame: BattleMiniGame, position: LatLng, userID: String): Boolean =
+        initialGame(
+            id = id,
+            title = title,
+            miniGame = miniGame,
+            position = position,
+            userID = userID
+        ).toRaw().update()
 
     suspend fun updateGame(game: Game): Boolean = game.toRaw().update()
 
@@ -148,6 +154,31 @@ class GamesRepository @Inject constructor(
             Timber.e("[$FIRESTORE_LOGGER_TAG] ${e.message}")
             false
         }
+    }
+
+    fun updateBattles(gameID: String, battle: Battle): Boolean {
+        val gameRef: DocumentReference = firestore.collection(COLLECTION_GAMES).document(gameID)
+
+        firestore.runTransaction { transaction ->
+            val snapshot: DocumentSnapshot = transaction.get(gameRef)
+            val battles: List<BattleRaw> = snapshot.toObject<GameRaw>()?.battles ?: emptyList()
+            val mutableBattles: MutableList<BattleRaw> = battles.toMutableList()
+
+            val battleWithSameID: BattleRaw? = battles.firstOrNull { it.battleID == battle.battleID }
+            val battleWithSamePlayerID: BattleRaw? = battles.firstOrNull { battle ->
+                val player: BattlingPlayerRaw? = battle.players.firstOrNull { player -> player.id == battle.battleID }
+                player != null
+            }
+
+            // if current player isn't fighting
+            if (battleWithSameID == null && battleWithSamePlayerID == null) mutableBattles.add(battle.toRaw())
+
+            transaction.update(gameRef, "battles", mutableBattles)
+            null
+        }
+            .addOnFailureListener { e -> Timber.e("[$FIRESTORE_LOGGER_TAG] Transaction failure.", e) }
+
+        return true
     }
 
     companion object {

@@ -3,6 +3,7 @@ package com.lamti.capturetheflag.data.firestore
 import com.google.android.gms.maps.model.LatLng
 import com.lamti.capturetheflag.data.authentication.AuthenticationRepository
 import com.lamti.capturetheflag.domain.FirestoreRepository
+import com.lamti.capturetheflag.domain.game.Battle
 import com.lamti.capturetheflag.domain.game.BattleMiniGame
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GamePlayer
@@ -61,6 +62,8 @@ class FirestoreRepositoryImpl @Inject constructor(
     override suspend fun getGame(id: String): Game? = gamesRepository.getGame(id)
 
     override suspend fun updateGame(game: Game): Boolean = gamesRepository.updateGame(game)
+
+    override suspend fun updateBattles(gameID: String, battle: Battle): Boolean = gamesRepository.updateBattles(gameID ,battle)
 
     override suspend fun createGame(
         id: String,
