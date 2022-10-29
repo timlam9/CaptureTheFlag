@@ -138,11 +138,12 @@ class GameEngine @Inject constructor(
     }
 
     private fun updateBattle() {
-        val playerBattle = findPlayerBattle() ?: return
-        _battleState.update { playerBattle.state }
-        _battleWinner.update { playerBattle.winner }
-        _isPlayerReadyToBattle.update {
-            playerBattle.players.firstOrNull { it.id == _player.value.userID }?.ready ?: false
+        findPlayerBattle()?.let { playerBattle ->
+            _battleState.update { playerBattle.state }
+            _battleWinner.update { playerBattle.winner }
+            _isPlayerReadyToBattle.update {
+                playerBattle.players.firstOrNull { it.id == _player.value.userID }?.ready ?: false
+            }
         }
     }
 
