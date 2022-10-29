@@ -12,6 +12,7 @@ import com.lamti.capturetheflag.data.firestore.GameRaw.Companion.toRaw
 import com.lamti.capturetheflag.domain.game.ActivePlayer
 import com.lamti.capturetheflag.domain.game.Battle
 import com.lamti.capturetheflag.domain.game.BattleMiniGame
+import com.lamti.capturetheflag.domain.game.BattleState
 import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.GeofenceObject
@@ -173,7 +174,36 @@ class GamesRepository @Inject constructor(
             // if current player isn't fighting
             if (battleWithSameID == null && battleWithSamePlayerID == null) mutableBattles.add(battle.toRaw())
 
-            transaction.update(gameRef, "battles", mutableBattles)
+            transaction.update(gameRef, FIELD_BATTLES, mutableBattles)
+            null
+        }
+            .addOnFailureListener { e -> Timber.e("[$FIRESTORE_LOGGER_TAG] Transaction failure.", e) }
+
+        return true
+    }
+
+    fun updateReadyToBattle(gameID: String, playerID: String): Boolean {
+        val gameRef: DocumentReference = firestore.collection(COLLECTION_GAMES).document(gameID)
+
+        firestore.runTransaction { transaction ->
+            val snapshot: DocumentSnapshot = transaction.get(gameRef)
+            val battles: List<BattleRaw> = snapshot.toObject<GameRaw>()?.battles ?: emptyList()
+            val mutableBattles: MutableList<BattleRaw> = battles.toMutableList()
+            val playerBattle = battles.first { battle -> battle.players.map { it.id }.contains(playerID) }
+
+            val updatedPlayers = playerBattle.players.map { if (it.id == playerID) it.copy(ready = true) else it }
+            val updatedState = if (updatedPlayers.all { it.ready }) BattleState.Started else BattleState.StandBy
+
+            val updatedBattles = mutableBattles.map { battle ->
+                if (battle.players.map { it.id }.contains(playerID))
+                    battle.copy(
+                        players = updatedPlayers,
+                        state = updatedState.toString()
+                    )
+                else battle
+            }
+
+            transaction.update(gameRef, FIELD_BATTLES, updatedBattles)
             null
         }
             .addOnFailureListener { e -> Timber.e("[$FIRESTORE_LOGGER_TAG] Transaction failure.", e) }
@@ -184,5 +214,6 @@ class GamesRepository @Inject constructor(
     companion object {
 
         private const val COLLECTION_GAMES = "games"
+        private const val FIELD_BATTLES = "battles"
     }
 }

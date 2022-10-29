@@ -63,7 +63,11 @@ class FirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun updateGame(game: Game): Boolean = gamesRepository.updateGame(game)
 
-    override suspend fun updateBattles(gameID: String, battle: Battle): Boolean = gamesRepository.updateBattles(gameID ,battle)
+    override suspend fun updateBattles(gameID: String, battle: Battle): Boolean =
+        gamesRepository.updateBattles(gameID, battle)
+
+    override suspend fun updateReadyToBattle(gameID: String, playerID: String): Boolean =
+        gamesRepository.updateReadyToBattle(gameID, playerID)
 
     override suspend fun createGame(
         id: String,

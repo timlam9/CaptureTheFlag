@@ -277,23 +277,7 @@ class GameEngine @Inject constructor(
     }
 
     suspend fun readyToBattle() = coroutineScope.launch {
-        val playerBattle = findPlayerBattle() ?: return@launch
-        val updatedPlayers = playerBattle.players.map { if (it.id == _player.value.userID) it.copy(ready = true) else it }
-        val updatedState = if (updatedPlayers.all { it.ready }) BattleState.Started else BattleState.StandBy
-        val updatedBattles = _game.value.battles.map { battle ->
-            if (battle.players.map { it.id }.contains(_player.value.userID))
-                battle.copy(
-                    players = updatedPlayers,
-                    state = updatedState
-                )
-            else battle
-        }
-
-        firestoreRepository.updateGame(
-            _game.value.copy(
-                battles = updatedBattles
-            )
-        )
+        firestoreRepository.updateReadyToBattle(_game.value.gameID, _player.value.userID)
     }
 
     private fun findPlayerBattle(): Battle? = _game.value.battles.firstOrNull { battle ->

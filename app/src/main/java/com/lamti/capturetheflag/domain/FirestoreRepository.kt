@@ -45,4 +45,6 @@ interface FirestoreRepository {
     suspend fun deleteFirebaseGame(gameID: String): Boolean
 
     suspend fun updateBattles(gameID: String, battle: Battle): Boolean
+
+    suspend fun updateReadyToBattle(gameID: String, playerID: String): Boolean
 }
