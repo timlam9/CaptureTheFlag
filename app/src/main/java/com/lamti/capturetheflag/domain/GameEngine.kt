@@ -103,6 +103,21 @@ class GameEngine @Inject constructor(
     private val _battleRequestFailed = MutableStateFlow(false)
     val battleRequestFailed: StateFlow<Boolean> = _battleRequestFailed
 
+    private val _battleCountdownSeconds = MutableStateFlow<Int?>(null)
+    val battleCountdownSeconds: StateFlow<Int?> = _battleCountdownSeconds
+    private val _battlePlayerCount = MutableStateFlow(0)
+    val battlePlayerCount: StateFlow<Int> = _battlePlayerCount
+    private var countdownJob: Job? = null
+    private var countdownKey: Pair<String, Long>? = null
+    private var lobbyJoinJob: Job? = null
+
+    suspend fun setMultiplayerBattles(enabled: Boolean): Boolean {
+        val current = _game.value
+        if (current.gameID.isBlank()) return false
+        // Existing battles retain their mode; the preference applies to new battles.
+        return firestoreRepository.updateGame(current.gameID) { it.copy(multiplayerBattles = enabled) }
+    }
+
     private val battleRequestMutex = Mutex()
 
     fun clearBattleRequestFailure() {
@@ -214,6 +229,10 @@ class GameEngine @Inject constructor(
         _battleWinner.value = EMPTY
         _battleWinnerID.value = EMPTY
         _isPlayerReadyToBattle.value = false
+        countdownJob?.cancel()
+        countdownKey = null
+        _battleCountdownSeconds.value = null
+        lobbyJoinJob?.cancel()
     }
 
     private fun publishBattleSnapshot(game: Game) {
@@ -281,6 +300,27 @@ class GameEngine @Inject constructor(
         _battleWinnerID.value = playerBattle?.winnerID ?: EMPTY
         _isPlayerReadyToBattle.value =
             playerBattle?.players?.firstOrNull { it.id == _player.value.userID }?.ready ?: false
+        _battlePlayerCount.value = playerBattle?.players?.size ?: 0
+        val deadline = playerBattle?.countdownEndsAt
+        val key = if (playerBattle?.state == BattleState.StandBy && deadline != null)
+            playerBattle.battleID to deadline else null
+        if (key == countdownKey && countdownJob?.isActive == true) return
+        countdownJob?.cancel()
+        countdownKey = key
+        _battleCountdownSeconds.value = null
+        if (key == null) return
+        val gameID = _game.value.gameID
+        val playerID = _player.value.userID
+        countdownJob = coroutineScope.launch {
+            while (isCurrentGamePlayer(gameID, playerID)) {
+                val remaining = (key.second - firestoreRepository.battleTimeMillis()).coerceAtLeast(0)
+                _battleCountdownSeconds.value = ((remaining + 999) / 1000).toInt()
+                if (remaining == 0L) {
+                    if (firestoreRepository.startBattle(gameID, key.first, playerID)) break
+                    kotlinx.coroutines.delay(1_000)
+                } else kotlinx.coroutines.delay(100)
+            }
+        }
     }
 
     suspend fun getGame(id: String): Game? = firestoreRepository.getGame(id)
@@ -411,7 +451,10 @@ class GameEngine @Inject constructor(
                 requestedGame.gameState.state == ProgressState.Started &&
                 opponents.any { it.id == opponentID && !it.hasLost } &&
                 requestedGame.battles.none { battle ->
-                    battle.players.any { it.id == playerID || it.id == opponentID }
+                    battle.players.any { it.id == playerID } ||
+                        (battle.players.any { it.id == opponentID } &&
+                            !(requestedGame.multiplayerBattles && battle.multiplayer &&
+                                battle.state == BattleState.StandBy))
                 }
             val accepted = valid && firestoreRepository.updateBattles(
                 requestedGame.gameID,
@@ -719,6 +762,22 @@ class GameEngine @Inject constructor(
             currentPlayer.status != Player.Status.Lost &&
             playerID.isNotBlank() && playerID !in busyPlayers && ownTeam != Team.Unknown &&
             _livePosition.value.isInBattleableGameZone()
+        if (canBattle && lobbyJoinJob?.isActive != true) {
+            val lobby = currentGame.battles.firstOrNull { battle ->
+                battle.multiplayer && battle.state == BattleState.StandBy &&
+                    battle.countdownEndsAt?.let { firestoreRepository.battleTimeMillis() >= it } != true &&
+                    players.any { nearby ->
+                        battle.players.any { it.id == nearby.id } &&
+                            nearby.position.isInBattleableGameZone() &&
+                            _livePosition.value.isInRangeOf(nearby.position, DEFAULT_BATTLE_RANGE)
+                    }
+            }
+            if (lobby != null) {
+                lobbyJoinJob = coroutineScope.launch {
+                    firestoreRepository.joinBattle(currentGame.gameID, lobby.battleID, playerID)
+                }
+            }
+        }
         val opponent = if (canBattle) players.firstOrNull { candidate ->
             candidate.id.isNotBlank() && candidate.id != playerID && candidate.id in opponents &&
                 candidate.id !in busyPlayers && candidate.position.isInBattleableGameZone() &&

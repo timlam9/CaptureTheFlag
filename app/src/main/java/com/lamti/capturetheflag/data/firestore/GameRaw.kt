@@ -34,7 +34,8 @@ data class GameRaw(
     val battleMiniGame: String = BattleMiniGame.None.name,
     val redPlayers: List<ActivePlayerRaw> = emptyList(),
     val greenPlayers: List<ActivePlayerRaw> = emptyList(),
-    val battles: List<BattleRaw> = emptyList()
+    val battles: List<BattleRaw> = emptyList(),
+    val multiplayerBattles: Boolean = false
 ) {
 
     fun toGame() = Game(
@@ -46,7 +47,8 @@ data class GameRaw(
         battleMiniGame = battleMiniGame.toMiniGame(),
         redPlayers = redPlayers.map { it.toActivePlayer() },
         greenPlayers = greenPlayers.map { it.toActivePlayer() },
-        battles = battles.toBattles()
+        battles = battles.toBattles(),
+        multiplayerBattles = multiplayerBattles
     )
 
     companion object {
@@ -60,7 +62,8 @@ data class GameRaw(
             gameState = gameState.toRaw(),
             redPlayers = redPlayers.map { it.toRaw() },
             greenPlayers = greenPlayers.map { it.toRaw() },
-            battles = battles.toRaw()
+            battles = battles.toRaw(),
+            multiplayerBattles = multiplayerBattles
         )
     }
 }
@@ -93,7 +96,9 @@ data class BattleRaw(
     val state: String = BattleState.StandBy.name,
     val winner: String = EMPTY,
     val players: List<BattlingPlayerRaw> = emptyList(),
-    val winnerID: String = EMPTY
+    val winnerID: String = EMPTY,
+    val multiplayer: Boolean = false,
+    val countdownEndsAt: Long? = null
 ) {
 
     fun toBattle() = Battle(
@@ -101,7 +106,9 @@ data class BattleRaw(
         state = state.toBattleState(),
         winner = winner,
         players = players.map { it.toBattlingPlayer() },
-        winnerID = winnerID
+        winnerID = winnerID,
+        multiplayer = multiplayer,
+        countdownEndsAt = countdownEndsAt
     )
 
     companion object {
@@ -111,7 +118,9 @@ data class BattleRaw(
             state = state.name,
             winner = winner,
             players = players.map { it.toRaw() },
-            winnerID = winnerID
+            winnerID = winnerID,
+            multiplayer = multiplayer,
+            countdownEndsAt = countdownEndsAt
         )
     }
 }

@@ -25,6 +25,8 @@ interface FirestoreRepository {
     suspend fun updatePlayer(player: Player) :Boolean
 
     // Games
+    fun battleTimeMillis(): Long
+
     fun observeGame(gameID: String): Flow<Game>
 
     suspend fun getGame(id: String): Game?
@@ -47,6 +49,10 @@ interface FirestoreRepository {
     suspend fun deleteFirebaseGame(gameID: String): Boolean
 
     suspend fun updateBattles(gameID: String, battle: Battle): Boolean
+
+    suspend fun joinBattle(gameID: String, battleID: String, playerID: String): Boolean
+
+    suspend fun startBattle(gameID: String, battleID: String, playerID: String): Boolean
 
     suspend fun updateReadyToBattle(gameID: String, battleID: String, playerID: String): Boolean
 

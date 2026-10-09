@@ -67,8 +67,9 @@ object NetworkingModule {
     @Provides
     fun provideGamesRepository(
         firestore: FirebaseFirestore,
+        database: FirebaseDatabase,
         @IoDispatcher ioDispatcher: CoroutineDispatcher
-    ): GamesRepository = GamesRepository(firestore, ioDispatcher)
+    ): GamesRepository = GamesRepository(firestore, ioDispatcher, database)
 
     @Singleton
     @Provides

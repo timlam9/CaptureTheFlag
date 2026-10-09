@@ -18,6 +18,7 @@ data class Game(
     val redPlayers: List<ActivePlayer>,
     val greenPlayers: List<ActivePlayer>,
     val battles: List<Battle>,
+    val multiplayerBattles: Boolean = false,
 ) {
 
     companion object {
@@ -53,7 +54,9 @@ data class Battle(
     val state: BattleState,
     val winner: String,
     val players: List<BattlingPlayer>,
-    val winnerID: String = EMPTY
+    val winnerID: String = EMPTY,
+    val multiplayer: Boolean = false,
+    val countdownEndsAt: Long? = null
 )
 
 data class BattlingPlayer(

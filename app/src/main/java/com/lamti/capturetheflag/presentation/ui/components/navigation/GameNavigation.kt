@@ -65,6 +65,11 @@ fun GameNavigation(
     val battleRequestInProgress by viewModel.battleRequestInProgress.collectAsState()
     val battleRequestFailed by viewModel.battleRequestFailed.collectAsState()
     val battleState by viewModel.battleState.collectAsState()
+    val battleCountdownSeconds by viewModel.battleCountdownSeconds.collectAsState()
+    val battlePlayerCount by viewModel.battlePlayerCount.collectAsState()
+    val multiplayerBattle = viewModel.game.value.battles.firstOrNull { battle ->
+        battle.players.any { it.id == player.userID }
+    }?.multiplayer == true
     val isPlayerReadyToBattle by viewModel.isPlayerReadyToBattle.collectAsState()
     val enterGameOverScreen by viewModel.enterGameOverScreen.collectAsState()
     val context = LocalContext.current
@@ -160,7 +165,7 @@ fun GameNavigation(
                 enterBattleScreen = enterBattleScreen,
                 enterGameOverScreen = enterGameOverScreen,
                 onEnterBattleScreen = {
-                    when (viewModel.game.value.battleMiniGame) {
+                    when (if (multiplayerBattle) BattleMiniGame.TapTheFlag else viewModel.game.value.battleMiniGame) {
                         BattleMiniGame.None -> navController.popNavigate(Screen.BattleWon.route)
                         BattleMiniGame.TapTheFlag -> navController.popNavigate(Screen.Battle.route)
                     }
@@ -187,6 +192,9 @@ fun GameNavigation(
                 winner = battleWinner,
                 isPlayerReady = isPlayerReadyToBattle,
                 battleStarted = battleState == BattleState.Started,
+                countdownSeconds = battleCountdownSeconds,
+                playerCount = battlePlayerCount,
+                multiplayer = multiplayerBattle,
                 onReadyClicked = { viewModel.readyToBattle(onBattleActionResult) },
                 onWinnerFound = { onResult ->
                     if (viewModel.battleWinner.value == EMPTY && viewModel.battleWinnerID.value.isBlank() &&

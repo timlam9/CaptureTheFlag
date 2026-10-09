@@ -55,6 +55,12 @@
     <string name="or">Or</string>
     <string name="place_flag">Place your flag</string>
     <string name="wait_leaders">Wait for the leaders to place the flags</string>
+    <string name="multiplayer_battles">Multiplayer battles</string>
+    <string name="multiplayer_battles_description">Allow nearby players to join the same battle. Ready taps and new arrivals restart a 10-second countdown. Applies to new battles for everyone in this game.</string>
+    <string name="battle_countdown">Battle starts in %1$d seconds</string>
+    <string name="battle_participants">%1$d players in this battle</string>
+    <string name="battle_waiting_ready">Tap Ready to start the countdown</string>
+    <string name="battle_waiting_opponent">Waiting for the other player</string>
     <string name="battle">Battle</string>
     <string name="battle_over">Battle is over</string>
     <string name="battle_request_failed">Unable to start the battle. Please try again.</string>

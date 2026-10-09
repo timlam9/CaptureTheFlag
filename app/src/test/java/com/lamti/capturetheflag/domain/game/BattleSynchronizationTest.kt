@@ -252,6 +252,94 @@ class BattleSynchronizationTest {
         assertEquals(departed, BattleSynchronization.leave(departed, "red1"))
     }
 
+    private fun multiplayerLobby(): Game = BattleSynchronization.add(
+        game().copy(multiplayerBattles = true), battle(), 0
+    )!!
+
+    @Test fun multiplayerReadyStartsTenSecondCountdownAndDuplicateReadyDoesNotResetIt() {
+        val first = BattleSynchronization.ready(multiplayerLobby(), "battle", "red1", 1_000)!!
+        assertEquals(11_000L, first.battles.single().countdownEndsAt)
+        assertEquals(BattleState.StandBy, first.battles.single().state)
+        assertEquals(first, BattleSynchronization.ready(first, "battle", "red1", 2_000))
+        val second = BattleSynchronization.ready(first, "battle", "green1", 3_000)!!
+        assertEquals(13_000L, second.battles.single().countdownEndsAt)
+        assertEquals(BattleState.StandBy, second.battles.single().state)
+    }
+
+    @Test fun newArrivalResetsCountdownAndStaleStartCannotStartEarly() {
+        val ready = BattleSynchronization.ready(multiplayerLobby(), "battle", "red1", 1_000)!!
+        val joined = BattleSynchronization.join(ready, "battle", "red2", 5_000)!!
+        assertEquals(3, joined.battles.single().players.size)
+        assertEquals(15_000L, joined.battles.single().countdownEndsAt)
+        assertEquals(joined, BattleSynchronization.join(joined, "battle", "red2", 6_000))
+        assertNull(BattleSynchronization.start(joined, "battle", "red1", 11_000))
+        val started = BattleSynchronization.start(joined, "battle", "red1", 15_000)!!
+        assertEquals(BattleState.Started, started.battles.single().state)
+        assertNull(BattleSynchronization.join(started, "battle", "green2", 15_000))
+    }
+
+    @Test fun deadlineLocksLobbyEvenBeforeStartWriteAndLateReadyDoesNotResetIt() {
+        val ready = BattleSynchronization.ready(multiplayerLobby(), "battle", "red1", 1_000)!!
+        assertNull(BattleSynchronization.join(ready, "battle", "red2", 11_000))
+        assertNull(BattleSynchronization.add(ready, battle("other", "red2", "green1"), 11_000))
+        val lateReady = BattleSynchronization.ready(ready, "battle", "green1", 11_000)!!
+        assertEquals(BattleState.Started, lateReady.battles.single().state)
+        assertEquals(11_000L, lateReady.battles.single().countdownEndsAt)
+        assertNull(BattleSynchronization.start(ready, "battle", "outsider", 11_000))
+    }
+
+    @Test fun joiningBeforeReadyDoesNotStartCountdownAndReservationsStillApply() {
+        val lobby = multiplayerLobby()
+        val joined = BattleSynchronization.join(lobby, "battle", "red2", 1_000)!!
+        assertNull(joined.battles.single().countdownEndsAt)
+        assertNull(BattleSynchronization.start(joined, "battle", "red1", 20_000))
+        assertNull(BattleSynchronization.join(lobby, "battle", "unknown", 1_000))
+        val busy = lobby.copy(battles = lobby.battles + battle("other", "red2", "green2"))
+        assertNull(BattleSynchronization.join(busy, "battle", "red2", 1_000))
+        val eliminated = lobby.copy(redPlayers = lobby.redPlayers.map {
+            if (it.id == "red2") it.copy(hasLost = true) else it
+        })
+        assertNull(BattleSynchronization.join(eliminated, "battle", "red2", 1_000))
+    }
+
+    @Test fun challengeAgainstLobbyParticipantJoinsExistingBattle() {
+        val lobby = multiplayerLobby()
+        val joined = BattleSynchronization.add(lobby, battle("other", "red2", "green1"), 1_000)!!
+        assertEquals(1, joined.battles.size)
+        assertEquals(setOf("red1", "green1", "red2"), joined.battles.single().players.map { it.id }.toSet())
+    }
+
+    @Test fun multiplayerOutcomeCanBeAcknowledgedByEveryParticipant() {
+        val lobby = BattleSynchronization.join(multiplayerLobby(), "battle", "green2", 0)!!
+        val ready = BattleSynchronization.ready(lobby, "battle", "red1", 1_000)!!
+        val started = BattleSynchronization.start(ready, "battle", "green1", 11_000)!!
+        val finished = BattleSynchronization.finish(started, "battle", "green2", "winner")!!
+        var acknowledged = finished
+        for (id in listOf("red1", "green1", "green2")) {
+            acknowledged = BattleSynchronization.acknowledge(acknowledged, "battle", id, id)!!
+        }
+        assertTrue(acknowledged.battles.isEmpty())
+        assertTrue(acknowledged.redPlayers.first().hasLost)
+        assertTrue(acknowledged.greenPlayers.first().hasLost)
+        assertFalse(acknowledged.greenPlayers[1].hasLost)
+    }
+
+    @Test fun multiplayerDepartureDoesNotCancelStartedBattle() {
+        val lobby = BattleSynchronization.join(multiplayerLobby(), "battle", "green2", 0)!!
+        val ready = BattleSynchronization.ready(lobby, "battle", "red1", 1_000)!!
+        val started = BattleSynchronization.start(ready, "battle", "red1", 11_000)!!
+        val departed = BattleSynchronization.leave(started, "red1")
+        assertEquals(BattleState.Started, departed.battles.single().state)
+        assertEquals(setOf("green1", "green2"), departed.battles.single().players.map { it.id }.toSet())
+    }
+
+    @Test fun multiplayerFieldsRoundTripAndLegacyDefaultsRemainDisabled() {
+        val lobby = BattleSynchronization.ready(multiplayerLobby(), "battle", "red1", 1_000)!!.battles.single()
+        assertEquals(lobby, lobby.toRaw().toBattle())
+        assertFalse(BattleRaw().toBattle().multiplayer)
+        assertNull(BattleRaw().toBattle().countdownEndsAt)
+    }
+
     @Test fun winnerIdRoundTripsAndDefaultsForLegacyDocuments() {
         val original = battle(state = BattleState.Over).copy(winner = "same", winnerID = "red1")
         assertEquals(original, original.toRaw().toBattle())

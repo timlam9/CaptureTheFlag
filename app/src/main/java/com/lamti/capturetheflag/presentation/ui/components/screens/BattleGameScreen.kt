@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -50,6 +51,9 @@ fun BattleGameScreen(
     winner: String = EMPTY,
     isPlayerReady: Boolean = false,
     battleStarted: Boolean = false,
+    countdownSeconds: Int? = null,
+    playerCount: Int = 2,
+    multiplayer: Boolean = false,
     onReadyClicked: () -> Unit,
     onWinnerFound: ((Boolean) -> Unit) -> Unit,
 ) {
@@ -58,6 +62,9 @@ fun BattleGameScreen(
         color = color,
         isPlayerReady = isPlayerReady,
         battleStarted = battleStarted && winner == EMPTY,
+        countdownSeconds = countdownSeconds,
+        playerCount = playerCount,
+        multiplayer = multiplayer,
         onReadyClicked = onReadyClicked,
         onWinnerFound = onWinnerFound
     )
@@ -72,6 +79,9 @@ fun TapTheFlag(
     color: Color,
     isPlayerReady: Boolean,
     battleStarted: Boolean,
+    countdownSeconds: Int? = null,
+    playerCount: Int = 2,
+    multiplayer: Boolean = false,
     onReadyClicked: () -> Unit,
     onWinnerFound: ((Boolean) -> Unit) -> Unit
 ) {
@@ -150,7 +160,21 @@ fun TapTheFlag(
             verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AnimatedVisibility(visible = !isPlayerReady) {
+            if (!battleStarted) {
+                if (multiplayer) {
+                    Text(stringResource(R.string.battle_participants, playerCount))
+                    Text(
+                        text = if (countdownSeconds != null)
+                            stringResource(R.string.battle_countdown, countdownSeconds)
+                        else stringResource(R.string.battle_waiting_ready),
+                        modifier = Modifier.padding(vertical = 16.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                } else if (isPlayerReady) {
+                    Text(stringResource(R.string.battle_waiting_opponent))
+                }
+            }
+            AnimatedVisibility(visible = !isPlayerReady && !battleStarted) {
                 DefaultButton(text = "Ready") {
                     onReadyClicked()
                 }

@@ -1,6 +1,10 @@
 package com.lamti.capturetheflag.data.firestore
 
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
@@ -31,8 +35,24 @@ import javax.inject.Inject
 
 class GamesRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val ioDispatcher: CoroutineDispatcher
+    private val ioDispatcher: CoroutineDispatcher,
+    database: FirebaseDatabase
 ) {
+    @Volatile private var serverTimeOffset = 0L
+
+    init {
+        // RTDB exposes Firebase's clock offset, shared by all battle deadlines.
+        database.getReference(".info/serverTimeOffset").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                serverTimeOffset = snapshot.getValue(Long::class.java) ?: 0L
+            }
+            override fun onCancelled(error: DatabaseError) {
+                Timber.w("Firebase clock offset unavailable: ${error.message}")
+            }
+        })
+    }
+
+    fun battleTimeMillis(): Long = System.currentTimeMillis() + serverTimeOffset
 
     fun observeGame(gameID: String): Flow<Game> = callbackFlow {
         var snapshotListener: ListenerRegistration? = null
@@ -177,10 +197,16 @@ class GamesRepository @Inject constructor(
     }
 
     suspend fun updateBattles(gameID: String, battle: Battle): Boolean =
-        mutateBattle(gameID) { BattleSynchronization.add(it, battle) }
+        mutateBattle(gameID) { BattleSynchronization.add(it, battle, battleTimeMillis()) }
+
+    suspend fun joinBattle(gameID: String, battleID: String, playerID: String): Boolean =
+        mutateBattle(gameID) { BattleSynchronization.join(it, battleID, playerID, battleTimeMillis()) }
+
+    suspend fun startBattle(gameID: String, battleID: String, playerID: String): Boolean =
+        mutateBattle(gameID) { BattleSynchronization.start(it, battleID, playerID, battleTimeMillis()) }
 
     suspend fun updateReadyToBattle(gameID: String, battleID: String, playerID: String): Boolean =
-        mutateBattle(gameID) { BattleSynchronization.ready(it, battleID, playerID) }
+        mutateBattle(gameID) { BattleSynchronization.ready(it, battleID, playerID, battleTimeMillis()) }
 
     suspend fun finishBattle(gameID: String, battleID: String, playerID: String, winnerName: String): Boolean =
         mutateBattle(gameID) { BattleSynchronization.finish(it, battleID, playerID, winnerName) }

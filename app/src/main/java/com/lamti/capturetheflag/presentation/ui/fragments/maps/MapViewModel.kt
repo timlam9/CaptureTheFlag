@@ -41,6 +41,12 @@ class MapViewModel @Inject constructor(private val gameEngine: GameEngine) : Vie
     val showBattleButton: StateFlow<String> = gameEngine.showBattleButton
     val isPlayerReadyToBattle: StateFlow<Boolean> = gameEngine.isPlayerReadyToBattle
     val battleState: StateFlow<BattleState> = gameEngine.battleState
+    val battleCountdownSeconds = gameEngine.battleCountdownSeconds
+    val battlePlayerCount = gameEngine.battlePlayerCount
+
+    fun setMultiplayerBattles(enabled: Boolean, onResult: (Boolean) -> Unit) = viewModelScope.launch {
+        onResult(battleActionResult { gameEngine.setMultiplayerBattles(enabled) })
+    }
     val battleWinner: StateFlow<String> = gameEngine.battleWinner
     val battleWinnerID: StateFlow<String> = gameEngine.battleWinnerID
     val battleRequestInProgress: StateFlow<Boolean> = gameEngine.battleRequestInProgress

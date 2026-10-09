@@ -6,6 +6,9 @@ import android.view.View
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.Switch
+import androidx.compose.material.Text
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
@@ -55,7 +57,6 @@ import com.lamti.capturetheflag.utils.set
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -120,7 +121,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                         sheetBackgroundColor = MaterialTheme.colors.background,
                         sheetPeekHeight = 0.dp,
                     ) {
-                        Scaffold {
+                        Column(modifier = Modifier.fillMaxSize()) {
                             GameNavigation(
                                 viewModel = viewModel,
                                 navController = navController,
@@ -187,6 +188,29 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                     .padding(20.dp),
                 painter = painterResource(id = R.drawable.intro_logo),
                 contentDescription = "intro image"
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(stringResource(R.string.multiplayer_battles))
+                Switch(
+                    checked = viewModel.game.value.multiplayerBattles,
+                    enabled = viewModel.game.value.gameID.isNotBlank(),
+                    onCheckedChange = { enabled ->
+                        viewModel.setMultiplayerBattles(enabled) { accepted ->
+                            if (!accepted) Toast.makeText(
+                                requireContext(), R.string.battle_action_failed, Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                )
+            }
+            Text(
+                text = stringResource(R.string.multiplayer_battles_description),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                style = MaterialTheme.typography.caption
             )
             DefaultButton(
                 modifier = Modifier

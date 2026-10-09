@@ -57,6 +57,8 @@ class FirestoreRepositoryImpl @Inject constructor(
     override suspend fun updatePlayer(player: Player) = playersRepository.updatePlayer(player)
 
     // Games
+    override fun battleTimeMillis(): Long = gamesRepository.battleTimeMillis()
+
     override fun observeGame(gameID: String): Flow<Game> = gamesRepository.observeGame(gameID)
 
     override suspend fun getGame(id: String): Game? = gamesRepository.getGame(id)
@@ -66,6 +68,12 @@ class FirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun updateBattles(gameID: String, battle: Battle): Boolean =
         gamesRepository.updateBattles(gameID, battle)
+
+    override suspend fun joinBattle(gameID: String, battleID: String, playerID: String): Boolean =
+        gamesRepository.joinBattle(gameID, battleID, playerID)
+
+    override suspend fun startBattle(gameID: String, battleID: String, playerID: String): Boolean =
+        gamesRepository.startBattle(gameID, battleID, playerID)
 
     override suspend fun updateReadyToBattle(gameID: String, battleID: String, playerID: String): Boolean =
         gamesRepository.updateReadyToBattle(gameID, battleID, playerID)
