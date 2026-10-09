@@ -30,7 +30,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.maps.MapsInitializer
 import com.google.ar.core.ArCoreApk
@@ -87,8 +90,10 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     }
 
     private fun observeArMode() {
-        lifecycleScope.launchWhenStarted {
-            viewModel.arMode.onEach { requireActivity().myAppPreferences[AR_MODE_KEY] = it.name }.launchIn(lifecycleScope)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.arMode.collect { requireActivity().myAppPreferences[AR_MODE_KEY] = it.name }
+            }
         }
     }
 

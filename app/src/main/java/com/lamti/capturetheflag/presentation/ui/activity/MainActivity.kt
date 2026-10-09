@@ -14,7 +14,10 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 import com.lamti.capturetheflag.R
 import com.lamti.capturetheflag.data.location.geofences.GEOFENCE_BROADCAST_RECEIVER_FILTER
 import com.lamti.capturetheflag.data.location.geofences.GEOFENCE_KEY
@@ -117,31 +120,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startGameListeners() {
-        lifecycleScope.launchWhenResumed {
-            geofenceIdFLow.onEach {
-                if ((greenPlayerEntersUncapturedRedFlag() || redPlayerEntersUncapturedGreenFlag()) && isAppInForeground()) {
-                    playSound(sound = flagFoundSound)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                geofenceIdFLow.collect {
+                    if ((greenPlayerEntersUncapturedRedFlag() || redPlayerEntersUncapturedGreenFlag()) && isAppInForeground()) {
+                        playSound(sound = flagFoundSound)
+                    }
                 }
-            }.launchIn(lifecycleScope)
+            }
         }
 
-        lifecycleScope.launchWhenCreated {
-            viewModel.game.onEach { game ->
-                if (game.gameState.state == ProgressState.Started)
-                    startBackgroundServices()
-                else if (game.gameState.state == ProgressState.Ended)
-                    removeBackgroundServices()
-            }.launchIn(lifecycleScope)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.CREATED) {
+                viewModel.game.collect { game ->
+                    if (game.gameState.state == ProgressState.Started)
+                        startBackgroundServices()
+                    else if (game.gameState.state == ProgressState.Ended)
+                        removeBackgroundServices()
+                }
+            }
         }
 
-        lifecycleScope.launchWhenResumed {
-            viewModel.isGpsEnabled.onEach {
-                if (!it) {
-                    supportFragmentManager.navigateToScreen(FragmentScreen.NoGps)
-                    requestLocationPermissions()
-                } else
-                    collectScreenFlow()
-            }.launchIn(lifecycleScope)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                viewModel.isGpsEnabled.collect {
+                    if (!it) {
+                        supportFragmentManager.navigateToScreen(FragmentScreen.NoGps)
+                        requestLocationPermissions()
+                    } else
+                        collectScreenFlow()
+                }
+            }
         }
     }
 
@@ -187,7 +196,7 @@ class MainActivity : AppCompatActivity() {
         requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), PERMISSION_REQUEST_CODE)
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -270,8 +279,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun collectScreenFlow() {
-        lifecycleScope.launchWhenCreated {
-            viewModel.currentScreen.onEach(::navigate).launchIn(lifecycleScope)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.CREATED) {
+                viewModel.currentScreen.collect(::navigate)
+            }
         }
     }
 

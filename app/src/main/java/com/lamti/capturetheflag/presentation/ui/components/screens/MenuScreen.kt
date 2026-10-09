@@ -15,7 +15,7 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,7 +59,7 @@ fun MenuScreen(
                 onClick = onLogoutClicked
             ) {
                 Icon(
-                    Icons.Filled.ExitToApp,
+                    Icons.AutoMirrored.Filled.ExitToApp,
                     contentDescription = null,
                     tint = White
                 )

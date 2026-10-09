@@ -44,7 +44,7 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
     }
 
     private fun handleIntent(intent: Intent, context: Context) {
-        val geofencingEvent = GeofencingEvent.fromIntent(intent)
+        val geofencingEvent = GeofencingEvent.fromIntent(intent) ?: return
         if (geofencingEvent.hasError()) {
             val errorMessage = GeofenceStatusCodes.getStatusCodeString(geofencingEvent.errorCode)
             Timber.e("[$GEOFENCE_LOGGER_TAG] Error: $errorMessage")
@@ -57,8 +57,9 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
         if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
             geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT
         ) {
-            val geofenceID = geofencingEvent.triggeringGeofences[0].requestId
             val triggeringGeofences = geofencingEvent.triggeringGeofences
+            if (triggeringGeofences.isNullOrEmpty()) return
+            val geofenceID = triggeringGeofences[0].requestId
             val geofenceTransitionDetails = getGeofenceTransitionDetails(geofenceTransition, triggeringGeofences)
 
             when {

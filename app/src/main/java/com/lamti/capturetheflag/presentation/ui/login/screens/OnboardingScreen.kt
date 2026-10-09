@@ -82,7 +82,7 @@ fun OnboardingScreen(
             image = R.drawable.green_battle_image
         ),
     )
-    val pagerState = rememberPagerState(pageCount = pages.size)
+    val pagerState = rememberPagerState()
     val imagePadding = animateFloatAsState(if (pagerState.currentPage == 3) 100f else 0f)
     val indicatorOffset = animateFloatAsState(if (pagerState.currentPage == 2) 70f else 0f)
 
@@ -92,6 +92,7 @@ fun OnboardingScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         HorizontalPager(
+            count = pages.size,
             modifier = Modifier.fillMaxSize(),
             state = pagerState,
             verticalAlignment = Alignment.Top
@@ -112,7 +113,8 @@ fun OnboardingScreen(
                 .offset(y = indicatorOffset.value.dp),
             activeColor = White,
             inactiveColor = WhiteOpacity,
-            pagerState = pagerState
+            pagerState = pagerState,
+            pageCount = pages.size
         )
         AnimatedVisibility(
             modifier = Modifier

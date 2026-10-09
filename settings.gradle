@@ -1,15 +1,14 @@
 pluginManagement {
     repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-    }
-    resolutionStrategy {
-        eachPlugin {
-            if( requested.id.id == 'dagger.hilt.android.plugin') {
-                useModule("com.google.dagger:hilt-android-gradle-plugin:2.39.1")
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
             }
         }
+        mavenCentral()
+        gradlePluginPortal()
     }
 }
 dependencyResolutionManagement {
@@ -19,5 +18,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+
 rootProject.name = "Capture the flag"
 include ':app'
