@@ -27,7 +27,6 @@ import com.lamti.capturetheflag.presentation.ui.components.composables.common.De
 import com.lamti.capturetheflag.presentation.ui.style.Black
 import com.lamti.capturetheflag.presentation.ui.style.Green
 import com.lamti.capturetheflag.presentation.ui.style.Red
-import com.lamti.capturetheflag.utils.EMPTY
 
 @Composable
 fun BattleWonScreen(
@@ -36,6 +35,7 @@ fun BattleWonScreen(
     playerName: String,
     enterBattleScreen: Boolean,
     onEnterBattleScreen: () -> Unit,
+    isWinner: Boolean? = null,
     onLostButtonClicked: () -> Unit
 ) {
     if (!enterBattleScreen) {
@@ -43,6 +43,7 @@ fun BattleWonScreen(
             onEnterBattleScreen()
         }
     }
+    val playerWon = isWinner ?: (winner.isNotBlank() && winner == playerName)
     val teamColor: Color = remember(team) {
         when (team) {
             Team.Red -> Red
@@ -71,7 +72,12 @@ fun BattleWonScreen(
         )
         Text(
             modifier = Modifier.offset(y = (-120).dp),
-            text = if (winner == EMPTY) stringResource(R.string.fight_for_your_team) else "$winner won the battle!",
+            text = when {
+                winner.isNotBlank() -> stringResource(R.string.battle_winner, winner)
+                isWinner == true -> stringResource(R.string.battle_won)
+                isWinner == false -> stringResource(R.string.battle_lost)
+                else -> stringResource(R.string.fight_for_your_team)
+            },
             style = MaterialTheme.typography.h5.copy(
                 color = teamColor,
                 fontWeight = FontWeight.Bold
@@ -89,7 +95,7 @@ fun BattleWonScreen(
             modifier = Modifier
                 .height(60.dp)
                 .fillMaxWidth(),
-            text = if (winner != playerName) stringResource(R.string.i_lost) else stringResource(id = R.string.back_to_map),
+            text = if (playerWon) stringResource(R.string.back_to_map) else stringResource(R.string.i_lost),
         ) {
             onLostButtonClicked()
         }

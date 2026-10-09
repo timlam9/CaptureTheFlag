@@ -52,7 +52,8 @@ data class Battle(
     val battleID: String,
     val state: BattleState,
     val winner: String,
-    val players: List<BattlingPlayer>
+    val players: List<BattlingPlayer>,
+    val winnerID: String = EMPTY
 )
 
 data class BattlingPlayer(

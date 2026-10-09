@@ -9,7 +9,6 @@ import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
 import com.lamti.capturetheflag.domain.FirestoreRepository
 import com.lamti.capturetheflag.domain.game.Flag
-import com.lamti.capturetheflag.domain.game.Game
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.utils.EMPTY
@@ -81,34 +80,18 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
         applicationScope.launch {
             val player = firestoreRepository.getPlayer() ?: return@launch
             val gameDetails = player.gameDetails ?: return@launch
-            val game = firestoreRepository.getGame(gameDetails.gameID) ?: return@launch
-
-            if (player.userID == game.gameState.greenFlagCaptured) {
-                if (gameDetails.team == Team.Red) {
-                    firestoreRepository.updateGame(
-                        game
-                            .copy(
-                                gameState = game.gameState.copy(
-                                    state = ProgressState.Ended,
-                                    winners = Team.Red
-                                )
-                            )
-                    )
+            firestoreRepository.updateGame(gameDetails.gameID) { game ->
+                val winners = when {
+                    player.userID == game.gameState.greenFlagCaptured && gameDetails.team == Team.Red -> Team.Red
+                    player.userID == game.gameState.redFlagCaptured && gameDetails.team == Team.Green -> Team.Green
+                    else -> return@updateGame game
                 }
-            }
-
-            if (player.userID == game.gameState.redFlagCaptured) {
-                if (gameDetails.team == Team.Green) {
-                    firestoreRepository.updateGame(
-                        game
-                            .copy(
-                                gameState = game.gameState.copy(
-                                    state = ProgressState.Ended,
-                                    winners = Team.Green
-                                )
-                            )
+                game.copy(
+                    gameState = game.gameState.copy(
+                        state = ProgressState.Ended,
+                        winners = winners
                     )
-                }
+                )
             }
         }
     }
@@ -146,23 +129,20 @@ open class GeofenceBroadcastReceiver : HiltBroadcastReceiver() {
             val player = firestoreRepository.getPlayer()
             val gameID = player?.gameDetails?.gameID ?: return@launch
             val team = player.gameDetails.team
-            val currentGame = firestoreRepository.getGame(gameID) ?: return@launch
+            if (!(team == Team.Red && flag == Flag.Green || team == Team.Green && flag == Flag.Red)) return@launch
 
-            val game: Game = when {
-                team == Team.Red && flag == Flag.Green -> currentGame.copy(
-                    gameState = currentGame.gameState.copy(
-                        greenFlag = currentGame.gameState.greenFlag.copy(isDiscovered = true)
-                    )
+            firestoreRepository.updateGame(gameID) { game ->
+                game.copy(
+                    gameState = when (flag) {
+                        Flag.Green -> game.gameState.copy(
+                            greenFlag = game.gameState.greenFlag.copy(isDiscovered = true)
+                        )
+                        Flag.Red -> game.gameState.copy(
+                            redFlag = game.gameState.redFlag.copy(isDiscovered = true)
+                        )
+                    }
                 )
-                team == Team.Green && flag == Flag.Red -> currentGame.copy(
-                    gameState = currentGame.gameState.copy(
-                        redFlag = currentGame.gameState.redFlag.copy(isDiscovered = true)
-                    )
-                )
-                else -> return@launch
             }
-
-            firestoreRepository.updateGame(game)
         }
     }
 

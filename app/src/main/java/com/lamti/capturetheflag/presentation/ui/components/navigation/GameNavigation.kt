@@ -1,6 +1,7 @@
 package com.lamti.capturetheflag.presentation.ui.components.navigation
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -60,11 +61,26 @@ fun GameNavigation(
     val showArFlagButton by viewModel.showArFlagButton.collectAsState()
     val enterBattleScreen by viewModel.enterBattleScreen.collectAsState()
     val battleWinner by viewModel.battleWinner.collectAsState()
+    val battleWinnerID by viewModel.battleWinnerID.collectAsState()
+    val battleRequestInProgress by viewModel.battleRequestInProgress.collectAsState()
+    val battleRequestFailed by viewModel.battleRequestFailed.collectAsState()
     val battleState by viewModel.battleState.collectAsState()
     val isPlayerReadyToBattle by viewModel.isPlayerReadyToBattle.collectAsState()
     val enterGameOverScreen by viewModel.enterGameOverScreen.collectAsState()
     val context = LocalContext.current
 
+    val onBattleActionResult: (Boolean) -> Unit = { accepted ->
+        if (!accepted) {
+            Toast.makeText(context, R.string.battle_action_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    LaunchedEffect(battleRequestFailed) {
+        if (battleRequestFailed) {
+            Toast.makeText(context, R.string.battle_request_failed, Toast.LENGTH_SHORT).show()
+            viewModel.clearBattleRequestFailure()
+        }
+    }
     LaunchedEffect(key1 = true) { dataStore.saveHasGameFound(false) }
     LaunchedEffect(key1 = showBattleButton) {
         if (showBattleButton.isNotEmpty()) {
@@ -136,7 +152,7 @@ fun GameNavigation(
                 livePosition = livePosition,
                 isSafehouseDraggable = isSafehouseDraggable,
                 otherPlayers = otherPlayers,
-                showBattleButton = showBattleButton,
+                showBattleButton = if (battleRequestInProgress) EMPTY else showBattleButton,
                 showArFlagButton = showArFlagButton,
                 lost = player.status == Player.Status.Lost,
                 redPlayersCount = viewModel.game.value.redPlayers.filterNot { it.hasLost }.size,
@@ -160,26 +176,52 @@ fun GameNavigation(
             )
         }
         composable(route = Screen.Battle.route) {
+            LaunchedEffect(battleState, enterBattleScreen) {
+                when {
+                    !enterBattleScreen -> navController.popNavigate(Screen.Map.route)
+                    battleState == BattleState.Over -> navController.popNavigate(Screen.BattleWon.route)
+                }
+            }
             BattleGameScreen(
                 color = if (player.gameDetails?.team == Team.Green) Green else Red,
                 winner = battleWinner,
                 isPlayerReady = isPlayerReadyToBattle,
                 battleStarted = battleState == BattleState.Started,
-                onReadyClicked = { viewModel.readyToBattle() },
-                onWinnerFound = {
-                    if (battleWinner == EMPTY) viewModel.onBattleWinnerFound()
-                    navController.navigate(Screen.BattleWon.route)
+                onReadyClicked = { viewModel.readyToBattle(onBattleActionResult) },
+                onWinnerFound = { onResult ->
+                    if (viewModel.battleWinner.value == EMPTY && viewModel.battleWinnerID.value.isBlank() &&
+                        viewModel.battleState.value == BattleState.Started && viewModel.enterBattleScreen.value
+                    ) {
+                        viewModel.onBattleWinnerFound { accepted ->
+                            onResult(accepted)
+                            onBattleActionResult(accepted)
+                        }
+                    } else {
+                        onResult(false)
+                    }
                 }
             )
         }
         composable(route = Screen.BattleWon.route) {
+            val isWinner = when {
+                battleWinnerID.isNotBlank() -> battleWinnerID == player.userID
+                battleWinner.isNotBlank() -> battleWinner == player.details.username
+                else -> null
+            }
+            val winnerDisplay = if (viewModel.game.value.battleMiniGame == BattleMiniGame.None &&
+                battleWinnerID.isNotBlank()
+            ) {
+                if (isWinner == true) player.details.username else
+                    battleWinner.ifBlank { context.getString(R.string.battle_opponent) }
+            } else battleWinner
             BattleWonScreen(
                 team = player.gameDetails?.team ?: Team.Unknown,
-                winner = battleWinner,
+                winner = winnerDisplay,
                 playerName = player.details.username,
                 enterBattleScreen = enterBattleScreen,
-                onEnterBattleScreen = { navController.popNavigate(Screen.Map.route) }
-            ) { viewModel.onLostBattleButtonClicked() }
+                onEnterBattleScreen = { navController.popNavigate(Screen.Map.route) },
+                isWinner = isWinner
+            ) { viewModel.onLostBattleButtonClicked(onBattleActionResult) }
         }
         composable(route = Screen.GameOver.route) {
             GameOverScreen(

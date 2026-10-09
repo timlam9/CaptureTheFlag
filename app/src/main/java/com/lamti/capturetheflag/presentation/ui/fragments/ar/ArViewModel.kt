@@ -21,7 +21,6 @@ import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationExceptio
 import com.lamti.capturetheflag.domain.GameEngine
 import com.lamti.capturetheflag.domain.anchors.CloudAnchorRepository
 import com.lamti.capturetheflag.domain.game.Game
-import com.lamti.capturetheflag.domain.game.GameState
 import com.lamti.capturetheflag.domain.game.ProgressState
 import com.lamti.capturetheflag.domain.player.Player
 import com.lamti.capturetheflag.domain.player.Team
@@ -305,27 +304,22 @@ class ArViewModel @Inject constructor(
 
     // Cloud anchors functions
     private suspend fun uploadFlagObject(onResult: (Boolean) -> Unit) {
-        val newGame = when (player.value.gameDetails?.team) {
-            Team.Red -> {
-                val redFlag = game.value.gameState.redFlag.copy(isPlaced = true)
-                val newGameState: GameState = game.value.gameState.copy(redFlag = redFlag)
-                game.value.copy(gameState = newGameState)
+        val team = player.value.gameDetails?.team
+        if (team != Team.Red && team != Team.Green) return
+        val gameID = game.value.gameID
+        onResult(cloudAnchorRepository.uploadGeofenceObject(gameID) { latestGame ->
+            val gameState = when (team) {
+                Team.Red -> latestGame.gameState.copy(redFlag = latestGame.gameState.redFlag.copy(isPlaced = true))
+                else -> latestGame.gameState.copy(greenFlag = latestGame.gameState.greenFlag.copy(isPlaced = true))
             }
-            Team.Green -> {
-                val greenFlag = game.value.gameState.greenFlag.copy(isPlaced = true)
-                val newGameState: GameState = game.value.gameState.copy(greenFlag = greenFlag)
-                game.value.copy(gameState = newGameState)
-            }
-            else -> return
-        }
-        val latestGame = newGame.copy(
-            gameState = if (newGame.gameState.redFlag.isPlaced && newGame.gameState.greenFlag.isPlaced) {
-                newGame.gameState.copy(state = ProgressState.Started)
-            } else {
-                newGame.gameState
-            }
-        )
-        onResult(cloudAnchorRepository.uploadGeofenceObject(latestGame))
+            latestGame.copy(
+                gameState = if (gameState.redFlag.isPlaced && gameState.greenFlag.isPlaced) {
+                    gameState.copy(state = ProgressState.Started)
+                } else {
+                    gameState
+                }
+            )
+        })
     }
 
     private fun sendAnchorToCloud() {
@@ -344,34 +338,29 @@ class ArViewModel @Inject constructor(
 
             viewModelScope.launch {
                 val currentPosition: Location = gameEngine.getLastLocation()
-                val newGame = when (player.value.gameDetails?.team) {
-                    Team.Red -> {
-                        val redFlag = game.value.gameState.redFlag.copy(
-                            id = cloudAnchorId,
-                            position = currentPosition.toLatLng(),
-                            isPlaced = false,
-                            isDiscovered = false,
-                            timestamp = Date(),
-                        )
-                        val newGameState: GameState = game.value.gameState.copy(redFlag = redFlag)
-                        game.value.copy(gameState = newGameState)
-                    }
-                    Team.Green -> {
-                        val greenFlag = game.value.gameState.greenFlag.copy(
-                            id = cloudAnchorId,
-                            position = currentPosition.toLatLng(),
-                            isPlaced = false,
-                            isDiscovered = false,
-                            timestamp = Date(),
-                        )
-                        val newGameState: GameState = game.value.gameState.copy(greenFlag = greenFlag)
-                        game.value.copy(gameState = newGameState)
-                    }
-                    Team.Unknown -> return@launch
-                    null -> return@launch
+                val team = player.value.gameDetails?.team
+                if (team != Team.Red && team != Team.Green) return@launch
+                val gameID = game.value.gameID
+                val position = currentPosition.toLatLng()
+                val timestamp = Date()
+                cloudAnchorRepository.uploadGeofenceObject(gameID) { latestGame ->
+                    val flag = when (team) {
+                        Team.Red -> latestGame.gameState.redFlag
+                        else -> latestGame.gameState.greenFlag
+                    }.copy(
+                        id = cloudAnchorId,
+                        position = position,
+                        isPlaced = false,
+                        isDiscovered = false,
+                        timestamp = timestamp,
+                    )
+                    latestGame.copy(
+                        gameState = when (team) {
+                            Team.Red -> latestGame.gameState.copy(redFlag = flag)
+                            else -> latestGame.gameState.copy(greenFlag = flag)
+                        }
+                    )
                 }
-
-                cloudAnchorRepository.uploadGeofenceObject(newGame)
                 _message.update { "Your flag was placed successfully!" }
                 _showPlacerButtons.update { true }
                 currentAnchor = anchor

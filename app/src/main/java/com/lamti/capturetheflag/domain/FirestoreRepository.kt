@@ -29,11 +29,13 @@ interface FirestoreRepository {
 
     suspend fun getGame(id: String): Game?
 
-    suspend fun updateGame(game: Game): Boolean
+    suspend fun updateGame(gameID: String, transform: (Game) -> Game): Boolean
 
     suspend fun createGame(id: String, title: String, miniGame: BattleMiniGame, position: LatLng, player: Player): Boolean
 
     suspend fun deleteGame(gameID: String): Boolean
+
+    suspend fun leaveGame(gameID: String, playerID: String): Boolean
 
     // Database repository
     fun observePlayersPosition(gameID: String): Flow<List<GamePlayer>>
@@ -46,5 +48,9 @@ interface FirestoreRepository {
 
     suspend fun updateBattles(gameID: String, battle: Battle): Boolean
 
-    suspend fun updateReadyToBattle(gameID: String, playerID: String): Boolean
+    suspend fun updateReadyToBattle(gameID: String, battleID: String, playerID: String): Boolean
+
+    suspend fun finishBattle(gameID: String, battleID: String, playerID: String, winnerName: String): Boolean
+
+    suspend fun acknowledgeBattle(gameID: String, battleID: String, playerID: String, playerName: String): Boolean
 }

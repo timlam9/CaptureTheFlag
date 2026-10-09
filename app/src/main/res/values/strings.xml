@@ -57,6 +57,12 @@
     <string name="wait_leaders">Wait for the leaders to place the flags</string>
     <string name="battle">Battle</string>
     <string name="battle_over">Battle is over</string>
+    <string name="battle_request_failed">Unable to start the battle. Please try again.</string>
+    <string name="battle_action_failed">Unable to update the battle. Please try again.</string>
+    <string name="battle_opponent">Opponent</string>
+    <string name="battle_winner">%1$s won the battle!</string>
+    <string name="battle_won">You won the battle!</string>
+    <string name="battle_lost">You lost the battle.</string>
     <string name="capture_flag">Capture Flag</string>
     <string name="fight_for_your_team">Fight for your team</string>
     <string name="both_flags_captured">Both flags have been captured!</string>

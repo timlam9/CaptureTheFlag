@@ -61,13 +61,20 @@ class FirestoreRepositoryImpl @Inject constructor(
 
     override suspend fun getGame(id: String): Game? = gamesRepository.getGame(id)
 
-    override suspend fun updateGame(game: Game): Boolean = gamesRepository.updateGame(game)
+    override suspend fun updateGame(gameID: String, transform: (Game) -> Game): Boolean =
+        gamesRepository.updateGame(gameID, transform)
 
     override suspend fun updateBattles(gameID: String, battle: Battle): Boolean =
         gamesRepository.updateBattles(gameID, battle)
 
-    override suspend fun updateReadyToBattle(gameID: String, playerID: String): Boolean =
-        gamesRepository.updateReadyToBattle(gameID, playerID)
+    override suspend fun updateReadyToBattle(gameID: String, battleID: String, playerID: String): Boolean =
+        gamesRepository.updateReadyToBattle(gameID, battleID, playerID)
+
+    override suspend fun finishBattle(gameID: String, battleID: String, playerID: String, winnerName: String): Boolean =
+        gamesRepository.finishBattle(gameID, battleID, playerID, winnerName)
+
+    override suspend fun acknowledgeBattle(gameID: String, battleID: String, playerID: String, playerName: String): Boolean =
+        gamesRepository.acknowledgeBattle(gameID, battleID, playerID, playerName)
 
     override suspend fun createGame(
         id: String,
@@ -106,6 +113,9 @@ class FirestoreRepositoryImpl @Inject constructor(
         databaseRepository.deleteGamePlayer(gameID, userID)
 
     override suspend fun deleteGame(gameID: String): Boolean = gamesRepository.deleteGame(gameID)
+
+    override suspend fun leaveGame(gameID: String, playerID: String): Boolean =
+        gamesRepository.leaveGame(gameID, playerID)
 
     override suspend fun deleteFirebaseGame(gameID: String): Boolean = databaseRepository.deleteGame(gameID)
 }

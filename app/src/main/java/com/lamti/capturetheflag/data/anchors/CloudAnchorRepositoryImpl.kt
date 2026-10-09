@@ -7,7 +7,8 @@ import javax.inject.Inject
 
 class CloudAnchorRepositoryImpl @Inject constructor(private val gamesRepository: GamesRepository) : CloudAnchorRepository {
 
-    override suspend fun uploadGeofenceObject(game: Game): Boolean = gamesRepository.updateGame(game = game)
+    override suspend fun uploadGeofenceObject(gameID: String, transform: (Game) -> Game): Boolean =
+        gamesRepository.updateGame(gameID, transform)
 
 }
 

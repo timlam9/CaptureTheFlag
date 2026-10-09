@@ -92,14 +92,16 @@ data class BattleRaw(
     val battleID: String = EMPTY,
     val state: String = BattleState.StandBy.name,
     val winner: String = EMPTY,
-    val players: List<BattlingPlayerRaw> = emptyList()
+    val players: List<BattlingPlayerRaw> = emptyList(),
+    val winnerID: String = EMPTY
 ) {
 
     fun toBattle() = Battle(
         battleID = battleID,
         state = state.toBattleState(),
         winner = winner,
-        players = players.map { it.toBattlingPlayer() }
+        players = players.map { it.toBattlingPlayer() },
+        winnerID = winnerID
     )
 
     companion object {
@@ -108,7 +110,8 @@ data class BattleRaw(
             battleID = battleID,
             state = state.name,
             winner = winner,
-            players = players.map { it.toRaw() }
+            players = players.map { it.toRaw() },
+            winnerID = winnerID
         )
     }
 }

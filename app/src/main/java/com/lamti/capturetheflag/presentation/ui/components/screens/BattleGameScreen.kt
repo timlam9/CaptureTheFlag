@@ -51,14 +51,13 @@ fun BattleGameScreen(
     isPlayerReady: Boolean = false,
     battleStarted: Boolean = false,
     onReadyClicked: () -> Unit,
-    onWinnerFound: () -> Unit,
+    onWinnerFound: ((Boolean) -> Unit) -> Unit,
 ) {
-    LaunchedEffect(winner) { if (winner != EMPTY) onWinnerFound() }
     TapTheFlag(
         modifier = modifier,
         color = color,
         isPlayerReady = isPlayerReady,
-        battleStarted = battleStarted,
+        battleStarted = battleStarted && winner == EMPTY,
         onReadyClicked = onReadyClicked,
         onWinnerFound = onWinnerFound
     )
@@ -74,10 +73,11 @@ fun TapTheFlag(
     isPlayerReady: Boolean,
     battleStarted: Boolean,
     onReadyClicked: () -> Unit,
-    onWinnerFound: () -> Unit
+    onWinnerFound: ((Boolean) -> Unit) -> Unit
 ) {
     val context = LocalContext.current
     var timesTaped by remember { mutableStateOf(0) }
+    var finishingClaimPending by remember { mutableStateOf(false) }
     var visible by remember { mutableStateOf(false) }
     var startPulseAnimation by remember { mutableStateOf(false) }
 
@@ -117,12 +117,21 @@ fun TapTheFlag(
         FlagIcon(
             modifier = Modifier.offset(iconLocation.x.dp, iconLocation.y.dp),
             tint = color,
-            isClickable = battleStarted,
+            isClickable = battleStarted && !finishingClaimPending,
             onIconClicked = {
+                if (!battleStarted || finishingClaimPending) return@FlagIcon
                 timesTaped += 1
                 context.playSound(punchSound)
                 startPulseAnimation = true
-                if (timesTaped == winnerTaps) onWinnerFound()
+                if (timesTaped >= winnerTaps) {
+                    finishingClaimPending = true
+                    onWinnerFound { accepted ->
+                        if (!accepted) {
+                            timesTaped = winnerTaps - 1
+                            finishingClaimPending = false
+                        }
+                    }
+                }
             }
         )
         Text(

@@ -4,5 +4,5 @@ import com.lamti.capturetheflag.domain.game.Game
 
 interface CloudAnchorRepository {
 
-    suspend fun uploadGeofenceObject(game: Game): Boolean
+    suspend fun uploadGeofenceObject(gameID: String, transform: (Game) -> Game): Boolean
 }

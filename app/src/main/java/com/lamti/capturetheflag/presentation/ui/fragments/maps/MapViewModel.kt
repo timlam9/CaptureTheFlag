@@ -15,7 +15,9 @@ import com.lamti.capturetheflag.domain.player.Team
 import com.lamti.capturetheflag.presentation.ui.components.navigation.Screen
 import com.lamti.capturetheflag.presentation.ui.fragments.ar.ArMode
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -40,6 +42,15 @@ class MapViewModel @Inject constructor(private val gameEngine: GameEngine) : Vie
     val isPlayerReadyToBattle: StateFlow<Boolean> = gameEngine.isPlayerReadyToBattle
     val battleState: StateFlow<BattleState> = gameEngine.battleState
     val battleWinner: StateFlow<String> = gameEngine.battleWinner
+    val battleWinnerID: StateFlow<String> = gameEngine.battleWinnerID
+    val battleRequestInProgress: StateFlow<Boolean> = gameEngine.battleRequestInProgress
+    val battleRequestFailed: StateFlow<Boolean> = gameEngine.battleRequestFailed
+
+    private var battleAcknowledgementJob: Job? = null
+    private var battleFinishJob: Job? = null
+    private var battleReadyJob: Job? = null
+
+    fun clearBattleRequestFailure() = gameEngine.clearBattleRequestFailure()
 
     val isSafehouseDraggable: StateFlow<Boolean> = gameEngine.isSafehouseDraggable
     val canPlaceFlag: StateFlow<Boolean> = gameEngine.canPlaceFlag
@@ -83,7 +94,12 @@ class MapViewModel @Inject constructor(private val gameEngine: GameEngine) : Vie
 
     fun onBattleButtonClicked() = viewModelScope.launch { gameEngine.createBattle() }
 
-    fun onLostBattleButtonClicked() = viewModelScope.launch { gameEngine.looseBattle() }
+    fun onLostBattleButtonClicked(onResult: (Boolean) -> Unit = {}) {
+        if (battleAcknowledgementJob?.isActive == true) return
+        battleAcknowledgementJob = viewModelScope.launch {
+            onResult(battleActionResult { gameEngine.looseBattle() })
+        }
+    }
 
     fun onGameOverOkClicked(onResult: (Boolean) -> Unit) = viewModelScope.launch(Dispatchers.Main) {
         gameEngine.removePlayer(onResult)
@@ -93,11 +109,25 @@ class MapViewModel @Inject constructor(private val gameEngine: GameEngine) : Vie
         gameEngine.captureFlag(onResult)
     }
 
-    fun readyToBattle() = viewModelScope.launch {
-        gameEngine.readyToBattle()
+    fun readyToBattle(onResult: (Boolean) -> Unit = {}) {
+        if (battleReadyJob?.isActive == true) return
+        battleReadyJob = viewModelScope.launch {
+            onResult(battleActionResult { gameEngine.readyToBattle() })
+        }
     }
 
-    fun onBattleWinnerFound() = viewModelScope.launch {
-        gameEngine.onBattleWinnerFound()
+    fun onBattleWinnerFound(onResult: (Boolean) -> Unit = {}) {
+        if (battleFinishJob?.isActive == true) return
+        battleFinishJob = viewModelScope.launch {
+            onResult(battleActionResult { gameEngine.onBattleWinnerFound() })
+        }
+    }
+
+    private suspend fun battleActionResult(action: suspend () -> Boolean): Boolean = try {
+        action()
+    } catch (error: CancellationException) {
+        throw error
+    } catch (error: Exception) {
+        false
     }
 }
